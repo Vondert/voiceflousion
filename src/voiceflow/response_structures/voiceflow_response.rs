@@ -25,9 +25,11 @@ impl VoiceflowResponse{
                 let response_type = get_response_type(&json);
                 match response_type {
                     VoiceflowResponseType::Text => {
+                        println!("\n JSON: {:?}", &json);
                         json_values.push(json);
                     },
                     VoiceflowResponseType::Choice =>{
+                        println!("\n JSON: {:?}", &json);
                         json_values.push(json);
                     }
                     _ => {}

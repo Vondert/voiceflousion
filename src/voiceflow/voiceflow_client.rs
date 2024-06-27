@@ -1,5 +1,5 @@
 use reqwest::{Client, Error, header::{AUTHORIZATION, CONTENT_TYPE, ACCEPT}};
-use crate::voiceflow::request_structures::{ActionType, Session, State, VoiceflowRequestBody, VoiceflowRequestBodyBuilder};
+use crate::voiceflow::request_structures::{Action, ActionBuilder, ActionType, Session, State, VoiceflowRequestBody, VoiceflowRequestBodyBuilder};
 use crate::voiceflow::response_structures::VoiceflowResponse;
 
 #[derive(Debug)]
@@ -18,15 +18,34 @@ impl VoiceflowClient{
             project_id
         }
     }
-    pub async fn launch_dialog(&self, session: Option<Session>, state: Option<State>) -> Result<(), Error> {
-        let body = VoiceflowRequestBodyBuilder::new(ActionType::Launch).session(session).state(state).build();
+    pub async fn launch_dialog(&self, session: &Session, state: Option<State>) -> Result<(), Error> {
+        let action = ActionBuilder::new(ActionType::Launch).build();
+        let body = VoiceflowRequestBodyBuilder::new(action).session(Some(session)).state(state).build();
         let response = self.send_stream_request(body).await;
         let voiceflow_response = response?;
         let json = voiceflow_response.json().await;
-        println!("Response: {:?}", json);
+        //println!("Response: {:?}", json);
         Ok(())
     }
-    async fn send_stream_request (&self, body: VoiceflowRequestBody) -> Result<VoiceflowResponse, Error>{
+
+    pub async fn send_message(&self, session: &Session, state: Option<State>, text: String) -> Result<(), Error> {
+        let action = ActionBuilder::new(ActionType::Text).text(text).build();
+        let body = VoiceflowRequestBodyBuilder::new(action).session(Some(session)).state(state).build();
+        let voiceflow_response = self.send_stream_request(body).await?;
+        let json = voiceflow_response.json().await;
+        //println!("Response: {:?}", json);
+        Ok(())
+    }
+
+    pub async fn choose_button(&self, session: &Session, state: Option<State>, button_name: String) -> Result<(), Error> {
+        let action = ActionBuilder::new(ActionType::Text).text(button_name).build();
+        let body = VoiceflowRequestBodyBuilder::new(action).session(Some(session)).state(state).build();
+        let voiceflow_response = self.send_stream_request(body).await?;
+        let json = voiceflow_response.json().await;
+        //println!("Response: {:?}", json);
+        Ok(())
+    }
+    async fn send_stream_request<'a>(&self, body: VoiceflowRequestBody<'a>) -> Result<VoiceflowResponse, Error>{
         let client = Client::new();
         let response = VoiceflowResponse::new(client.post(&self.general_runtime_url)
             .header(AUTHORIZATION, &self.voiceflow_api_key)

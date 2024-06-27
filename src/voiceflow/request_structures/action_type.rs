@@ -1,17 +1,23 @@
+use std::fmt::Display;
+use serde::Serialize;
 
-#[derive(Debug)]
-pub enum ActionType{
+#[derive(Debug, Serialize)]
+pub enum ActionType {
+    #[serde(rename = "launch")]
     Launch,
+    #[serde(rename = "text")]
     Text,
-    Intent
+    #[serde(rename = "intent")]
+    Intent,
 }
 
-impl ToString for ActionType{
-    fn to_string(&self) -> String {
-        match &self {
+impl Display for ActionType{
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let str = match &self {
             ActionType::Launch => "launch".to_string(),
             ActionType::Text => "text".to_string(),
             ActionType::Intent => "intent".to_string()
-        }
+        };
+        write!(f, "{}", str)
     }
 }

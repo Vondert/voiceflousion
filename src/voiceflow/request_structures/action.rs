@@ -29,6 +29,13 @@ impl ActionBuilder {
         self.payload = Some(Payload::Single(json_value));
         self
     }
+    pub fn intent(mut self, query: String) -> Self {
+        let json_value: Value = serde_json::json!({
+            "query": query
+        });
+        self.payload = Some(Payload::Object(json_value));
+        self
+    }
 
     pub fn build(self) -> Action {
         Action {

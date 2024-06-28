@@ -1,5 +1,5 @@
 use serde::Serialize;
-use crate::voiceflow::request_structures::{ActionType, Session, State};
+use crate::voiceflow::request_structures::{Session, State};
 use crate::voiceflow::request_structures::action::Action;
 
 #[derive(Debug, Serialize)]

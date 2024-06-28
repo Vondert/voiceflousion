@@ -9,4 +9,4 @@ pub(crate) use self::voiceflow_request_payload::{VoiceflowRequestBodyBuilder, Vo
 pub use self::action_type::ActionType;
 pub use self::session::Session;
 pub use self::state::State;
-pub use self::action::{Action, ActionBuilder};
+pub use self::action::ActionBuilder;

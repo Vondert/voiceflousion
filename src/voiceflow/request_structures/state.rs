@@ -1,3 +1,4 @@
+use std::ops::{Deref, DerefMut};
 use serde::Serialize;
 use serde_json::Value;
 
@@ -6,6 +7,19 @@ pub struct State{
     variables: Vec<Value>
 }
 
+impl Deref for State {
+    type Target = Vec<Value>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.variables
+    }
+}
+
+impl DerefMut for State{
+    fn deref_mut(&mut self) -> &mut Self::Target {
+       &mut self.variables
+    }
+}
 impl State{
     pub fn new(variables: Vec<Value>) -> Self{
         Self{

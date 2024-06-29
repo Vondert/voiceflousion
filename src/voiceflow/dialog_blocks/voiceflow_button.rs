@@ -1,5 +1,5 @@
 use serde_json::Value;
-use crate::voiceflow::dialog_blocks::traits::FromValue;
+use crate::voiceflow::dialog_blocks::traits::{FromValue, VoiceflowBlock};
 use crate::voiceflow::VoiceflowError;
 
 #[derive(Debug)]
@@ -12,6 +12,9 @@ impl VoiceflowButton{
             name
         }
     }
+}
+impl VoiceflowBlock for VoiceflowButton{
+
 }
 impl FromValue for VoiceflowButton{
     type Error = VoiceflowError;

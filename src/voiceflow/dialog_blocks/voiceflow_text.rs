@@ -1,10 +1,13 @@
 use serde_json::Value;
-use crate::voiceflow::dialog_blocks::traits::FromValue;
+use crate::voiceflow::dialog_blocks::traits::{FromValue, VoiceflowBlock};
 use crate::voiceflow::VoiceflowError;
 #[derive(Debug)]
 pub(super) struct VoiceflowText{
     message: String
 }
+
+impl VoiceflowBlock for VoiceflowText {}
+
 impl FromValue for VoiceflowText{
     type Error = VoiceflowError;
     fn from_value(value: Value) -> Result<Self, Self::Error> {

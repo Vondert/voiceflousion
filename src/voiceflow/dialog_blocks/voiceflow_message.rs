@@ -1,4 +1,5 @@
-use crate::voiceflow::dialog_blocks::traits::FromValue;
+use std::fmt::Debug;
+use crate::voiceflow::dialog_blocks::traits::{FromValue, VoiceflowBlock};
 use crate::voiceflow::dialog_blocks::voiceflow_buttons::VoiceflowButtons;
 use crate::voiceflow::dialog_blocks::voiceflow_card::VoiceflowCard;
 use crate::voiceflow::dialog_blocks::voiceflow_carousel::VoiceflowCarousel;
@@ -9,11 +10,7 @@ use crate::voiceflow::VoiceflowError;
 
 #[derive(Debug)]
 pub(crate) struct VoiceflowMessage{
-    text: Vec<VoiceflowText>,
-    image: Vec<VoiceflowImage>,
-    card: Vec<VoiceflowCard>,
-    carousel: Vec<VoiceflowCarousel>,
-    buttons: Option<VoiceflowButtons>
+    content: Vec<Box<dyn VoiceflowBlock>>
 }
 pub(crate) struct VoiceflowMessageBuilder;
 impl VoiceflowMessageBuilder{
@@ -22,28 +19,29 @@ impl VoiceflowMessageBuilder{
     }
     pub fn build_message(self, blocks: Vec<VoiceflowResponseBlock>) -> Result<VoiceflowMessage, VoiceflowError>{
         let mut message = VoiceflowMessage{
-            text: vec![],
-            image: vec![],
-            card: vec![],
-            carousel: vec![],
-            buttons: None,
+            content: Vec::with_capacity(blocks.len()),
         };
         for block in blocks{
             match block.block_type{
                 VoiceflowResponseBlockType::Text => {
-                    message.text.push(VoiceflowText::from_value(block.json)?);
+                    let text = Box::new(VoiceflowText::from_value(block.json)?);
+                    message.content.push(text);
                 },
                 VoiceflowResponseBlockType::Choice => {
-                    message.buttons = Some(VoiceflowButtons::from_value(block.json)?);
+                    let buttons = Box::new(VoiceflowButtons::from_value(block.json)?);
+                    message.content.push(buttons);
                 },
                 VoiceflowResponseBlockType::CardV2 => {
-                    message.card.push(VoiceflowCard::from_value(block.json)?);
+                    let card = Box::new(VoiceflowCard::from_value(block.json)?);
+                    message.content.push(card);
                 },
                 VoiceflowResponseBlockType::Visual => {
-                    message.image.push(VoiceflowImage::from_value(block.json)?);
+                    let image = Box::new(VoiceflowImage::from_value(block.json)?);
+                    message.content.push(image);
                 },
                 VoiceflowResponseBlockType::Carousel => {
-                    message.carousel.push(VoiceflowCarousel::from_value(block.json)?);
+                    let carousel = Box::new(VoiceflowImage::from_value(block.json)?);
+                    message.content.push(carousel);
                 },
                 _ => {}
             }

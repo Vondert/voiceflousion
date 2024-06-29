@@ -1,6 +1,6 @@
 use std::ops::Deref;
 use serde_json::Value;
-use crate::voiceflow::dialog_blocks::traits::FromValue;
+use crate::voiceflow::dialog_blocks::traits::{FromValue, VoiceflowBlock};
 use crate::voiceflow::dialog_blocks::voiceflow_button::VoiceflowButton;
 use crate::voiceflow::VoiceflowError;
 #[derive(Debug)]
@@ -15,9 +15,11 @@ impl Deref for VoiceflowButtons{
         &self.buttons
     }
 }
+
+impl VoiceflowBlock for VoiceflowButtons {}
+
 impl FromValue for VoiceflowButtons{
     type Error = VoiceflowError;
-
     fn from_value(value: Value) -> Result<Self, Self::Error> {
         let buttons_value = if let Some(json_buttons) = value.get("trace")
             .and_then(|trace| trace.get("payload"))

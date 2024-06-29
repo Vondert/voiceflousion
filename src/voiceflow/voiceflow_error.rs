@@ -6,7 +6,8 @@ use serde_json::Value;
 pub enum VoiceflowError {
     BlockConvertationError((String, Value)),
     RequestError(String),
-    ResponseReadingError(String)
+    ResponseReadingError(String),
+    SessionLockError
 }
 
 impl Display for VoiceflowError {
@@ -20,6 +21,9 @@ impl Display for VoiceflowError {
             },
             VoiceflowError::ResponseReadingError(error) => {
                 write!(f, "Voiceflow response reading: {:?}", error)
+            },
+            VoiceflowError::SessionLockError =>{
+                write!(f, "Session is locked")
             }
         }
     }

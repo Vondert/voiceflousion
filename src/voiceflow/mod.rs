@@ -1,7 +1,7 @@
 mod voiceflow_client;
 mod response_structures;
 pub mod request_structures;
-mod dialog_blocks;
+pub mod dialog_blocks;
 mod voiceflow_error;
 
 pub use self::voiceflow_client::VoiceflowClient;

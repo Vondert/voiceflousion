@@ -1,6 +1,6 @@
 use reqwest::{Client, header::{AUTHORIZATION, CONTENT_TYPE, ACCEPT}};
 use crate::voiceflow::dialog_blocks::{VoiceflowMessage, VoiceflowMessageBuilder};
-use crate::voiceflow::request_structures::{ActionBuilder, ActionType, Session, State, VoiceflowRequestBody, VoiceflowRequestBodyBuilder};
+use crate::voiceflow::request_structures::{ActionBuilder, ActionType, VoiceflowSession, State, VoiceflowRequestBody, VoiceflowRequestBodyBuilder};
 use crate::voiceflow::response_structures::VoiceflowResponse;
 use crate::voiceflow::VoiceflowError;
 
@@ -20,34 +20,35 @@ impl VoiceflowClient{
             project_id
         }
     }
-    pub async fn launch_dialog(&self, session: &Session, state: Option<State>) -> Result<VoiceflowMessage, VoiceflowError> {
+    pub async fn launch_dialog(&self, session: &VoiceflowSession, state: Option<State>) -> Result<VoiceflowMessage, VoiceflowError> {
+        let _guard = session.try_lock()?;
         let action = ActionBuilder::new(ActionType::Launch).build();
         let body = VoiceflowRequestBodyBuilder::new(action).session(Some(session)).state(state).build();
         let response = self.send_stream_request(body).await;
         let voiceflow_response = response?;
         let blocks = voiceflow_response.to_blocks().await?;
-        //println!("Response: {:?}", blocks);
         let message = VoiceflowMessageBuilder::new().build_message(blocks);
-        println!("{:?}", message);
-        Ok(message?)
+        return Ok(message?);
     }
 
-    pub async fn send_message(&self, session: &Session, state: Option<State>, text: String) -> Result<(), VoiceflowError> {
+    pub async fn send_message(&self, session: &VoiceflowSession, state: Option<State>, text: String) -> Result<VoiceflowMessage, VoiceflowError> {
+        let _guard = session.try_lock()?;
         let action = ActionBuilder::new(ActionType::Text).text(text).build();
         let body = VoiceflowRequestBodyBuilder::new(action).session(Some(session)).state(state).build();
         let voiceflow_response = self.send_stream_request(body).await?;
         let blocks = voiceflow_response.to_blocks().await?;
-        //println!("Response: {:?}", json);
-        Ok(())
+        let message = VoiceflowMessageBuilder::new().build_message(blocks);
+        return Ok(message?);
     }
 
-    pub async fn choose_button(&self, session: &Session, state: Option<State>, button_name: String) -> Result<(), VoiceflowError> {
+    pub async fn choose_button(&self, session: &VoiceflowSession, state: Option<State>, button_name: String) -> Result<VoiceflowMessage, VoiceflowError> {
+        let _guard = session.try_lock()?;
         let action = ActionBuilder::new(ActionType::Text).text(button_name).build();
         let body = VoiceflowRequestBodyBuilder::new(action).session(Some(session)).state(state).build();
         let voiceflow_response = self.send_stream_request(body).await?;
         let blocks = voiceflow_response.to_blocks().await?;
-        //println!("Response: {:?}", json);
-        Ok(())
+        let message = VoiceflowMessageBuilder::new().build_message(blocks);
+        return Ok(message?);
     }
     async fn send_stream_request<'a>(&self, body: VoiceflowRequestBody<'a>) -> Result<VoiceflowResponse, VoiceflowError>{
         let client = Client::new();

@@ -1,12 +1,12 @@
 use serde::Serialize;
-use crate::voiceflow::request_structures::{Session, State};
+use crate::voiceflow::request_structures::{VoiceflowSession, State};
 use crate::voiceflow::request_structures::action::Action;
 
 #[derive(Debug, Serialize)]
 pub(crate) struct VoiceflowRequestBody<'a> {
     action: Action,
     #[serde(skip_serializing_if = "Option::is_none")]
-    session: Option<&'a Session>,
+    session: Option<&'a VoiceflowSession>,
     #[serde(skip_serializing_if = "Option::is_none")]
     state: Option<State>,
 }
@@ -19,7 +19,7 @@ impl<'a> VoiceflowRequestBody<'a> {
 
 pub(crate) struct VoiceflowRequestBodyBuilder<'a> {
     action: Action,
-    session: Option<&'a Session>,
+    session: Option<&'a VoiceflowSession>,
     state: Option<State>,
 }
 
@@ -32,7 +32,7 @@ impl<'a> VoiceflowRequestBodyBuilder<'a> {
         }
     }
 
-    pub fn session(mut self, session: Option<&'a Session>) -> Self {
+    pub fn session(mut self, session: Option<&'a VoiceflowSession>) -> Self {
         self.session = session;
         self
     }

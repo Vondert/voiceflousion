@@ -8,6 +8,13 @@ pub(super) struct VoiceflowButtons{
     buttons: Vec<VoiceflowButton>
 }
 
+impl VoiceflowButtons{
+    pub fn new(buttons: Vec<VoiceflowButton>) -> Self{
+        Self{
+            buttons
+        }
+    }
+}
 impl Deref for VoiceflowButtons{
     type Target = Vec<VoiceflowButton>;
 
@@ -20,25 +27,20 @@ impl VoiceflowBlock for VoiceflowButtons {}
 
 impl FromValue for VoiceflowButtons{
     type Error = VoiceflowError;
-    fn from_value(value: Value) -> Result<Self, Self::Error> {
-        let buttons_value = if let Some(json_buttons) = value.get("trace")
-            .and_then(|trace| trace.get("payload"))
-            .and_then(|payload| payload.get("buttons"))
-            .and_then(|buttons| buttons.as_array())
-        {
-            json_buttons.to_owned()
-        }
-        else{
-            return Err(VoiceflowError::BlockConvertationError(("Buttons".to_string(), value)))
-        };
+    fn from_value(value: &Value) -> Result<Self, Self::Error> {
+
+        let buttons_value = match value.get("trace").and_then(|trace| trace.get("payload"))
+            .and_then(|payload| payload.get("buttons")){
+            None => value.get("buttons").and_then(|buttons| buttons.as_array()),
+            Some(buttons) => buttons.as_array()
+        }.ok_or_else(|| VoiceflowError::BlockConvertationError(("Buttons".to_string(), value.clone())))?;
+
 
         let buttons: Result<Vec<VoiceflowButton>, Self::Error> = buttons_value.into_iter()
-            .map(VoiceflowButton::from_value)
+            .map(|button| VoiceflowButton::from_value(button))
             .collect();
         let buttons = buttons?;
 
-       Ok(Self{
-           buttons
-       })
+       Ok(Self::new(buttons))
     }
 }

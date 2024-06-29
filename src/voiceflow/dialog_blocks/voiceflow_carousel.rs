@@ -8,6 +8,13 @@ pub(super) struct VoiceflowCarousel{
     cards: Vec<VoiceflowCard>
 }
 
+impl VoiceflowCarousel{
+    pub fn new(cards: Vec<VoiceflowCard>) -> Self{
+        Self{
+            cards
+        }
+    }
+}
 impl Deref for VoiceflowCarousel{
     type Target = Vec<VoiceflowCard>;
 
@@ -20,7 +27,17 @@ impl VoiceflowBlock for VoiceflowCarousel {}
 
 impl FromValue for VoiceflowCarousel{
     type Error = VoiceflowError;
-    fn from_value(value: Value) -> Result<Self, Self::Error> {
-        todo!()
+    fn from_value(value: &Value) -> Result<Self, Self::Error> {
+        let payload = value.get("trace")
+            .and_then(|trace| trace.get("payload"))
+            .ok_or_else(|| VoiceflowError::BlockConvertationError(("Carousel payload".to_string(), value.clone())))?;
+
+        let cards_value = payload.get("cards").and_then(|cards| cards.as_array())
+            .ok_or_else(|| VoiceflowError::BlockConvertationError(("Carousel Cards".to_string(), value.clone())))?;
+
+        let cards: Result<Vec<VoiceflowCard>, Self::Error> = cards_value.into_iter().map(|card| VoiceflowCard::from_value(card)).collect();
+        let cards = cards?;
+
+        Ok(Self::new(cards))
     }
 }

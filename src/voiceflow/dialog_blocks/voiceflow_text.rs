@@ -5,21 +5,25 @@ use crate::voiceflow::VoiceflowError;
 pub(super) struct VoiceflowText{
     message: String
 }
+impl VoiceflowText{
+    pub fn new(message: String) -> Self{
+        Self{
+            message
+        }
+    }
+}
 
 impl VoiceflowBlock for VoiceflowText {}
 
 impl FromValue for VoiceflowText{
     type Error = VoiceflowError;
-    fn from_value(value: Value) -> Result<Self, Self::Error> {
-        if let Some(message) = value.get("trace")
+    fn from_value(value: &Value) -> Result<Self, Self::Error> {
+        let message = value.get("trace")
             .and_then(|trace| trace.get("payload"))
             .and_then(|payload| payload.get("message"))
-            .and_then(|message| message.as_str())
-        {
-            return Ok(Self {
-                message: message.to_string()
-            });
-        }
-        Err(VoiceflowError::BlockConvertationError(("Text".to_string(), value)))
+            .ok_or_else(|| VoiceflowError::BlockConvertationError(("Text".to_string(), value.clone())))?
+            .to_string();
+
+        Ok(Self::new(message.to_string()))
     }
 }

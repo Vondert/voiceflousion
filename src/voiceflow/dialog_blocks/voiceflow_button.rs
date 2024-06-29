@@ -13,18 +13,16 @@ impl VoiceflowButton{
         }
     }
 }
-impl VoiceflowBlock for VoiceflowButton{
-
-}
+impl VoiceflowBlock for VoiceflowButton{}
 impl FromValue for VoiceflowButton{
     type Error = VoiceflowError;
 
-    fn from_value(value: Value) -> Result<Self, Self::Error> {
-        match value.get("name").and_then(|name| name.as_str()){
-            Some(name) => Ok(Self{
-                name: name.to_string()
-            }),
-            None => return Err(VoiceflowError::BlockConvertationError(("Button".to_string(), value)))
-        }
+    fn from_value(value: &Value) -> Result<Self, Self::Error> {
+        let name = value.get("name")
+            .and_then(|name| name.as_str())
+            .ok_or_else(|| VoiceflowError::BlockConvertationError(("Button".to_string(), value.clone())))?
+            .to_string();
+
+        Ok(Self::new(name))
     }
 }

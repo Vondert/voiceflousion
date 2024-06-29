@@ -3,8 +3,8 @@ use crate::voiceflow::response_structures::voiceflow_response_block_type::Voicef
 
 #[derive(Debug)]
 pub(crate) struct VoiceflowResponseBlock{
-    pub block_type: VoiceflowResponseBlockType,
-    pub json: Value
+    block_type: VoiceflowResponseBlockType,
+    json: Value
 }
 
 impl VoiceflowResponseBlock{
@@ -13,5 +13,11 @@ impl VoiceflowResponseBlock{
             block_type,
             json
         }
+    }
+    pub fn json(&self) -> &Value{
+        &self.json
+    }
+    pub fn block_type(&self) -> &VoiceflowResponseBlockType{
+        &self.block_type
     }
 }

@@ -22,25 +22,25 @@ impl VoiceflowMessageBuilder{
             content: Vec::with_capacity(blocks.len()),
         };
         for block in blocks{
-            match block.block_type{
+            match block.block_type(){
                 VoiceflowResponseBlockType::Text => {
-                    let text = Box::new(VoiceflowText::from_value(block.json)?);
+                    let text = Box::new(VoiceflowText::from_value(block.json())?);
                     message.content.push(text);
                 },
                 VoiceflowResponseBlockType::Choice => {
-                    let buttons = Box::new(VoiceflowButtons::from_value(block.json)?);
+                    let buttons = Box::new(VoiceflowButtons::from_value(block.json())?);
                     message.content.push(buttons);
                 },
                 VoiceflowResponseBlockType::CardV2 => {
-                    let card = Box::new(VoiceflowCard::from_value(block.json)?);
+                    let card = Box::new(VoiceflowCard::from_value(block.json())?);
                     message.content.push(card);
                 },
                 VoiceflowResponseBlockType::Visual => {
-                    let image = Box::new(VoiceflowImage::from_value(block.json)?);
+                    let image = Box::new(VoiceflowImage::from_value(block.json())?);
                     message.content.push(image);
                 },
                 VoiceflowResponseBlockType::Carousel => {
-                    let carousel = Box::new(VoiceflowImage::from_value(block.json)?);
+                    let carousel = Box::new(VoiceflowCarousel::from_value(block.json())?);
                     message.content.push(carousel);
                 },
                 _ => {}

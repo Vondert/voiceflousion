@@ -27,9 +27,9 @@ impl VoiceflowClient{
         let voiceflow_response = response?;
         let blocks = voiceflow_response.to_blocks().await?;
         //println!("Response: {:?}", blocks);
-        let message = VoiceflowMessageBuilder::new().build_message(blocks)?;
+        let message = VoiceflowMessageBuilder::new().build_message(blocks);
         println!("{:?}", message);
-        Ok(message)
+        Ok(message?)
     }
 
     pub async fn send_message(&self, session: &Session, state: Option<State>, text: String) -> Result<(), VoiceflowError> {

@@ -16,7 +16,7 @@ async fn main() {
     let voiceflow_client = VoiceflowClient::new(vf_api_key, bot_id, version_id);
     let session = Session::new("12321432434".to_string(), "123124324413".to_string());
 
-    voiceflow_client.launch_dialog(&session, None).await;
+    let _r = voiceflow_client.launch_dialog(&session, None).await;
     println!("Button resp");
     //voiceflow_client.send_message(&session, None, String::from("Buy")).await;
     //voiceflow_client.choose_button(&session, None, String::from("gds")).await;

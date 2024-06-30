@@ -21,7 +21,6 @@ impl VoiceflowClient{
         }
     }
     pub async fn launch_dialog(&self, session: &VoiceflowSession, state: Option<State>) -> Result<VoiceflowMessage, VoiceflowError> {
-        let _guard = session.try_lock()?;
         let action = ActionBuilder::new(ActionType::Launch).build();
         let body = VoiceflowRequestBodyBuilder::new(action).session(Some(session)).state(state).build();
         let response = self.send_stream_request(body).await;
@@ -32,7 +31,6 @@ impl VoiceflowClient{
     }
 
     pub async fn send_message(&self, session: &VoiceflowSession, state: Option<State>, text: String) -> Result<VoiceflowMessage, VoiceflowError> {
-        let _guard = session.try_lock()?;
         let action = ActionBuilder::new(ActionType::Text).text(text).build();
         let body = VoiceflowRequestBodyBuilder::new(action).session(Some(session)).state(state).build();
         let voiceflow_response = self.send_stream_request(body).await?;
@@ -42,7 +40,6 @@ impl VoiceflowClient{
     }
 
     pub async fn choose_button(&self, session: &VoiceflowSession, state: Option<State>, button_name: String) -> Result<VoiceflowMessage, VoiceflowError> {
-        let _guard = session.try_lock()?;
         let action = ActionBuilder::new(ActionType::Text).text(button_name).build();
         let body = VoiceflowRequestBodyBuilder::new(action).session(Some(session)).state(state).build();
         let voiceflow_response = self.send_stream_request(body).await?;

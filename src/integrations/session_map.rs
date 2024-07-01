@@ -33,18 +33,28 @@ impl<T: Session> SessionMap<T>{
         }
     }
     pub async fn get_or_add_session_async(&self, chat_id: String) -> Arc<T> {
-        let read_lock = self.sessions.read().await;
-        let session = if let Some(session) = read_lock.get(&chat_id) {
-            Arc::clone(session)
+        if let Some(session) = self.get_session(chat_id.clone()).await{
+            session
         }
         else{
-            drop(read_lock);
-            let mut write_lock = self.sessions.write().await;
-            let session = write_lock.entry(chat_id.clone())
-                .or_insert_with(|| Arc::new(T::from_chat_id(chat_id.clone())))
-                .clone();
-            session
+           self.add_session(chat_id).await
+        }
+    }
+    pub async fn get_session(&self, chat_id: String) -> Option<Arc<T>> {
+        let read_lock = self.sessions.read().await;
+        let session = if let Some(session) = read_lock.get(&chat_id) {
+            Some(session.clone())
+        }
+        else{
+            None
         };
+        return session;
+    }
+    pub async fn add_session(&self, chat_id: String) -> Arc<T> {
+        let mut write_lock = self.sessions.write().await;
+        let session = write_lock.entry(chat_id.clone())
+            .or_insert_with(|| Arc::new(T::from_chat_id(chat_id.clone(), None)))
+            .clone();
         session
     }
 }

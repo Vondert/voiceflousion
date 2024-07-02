@@ -3,7 +3,7 @@ use std::sync::Arc;
 use chrono::Utc;
 use dotenv::dotenv;
 use tokio::task;
-use crate::integrations::{Session, Client, TelegramClient, TelegramSession};
+use crate::integrations::{Session, Client, TelegramClient, TelegramSession, TelegramUpdate, InteractionType};
 use crate::voiceflow::VoiceflowClient;
 
 mod voiceflow;
@@ -17,31 +17,35 @@ async fn main() {
     let version_id: String = env::var("VERSION_ID").unwrap_or_else(|_| "".to_string());
     let vf_api_key: String = env::var("VF_API_KEY").unwrap_or_else(|_| "".to_string());
     let telegram_bot_token = env::var("TELEGRAM_BOT_TOKEN").unwrap_or_else(|_| "".to_string());
-    let voiceflow_client = Arc::new(VoiceflowClient::new(vf_api_key, bot_id, version_id));
+    let voiceflow_client = Arc::new(VoiceflowClient::new(vf_api_key, bot_id.clone(), version_id));
 
     let chat_id = format!("gdfgfdgfdgfdg");
     let telegram_client = Arc::new(TelegramClient::new(telegram_bot_token, voiceflow_client.clone(), None, None));
 
     let now = Utc::now().timestamp();
-    let result = telegram_client.interact_with_client(chat_id.clone(), now, String::new(), None, None).await;
+    let update =  TelegramUpdate::new(bot_id.clone(), chat_id.clone(), now, InteractionType::new(String::new(), String::from("text")));
+    let result = telegram_client.interact_with_client(update, None, None).await;
     match result {
         Ok(message) => println!("Task: {:?}", message),
         Err(e) => println!("Task: Error {:?}", e),
     }
     let now = Utc::now().timestamp();
-    let result = telegram_client.interact_with_client(chat_id.clone(), now, String::from("How can I buy?"), None, None).await;
+    let update =  TelegramUpdate::new(bot_id.clone(), chat_id.clone(), now, InteractionType::new(String::from("How can I buy?"), String::from("text")));
+    let result = telegram_client.interact_with_client(update, None, None).await;
     match result {
         Ok(message) => println!("Task: {:?}", message),
         Err(e) => println!("Task: Error {:?}", e),
     }
     let now = Utc::now().timestamp();
-    let result = telegram_client.interact_with_client(chat_id.clone(), now, String::from("Who are you?"), None, None).await;
+    let update =  TelegramUpdate::new(bot_id.clone(), chat_id.clone(), now, InteractionType::new(String::from("Who are you?"), String::from("text")));
+    let result = telegram_client.interact_with_client(update, None, None).await;
     match result {
         Ok(message) => println!("Task: {:?}", message),
         Err(e) => println!("Task: Error {:?}", e),
     }
     let now = Utc::now().timestamp();
-    let result = telegram_client.interact_with_client(chat_id.clone(), now, String::from("I want buy"), None, None).await;
+    let update =  TelegramUpdate::new(bot_id.clone(), chat_id.clone(), now, InteractionType::new(String::from("I want buy"), String::from("text")));
+    let result = telegram_client.interact_with_client(update, None, None).await;
     match result {
         Ok(message) => println!("Task: {:?}", message),
         Err(e) => println!("Task: Error {:?}", e),
@@ -130,7 +134,6 @@ async fn main() {
         Err(e) => println!("Task {}: Error {:?}", 4, e),
     }*/
 
-    println!("Button resp");
     //voiceflow_client.send_message(&session, None, String::from("Buy")).await;
     //voiceflow_client.choose_button(&session, None, String::from("gds")).await;
 }

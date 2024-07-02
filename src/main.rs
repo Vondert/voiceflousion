@@ -22,30 +22,30 @@ async fn main() {
     let chat_id = format!("gdfgfdgfdgfdg");
     let telegram_client = Arc::new(TelegramClient::new(telegram_bot_token, voiceflow_client.clone(), None, None));
 
-    // let now = Utc::now().timestamp();
-    // let result = telegram_client.interact_with_client(chat_id.clone(), now, String::new(), None, None).await;
-    // match result {
-    //     Ok(message) => println!("Task: {:?}", message),
-    //     Err(e) => println!("Task: Error {:?}", e),
-    // }
-    // let now = Utc::now().timestamp();
-    // let result = telegram_client.interact_with_client(chat_id.clone(), now, String::from("How can I buy?"), None, None).await;
-    // match result {
-    //     Ok(message) => println!("Task: {:?}", message),
-    //     Err(e) => println!("Task: Error {:?}", e),
-    // }
-    // let now = Utc::now().timestamp();
-    // let result = telegram_client.interact_with_client(chat_id.clone(), now, String::from("Who are you?"), None, None).await;
-    // match result {
-    //     Ok(message) => println!("Task: {:?}", message),
-    //     Err(e) => println!("Task: Error {:?}", e),
-    // }
-    // let now = Utc::now().timestamp();
-    // let result = telegram_client.interact_with_client(chat_id.clone(), now, String::from("I want buy"), None, None).await;
-    // match result {
-    //     Ok(message) => println!("Task: {:?}", message),
-    //     Err(e) => println!("Task: Error {:?}", e),
-    // }
+    let now = Utc::now().timestamp();
+    let result = telegram_client.interact_with_client(chat_id.clone(), now, String::new(), None, None).await;
+    match result {
+        Ok(message) => println!("Task: {:?}", message),
+        Err(e) => println!("Task: Error {:?}", e),
+    }
+    let now = Utc::now().timestamp();
+    let result = telegram_client.interact_with_client(chat_id.clone(), now, String::from("How can I buy?"), None, None).await;
+    match result {
+        Ok(message) => println!("Task: {:?}", message),
+        Err(e) => println!("Task: Error {:?}", e),
+    }
+    let now = Utc::now().timestamp();
+    let result = telegram_client.interact_with_client(chat_id.clone(), now, String::from("Who are you?"), None, None).await;
+    match result {
+        Ok(message) => println!("Task: {:?}", message),
+        Err(e) => println!("Task: Error {:?}", e),
+    }
+    let now = Utc::now().timestamp();
+    let result = telegram_client.interact_with_client(chat_id.clone(), now, String::from("I want buy"), None, None).await;
+    match result {
+        Ok(message) => println!("Task: {:?}", message),
+        Err(e) => println!("Task: Error {:?}", e),
+    }
 
 
     // let mut handles = vec![];

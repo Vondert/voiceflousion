@@ -8,7 +8,7 @@ use crate::voiceflow::{VoiceflowClient, VoiceflowError};
 use crate::voiceflow::dialog_blocks::VoiceflowMessage;
 use crate::voiceflow::request_structures::State;
 
-pub(crate) struct TelegramClient{
+pub struct TelegramClient{
     bot_id: String,
     bot_token: String,
     voiceflow_client: Arc<VoiceflowClient>,
@@ -37,32 +37,30 @@ impl TelegramClient{
 #[async_trait]
 impl Client for TelegramClient {
     type ClientSession = TelegramSession;
-    async fn launch_voiceflow_dialog(&self, session: &Self::ClientSession, state: Option<State>) -> Result<VoiceflowMessage, VoiceflowError>{
-        self.voiceflow_client.launch_dialog(session, state).await
+
+    async fn launch_voiceflow_dialog(&self, session: &Self::ClientSession,  interaction_time: i64, state: Option<State>) -> Result<VoiceflowMessage, VoiceflowError>{
+        let message = self.voiceflow_client.launch_dialog(session, state).await?;
+        session.set_last_interaction_locked(interaction_time)?;
+        Ok(message)
     }
-    async fn send_message_to_voiceflow_dialog(&self, session: &Self::ClientSession, message: String, state: Option<State>) -> Result<VoiceflowMessage, VoiceflowError> {
+    async fn send_message_to_voiceflow_dialog(&self, session: &Self::ClientSession,  interaction_time: i64, message: String, state: Option<State>) -> Result<VoiceflowMessage, VoiceflowError> {
+        session.set_last_interaction_locked(interaction_time)?;
         self.voiceflow_client.send_message(session, state, message).await
     }
+
     async fn interact_with_client(&self, chat_id: String, interaction_time: i64, message: String, launch_state: Option<State>, update_state: Option<State>) -> Result<VoiceflowMessage, VoiceflowError>{
-        let option_telegram_session = self.get_session(chat_id.clone()).await;
-        match option_telegram_session{
-            Some(telegram_session) =>{
-                let _guard = telegram_session.try_lock()?;
-                let is_valid = self.is_valid_session(&*telegram_session)?;
-                if !is_valid{
-                    telegram_session.set_last_interaction_locked(interaction_time)?;
-                    self.launch_voiceflow_dialog(&*telegram_session, launch_state).await
-                }
-                else{
-                    telegram_session.set_last_interaction_locked(interaction_time)?;
-                    self.send_message_to_voiceflow_dialog(&*telegram_session, message, update_state).await
-                }
-            },
-            None => {
-                let telegram_session = self.add_session(chat_id).await;
-                let _guard = telegram_session.try_lock()?;
-                return self.launch_voiceflow_dialog(&*telegram_session, launch_state).await
+        if let Some(telegram_session) = self.get_session(chat_id.clone()).await {
+            let _guard = telegram_session.try_lock()?;
+            let is_valid = self.is_valid_session(&*telegram_session)?;
+            if !is_valid {
+                return self.launch_voiceflow_dialog(&*telegram_session, interaction_time, launch_state).await
             }
+            self.send_message_to_voiceflow_dialog(&*telegram_session, interaction_time, message, update_state).await
+        }
+        else{
+            let telegram_session = self.add_session(chat_id).await;
+            let _guard = telegram_session.try_lock()?;
+            self.launch_voiceflow_dialog(&*telegram_session, interaction_time, launch_state).await
         }
     }
 

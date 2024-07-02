@@ -7,11 +7,11 @@ use crate::voiceflow::request_structures::VoiceflowSession;
 use crate::voiceflow::VoiceflowError;
 
 
-pub(crate) struct TelegramSession{
+pub struct TelegramSession{
     chat_id: String,
     voiceflow_session: VoiceflowSession,
     lock: Arc<Mutex<bool>>,
-    last_interaction: Arc<Mutex<i64>>
+    last_interaction: Arc<Mutex<Option<i64>>>
 }
 impl Deref for TelegramSession{
     type Target = VoiceflowSession;
@@ -21,7 +21,7 @@ impl Deref for TelegramSession{
     }
 }
 impl TelegramSession{
-    fn new (chat_id: String, voiceflow_session: VoiceflowSession, last_interaction: i64) -> Self{
+    fn new (chat_id: String, voiceflow_session: VoiceflowSession, last_interaction: Option<i64>) -> Self{
         Self{
             chat_id,
             voiceflow_session,
@@ -33,8 +33,7 @@ impl TelegramSession{
 impl Session for TelegramSession{
     fn from_chat_id(chat_id: String, interaction: Option<i64>) -> Self{
         let voiceflow_session = VoiceflowSession::from_chat_id(&chat_id);
-        let interaction_time = interaction.unwrap_or_else(|| Utc::now().timestamp());
-        Self::new(chat_id, voiceflow_session, interaction_time)
+        Self::new(chat_id, voiceflow_session, interaction)
     }
 
     fn get_chat_id(&self) -> &String {
@@ -49,7 +48,7 @@ impl Session for TelegramSession{
         self.lock.try_lock().map_err(|_| VoiceflowError::SessionLockError)
     }
 
-    fn last_interaction(&self) -> Arc<Mutex<i64>> {
+    fn last_interaction(&self) -> Arc<Mutex<Option<i64>>> {
         self.last_interaction.clone()
     }
 }

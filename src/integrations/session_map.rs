@@ -4,7 +4,7 @@ use std::sync::Arc;
 use tokio::sync::RwLock;
 use crate::integrations::Session;
 
-pub(crate) struct SessionMap<T: Session>{
+pub struct SessionMap<T: Session>{
     sessions: Arc<RwLock<HashMap<String, Arc<T>>>>,
 }
 impl<T: Session> Deref for SessionMap<T>{

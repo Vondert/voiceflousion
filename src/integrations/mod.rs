@@ -4,6 +4,7 @@ mod session_map;
 mod client;
 mod interaction_type;
 mod update;
+mod locked_session;
 
 pub use self::telegram::telegram_client::TelegramClient;
 pub use self::telegram::telegram_session::TelegramSession;

@@ -5,6 +5,7 @@ use crate::integrations::session_map::SessionMap;
 use crate::integrations::{Session, TelegramSession};
 use crate::integrations::client::Client;
 use crate::integrations::interaction_type::InteractionType;
+use crate::integrations::locked_session::LockedSession;
 use crate::integrations::telegram::telegram_update::TelegramUpdate;
 use crate::integrations::update::Update;
 use crate::voiceflow::{VoiceflowClient, VoiceflowError};
@@ -42,40 +43,43 @@ impl Client for TelegramClient {
     type ClientSession = TelegramSession;
     type ClientUpdate = TelegramUpdate;
 
-    async fn launch_voiceflow_dialog(&self, session: &Self::ClientSession,  interaction_time: i64, state: Option<State>) -> Result<VoiceflowMessage, VoiceflowError>{
-        let message = self.voiceflow_client.launch_dialog(session, state).await?;
-        session.set_last_interaction_locked(interaction_time)?;
+    async fn launch_voiceflow_dialog(&self, locked_session: &LockedSession<Self::ClientSession>,  interaction_time: i64, state: Option<State>) -> Result<VoiceflowMessage, VoiceflowError>{
+        let voiceflow_session = &**locked_session.session();
+        let message = self.voiceflow_client.launch_dialog(voiceflow_session, state).await?;
+        //session.set_last_interaction(interaction_time).await;
         Ok(message)
     }
-    async fn send_message_to_voiceflow_dialog(&self, session: &Self::ClientSession,  interaction_time: i64, message: String, state: Option<State>) -> Result<VoiceflowMessage, VoiceflowError> {
-        session.set_last_interaction_locked(interaction_time)?;
-        self.voiceflow_client.send_message(session, state, message).await
+    async fn send_message_to_voiceflow_dialog(&self, locked_session: &LockedSession<Self::ClientSession>,  interaction_time: i64, message: String, state: Option<State>) -> Result<VoiceflowMessage, VoiceflowError> {
+        locked_session.set_last_interaction(interaction_time).await;
+        let voiceflow_session = &**locked_session.session();
+        self.voiceflow_client.send_message(voiceflow_session, state, message).await
     }
-    async fn choose_button_in_voiceflow_dialog(&self, session: &Self::ClientSession,  interaction_time: i64, button_name: String, state: Option<State>) -> Result<VoiceflowMessage, VoiceflowError> {
-        session.set_last_interaction_locked(interaction_time)?;
-        self.voiceflow_client.choose_button(session, state, button_name).await
+    async fn choose_button_in_voiceflow_dialog(&self,locked_session: &LockedSession<Self::ClientSession>,  interaction_time: i64, button_name: String, state: Option<State>) -> Result<VoiceflowMessage, VoiceflowError> {
+        locked_session.set_last_interaction(interaction_time).await;
+        let voiceflow_session = &**locked_session.session();
+        self.voiceflow_client.choose_button(voiceflow_session, state, button_name).await
     }
     async fn interact_with_client(&self, update: Self::ClientUpdate, launch_state: Option<State>, update_state: Option<State>) -> Result<VoiceflowMessage, VoiceflowError>{
         let interaction_time =  update.interaction_time();
         if let Some(telegram_session) = self.get_session(update.chat_id_cloned()).await {
-            let _guard = telegram_session.try_lock()?;
-            let is_valid = self.is_valid_session(&*telegram_session)?;
+            let locked_session = LockedSession::try_from_session(&telegram_session)?;
+            let is_valid = telegram_session.is_valid(&self.session_duration).await;
             if !is_valid {
-                return self.launch_voiceflow_dialog(&*telegram_session, interaction_time, launch_state).await
+                return self.launch_voiceflow_dialog(&locked_session, interaction_time, launch_state).await
             }
             match update.interaction_type(){
                 InteractionType::Button(button_name) => {
-                    self.choose_button_in_voiceflow_dialog(&*telegram_session, interaction_time, button_name, update_state).await
+                    self.choose_button_in_voiceflow_dialog(&locked_session, interaction_time, button_name, update_state).await
                 },
                 InteractionType::Undefined(message) | InteractionType::Text(message) => {
-                    self.send_message_to_voiceflow_dialog(&*telegram_session,interaction_time, message, update_state).await
+                    self.send_message_to_voiceflow_dialog(&locked_session,interaction_time, message, update_state).await
                 }
             }
         }
         else{
             let telegram_session = self.add_session(update.chat_id_cloned()).await;
-            let _guard = telegram_session.try_lock()?;
-            self.launch_voiceflow_dialog(&*telegram_session, interaction_time, launch_state).await
+            let locked_session = LockedSession::try_from_session(&telegram_session)?;
+            self.launch_voiceflow_dialog(&locked_session, interaction_time, launch_state).await
         }
     }
 

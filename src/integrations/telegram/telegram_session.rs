@@ -1,7 +1,7 @@
 use std::ops::Deref;
 use std::sync::Arc;
-use chrono::Utc;
-use tokio::sync::{Mutex, MutexGuard};
+use async_trait::async_trait;
+use tokio::sync::{Mutex, MutexGuard, RwLock};
 use crate::integrations::session::Session;
 use crate::voiceflow::request_structures::VoiceflowSession;
 use crate::voiceflow::VoiceflowError;
@@ -11,11 +11,11 @@ pub struct TelegramSession{
     chat_id: String,
     voiceflow_session: VoiceflowSession,
     lock: Arc<Mutex<bool>>,
-    last_interaction: Arc<Mutex<Option<i64>>>
+    status: Arc<RwLock<bool>>,
+    last_interaction: Arc<RwLock<Option<i64>>>
 }
 impl Deref for TelegramSession{
     type Target = VoiceflowSession;
-
     fn deref(&self) -> &Self::Target {
         &self.voiceflow_session
     }
@@ -26,10 +26,12 @@ impl TelegramSession{
             chat_id,
             voiceflow_session,
             lock: Arc::new(Mutex::new(true)),
-            last_interaction: Arc::new(Mutex::new(last_interaction))
+            status: Arc::new(RwLock::new(true)),
+            last_interaction: Arc::new(RwLock::new(last_interaction))
         }
     }
 }
+#[async_trait]
 impl Session for TelegramSession{
     fn from_chat_id(chat_id: String, interaction: Option<i64>) -> Self{
         let voiceflow_session = VoiceflowSession::from_chat_id(&chat_id);
@@ -44,11 +46,15 @@ impl Session for TelegramSession{
         self.chat_id.clone()
     }
 
-    fn try_lock(&self) -> Result<MutexGuard<bool>, VoiceflowError> {
+    fn try_lock_sync(&self) -> Result<MutexGuard<bool>, VoiceflowError> {
         self.lock.try_lock().map_err(|_| VoiceflowError::SessionLockError)
     }
 
-    fn last_interaction(&self) -> Arc<Mutex<Option<i64>>> {
+    fn last_interaction(&self) -> Arc<RwLock<Option<i64>>> {
         self.last_interaction.clone()
+    }
+
+    fn status(&self) -> Arc<RwLock<bool>> {
+        self.status.clone()
     }
 }

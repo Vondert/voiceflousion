@@ -2,7 +2,9 @@ use std::collections::HashMap;
 use std::ops::Deref;
 use std::sync::Arc;
 use tokio::sync::RwLock;
+use crate::integrations::locked_session::LockedSession;
 use crate::integrations::Session;
+use crate::voiceflow::VoiceflowError;
 
 pub struct SessionMap<T: Session>{
     sessions: Arc<RwLock<HashMap<String, Arc<T>>>>,
@@ -32,7 +34,7 @@ impl<T: Session> SessionMap<T>{
             None => Self::new()
         }
     }
-    pub async fn get_or_add_session_async(&self, chat_id: String) -> Arc<T> {
+    pub async fn get_or_add_session(&self, chat_id: String) -> Arc<T> {
         if let Some(session) = self.get_session(chat_id.clone()).await{
             session
         }

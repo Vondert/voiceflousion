@@ -1,17 +1,15 @@
-use std::sync::Arc;
 use async_trait::async_trait;
 use chrono::Utc;
-use tokio::sync::{MutexGuard, RwLock};
+use tokio::sync::MutexGuard;
+use crate::integrations::utils::traits::SessionBase;
 use crate::voiceflow::VoiceflowError;
 
 #[async_trait]
-pub trait Session{
-    fn from_chat_id(chat_id: String, interaction: Option<i64>) -> Self;
-    fn get_chat_id(&self) -> &String;
-    fn get_cloned_chat_id(&self) -> String;
-    fn try_lock_sync(&self) -> Result<MutexGuard<'_, bool>, VoiceflowError>;
-    fn last_interaction(&self) -> Arc<RwLock<Option<i64>>>;
-    fn status(&self) -> Arc<RwLock<bool>>;
+pub trait Session: SessionBase{
+    fn try_lock_sync(&self) -> Result<MutexGuard<'_, bool>, VoiceflowError>{
+        let binding = self.get_lock();
+        binding.try_lock().map_err(|_| VoiceflowError::SessionLockError)
+    }
     async fn get_last_interaction(&self) -> Option<i64> {
         let binding = self.last_interaction();
         let last_interaction = binding.read().await;
@@ -36,7 +34,6 @@ pub trait Session{
             true
         }
     }
-
     async fn activate(&self) ->  (){
         let binding = self.status();
         let mut write_status = binding.write().await;

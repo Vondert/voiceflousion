@@ -1,7 +1,7 @@
 use std::ops::Deref;
 use std::sync::Arc;
 use tokio::sync::MutexGuard;
-use crate::integrations::Session;
+use crate::integrations::utils::traits::Session;
 use crate::voiceflow::VoiceflowError;
 
 pub struct LockedSession<'g, S: Session>{

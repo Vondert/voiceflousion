@@ -1,10 +1,9 @@
 use std::ops::Deref;
 use std::sync::Arc;
 use async_trait::async_trait;
-use tokio::sync::{Mutex, MutexGuard, RwLock};
-use crate::integrations::session::Session;
+use tokio::sync::{Mutex, RwLock};
+use crate::integrations::utils::traits::{Session, SessionBase};
 use crate::voiceflow::request_structures::VoiceflowSession;
-use crate::voiceflow::VoiceflowError;
 
 
 pub struct TelegramSession{
@@ -31,8 +30,7 @@ impl TelegramSession{
         }
     }
 }
-#[async_trait]
-impl Session for TelegramSession{
+impl SessionBase for TelegramSession{
     fn from_chat_id(chat_id: String, interaction: Option<i64>) -> Self{
         let voiceflow_session = VoiceflowSession::from_chat_id(&chat_id);
         Self::new(chat_id, voiceflow_session, interaction)
@@ -46,15 +44,17 @@ impl Session for TelegramSession{
         self.chat_id.clone()
     }
 
-    fn try_lock_sync(&self) -> Result<MutexGuard<bool>, VoiceflowError> {
-        self.lock.try_lock().map_err(|_| VoiceflowError::SessionLockError)
+    fn get_lock(&self) -> &Arc<Mutex<bool>> {
+        &self.lock
     }
 
-    fn last_interaction(&self) -> Arc<RwLock<Option<i64>>> {
-        self.last_interaction.clone()
+    fn last_interaction(&self) -> &Arc<RwLock<Option<i64>>> {
+        &self.last_interaction
     }
 
-    fn status(&self) -> Arc<RwLock<bool>> {
-        self.status.clone()
+    fn status(&self) -> &Arc<RwLock<bool>> {
+        &self.status
     }
 }
+#[async_trait]
+impl Session for TelegramSession{}

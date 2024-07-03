@@ -3,7 +3,8 @@ use std::sync::Arc;
 use chrono::Utc;
 use dotenv::dotenv;
 use tokio::task;
-use crate::integrations::{Session, Client, TelegramClient, TelegramUpdate, InteractionType};
+use crate::integrations::{TelegramClient, TelegramUpdate, InteractionType};
+use crate::integrations::utils::traits::{Session, Client, Update};
 use crate::voiceflow::VoiceflowClient;
 
 mod voiceflow;
@@ -52,43 +53,43 @@ async fn main() {
     // }
 
 
-    let mut handles = vec![];
-    for i in 0..5 {
-        let telegram_client = telegram_client.clone();
-        let handle = task::spawn(async move {
-            let chat_id = format!("rgfdgfdgfdg");
-            let bot_id = format!("gdfgdfgfdg");
-            let now = Utc::now().timestamp();
-            let update =  TelegramUpdate::new(bot_id.clone(), chat_id.clone(), now, InteractionType::new(String::new(), String::from("text")));
-            let result = telegram_client.interact_with_client(update, None, None).await;
-            match result {
-                Ok(message) => println!("Task {}: {:?}", i, message),
-                Err(e) => println!("Task {}: Error {:?}", i, e),
-            }
-        });
-        handles.push(handle);
-    }
-    for i in 0..5 {
-        let telegram_client = telegram_client.clone();
-        let handle = task::spawn(async move {
-            let chat_id = format!("sfdsdfsdf");
-            let bot_id = format!("gdfgdfgfdg");
-            let now = Utc::now().timestamp();
-            let update =  TelegramUpdate::new(bot_id.clone(), chat_id.clone(), now, InteractionType::new(String::new(), String::from("text")));
-            let result = telegram_client.interact_with_client(update, None, None).await;
-            match result {
-                Ok(message) => println!("Task {}: {:?}", i, message),
-                Err(e) => println!("Task {}: Error {:?}", i, e),
-            }
-        });
-        handles.push(handle);
-    }
-    //Ожидание завершения всех задач
-    for handle in handles {
-        if let Err(e) = handle.await {
-            println!("Task failed: {:?}", e);
-        }
-    }
+    // let mut handles = vec![];
+    // for i in 0..5 {
+    //     let telegram_client = telegram_client.clone();
+    //     let handle = task::spawn(async move {
+    //         let chat_id = format!("rgfdgfdgfdg");
+    //         let bot_id = format!("gdfgdfgfdg");
+    //         let now = Utc::now().timestamp();
+    //         let update =  TelegramUpdate::new(bot_id.clone(), chat_id.clone(), now, InteractionType::new(String::new(), String::from("text")));
+    //         let result = telegram_client.interact_with_client(update, None, None).await;
+    //         match result {
+    //             Ok(message) => println!("Task {}: {:?}", i, message),
+    //             Err(e) => println!("Task {}: Error {:?}", i, e),
+    //         }
+    //     });
+    //     handles.push(handle);
+    // }
+    // for i in 0..5 {
+    //     let telegram_client = telegram_client.clone();
+    //     let handle = task::spawn(async move {
+    //         let chat_id = format!("sfdsdfsdf");
+    //         let bot_id = format!("gdfgdfgfdg");
+    //         let now = Utc::now().timestamp();
+    //         let update =  TelegramUpdate::new(bot_id.clone(), chat_id.clone(), now, InteractionType::new(String::new(), String::from("text")));
+    //         let result = telegram_client.interact_with_client(update, None, None).await;
+    //         match result {
+    //             Ok(message) => println!("Task {}: {:?}", i, message),
+    //             Err(e) => println!("Task {}: Error {:?}", i, e),
+    //         }
+    //     });
+    //     handles.push(handle);
+    // }
+    // //Ожидание завершения всех задач
+    // for handle in handles {
+    //     if let Err(e) = handle.await {
+    //         println!("Task failed: {:?}", e);
+    //     }
+    // }
 
     // let mut handles = vec![];
     // for i in 0..2 {

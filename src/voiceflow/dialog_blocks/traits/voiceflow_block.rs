@@ -1,5 +1,5 @@
 use std::fmt::Debug;
 
-pub(crate) trait VoiceflowBlock: Debug{
+pub(crate) trait VoiceflowBlock: Send + Sync + Debug{
 
 }

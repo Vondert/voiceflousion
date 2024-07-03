@@ -2,9 +2,7 @@ use std::collections::HashMap;
 use std::ops::Deref;
 use std::sync::Arc;
 use tokio::sync::RwLock;
-use crate::integrations::locked_session::LockedSession;
-use crate::integrations::Session;
-use crate::voiceflow::VoiceflowError;
+use crate::integrations::utils::traits::Session;
 
 pub struct SessionMap<T: Session>{
     sessions: Arc<RwLock<HashMap<String, Arc<T>>>>,

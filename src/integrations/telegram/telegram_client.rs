@@ -63,7 +63,7 @@ impl Client for TelegramClient {
         let interaction_time =  update.interaction_time();
         if let Some(telegram_session) = self.get_session(update.chat_id_cloned()).await {
             let locked_session = LockedSession::try_from_session(&telegram_session)?;
-            let is_valid = telegram_session.is_valid(&self.session_duration).await;
+            let is_valid = locked_session.is_valid(&self.session_duration).await;
             if !is_valid {
                 return self.launch_voiceflow_dialog(&locked_session, interaction_time, launch_state).await
             }

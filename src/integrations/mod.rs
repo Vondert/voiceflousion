@@ -10,4 +10,3 @@ pub use self::telegram::telegram_update::TelegramUpdate;
 
 pub use self::interaction_type::InteractionType;
 pub use self::locked_session::LockedSession;
-

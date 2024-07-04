@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::time::Duration;
 use reqwest::{Client, header::{AUTHORIZATION, CONTENT_TYPE, ACCEPT}};
 use crate::voiceflow::dialog_blocks::{VoiceflowMessage, VoiceflowMessageBuilder};
 use crate::voiceflow::request_structures::{ActionBuilder, ActionType, VoiceflowSession, State, VoiceflowRequestBody, VoiceflowRequestBodyBuilder};
@@ -10,14 +10,19 @@ const VOICEFLOW_URL: &str = "https://general-runtime.voiceflow.com/v2beta1/inter
 pub struct VoiceflowClient{
     voiceflow_api_key:  String,
     version_id: String,
-    project_id: String
+    project_id: String,
+    client: Client
 }
 impl VoiceflowClient{
-    pub fn new(voiceflow_api_key: String, project_id: String, version_id: String) -> Self{
+    pub fn new(voiceflow_api_key: String, project_id: String, version_id: String, max_sessions_per_moment: usize) -> Self{
         Self{
             voiceflow_api_key,
             version_id,
-            project_id
+            project_id,
+            client: Client::builder()
+                .pool_max_idle_per_host(max_sessions_per_moment)
+                .pool_idle_timeout(Duration::from_secs(60))
+                .build().unwrap()
         }
     }
     pub async fn launch_dialog(&self, session: &VoiceflowSession, state: Option<State>) -> Result<VoiceflowMessage, VoiceflowError> {
@@ -48,9 +53,8 @@ impl VoiceflowClient{
         return Ok(message?);
     }
     async fn send_stream_request<'a>(&self, body: VoiceflowRequestBody<'a>) -> Result<VoiceflowResponse, VoiceflowError>{
-        let client = Client::new();
         let general_runtime_url = format!("{}/{}/{}/stream", VOICEFLOW_URL, &self.project_id, &self.version_id);
-        let response = client.post(general_runtime_url)
+        let response = self.client.post(general_runtime_url)
             .header(AUTHORIZATION, &self.voiceflow_api_key)
             .header(CONTENT_TYPE, "application/json")
             .header(ACCEPT, "text/event-stream")

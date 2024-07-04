@@ -16,16 +16,16 @@ impl VoiceflowSession {
           user_id
         }
     }
-    pub fn from_chat_id(chat_id: &str) -> Self{
-        let mut hasher = Sha256::new();
-        Digest::update(&mut hasher, &chat_id);
-        Digest::update(&mut hasher, "session_id");
-        let session_id = format!("{:x}", hasher.finalize());
+    pub fn from_chat_id(chat_id: &str) -> Self {
+        fn hash(input: &str, suffix: &str) -> String {
+            let mut hasher = Sha256::new();
+            hasher.update(input);
+            hasher.update(suffix);
+            format!("{:x}", hasher.finalize())
+        }
 
-        hasher = Sha256::new();
-        Digest::update(&mut hasher, &chat_id);
-        Digest::update(&mut hasher, "user_id");
-        let user_id = format!("{:x}", hasher.finalize());
+        let session_id = hash(chat_id, "session_id");
+        let user_id = hash(chat_id, "user_id");
         Self::new(session_id, user_id)
     }
 }

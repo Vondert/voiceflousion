@@ -4,12 +4,19 @@ use crate::voiceflow::VoiceflowError;
 
 #[derive(Debug)]
 pub(super) struct VoiceflowButton{
+    action_type: VoiceflowButtonActionType,
     name: String
 }
+#[derive(Debug)]
+pub(crate) enum VoiceflowButtonActionType{
+    OpenUrl(String),
+    Path
+}
 impl VoiceflowButton{
-    pub fn new(name: String) -> Self{
+    pub fn new(name: String, action_type: VoiceflowButtonActionType) -> Self{
         Self{
-            name
+            name,
+            action_type
         }
     }
 }
@@ -22,7 +29,28 @@ impl FromValue for VoiceflowButton{
             .and_then(|name| name.as_str())
             .ok_or_else(|| VoiceflowError::BlockConvertationError(("Button".to_string(), value.clone())))?
             .to_string();
+        let actions = value.get("request")
+            .and_then(|request| request.get("payload"))
+            .and_then(|payload| payload.get("actions"))
+            .and_then(|actions| actions.as_array())
+            .ok_or_else(|| VoiceflowError::BlockConvertationError(("Button".to_string(), value.clone())))?;
 
-        Ok(Self::new(name))
+        let action_type = if let Some(action) = actions.iter().find(|action| {
+                action.get("type")
+                    .and_then(|action_type| action_type.as_str())
+                    .map(|action_type| action_type == "open_url")
+                    .unwrap_or(false)
+            }) {
+                let url = action
+                    .get("payload")
+                    .and_then(|payload| payload.get("url"))
+                    .and_then(|url| url.as_str())
+                    .ok_or_else(|| VoiceflowError::BlockConvertationError(("Button".to_string(), value.clone())))?
+                    .to_string();
+                VoiceflowButtonActionType::OpenUrl(url)
+            } else {
+                VoiceflowButtonActionType::Path
+            };
+        Ok(Self::new(name, action_type))
     }
 }

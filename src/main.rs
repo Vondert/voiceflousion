@@ -18,18 +18,18 @@ async fn main() {
     let version_id: String = env::var("VERSION_ID").unwrap_or_else(|_| "".to_string());
     let vf_api_key: String = env::var("VF_API_KEY").unwrap_or_else(|_| "".to_string());
     let telegram_bot_token = env::var("TELEGRAM_BOT_TOKEN").unwrap_or_else(|_| "".to_string());
-    let voiceflow_client = Arc::new(VoiceflowClient::new(vf_api_key, bot_id.clone(), version_id));
+    let voiceflow_client = Arc::new(VoiceflowClient::new(vf_api_key, bot_id.clone(), version_id, 10));
 
     let chat_id = format!("gdfgfdgfdgfdg");
     let telegram_client = Arc::new(TelegramClient::new(telegram_bot_token, voiceflow_client.clone(), None, None));
 
-    // let now = Utc::now().timestamp();
-    // let update =  TelegramUpdate::new(bot_id.clone(), chat_id.clone(), now, InteractionType::new(String::new(), String::from("text")));
-    // let result = telegram_client.interact_with_client(update, None, None).await;
-    // match result {
-    //     Ok(message) => println!("Task: {:?}", message),
-    //     Err(e) => println!("Task: Error {:?}", e),
-    // }
+    let now = Utc::now().timestamp();
+    let update =  TelegramUpdate::new(bot_id.clone(), chat_id.clone(), now, InteractionType::new(String::new(), String::from("text")));
+    let result = telegram_client.interact_with_client(update, None, None).await;
+    match result {
+        Ok(message) => println!("Task: {:?}", message),
+        Err(e) => println!("Task: Error {:?}", e),
+    }
     // let now = Utc::now().timestamp();
     // let update =  TelegramUpdate::new(bot_id.clone(), chat_id.clone(), now, InteractionType::new(String::from("How can I buy?"), String::from("text")));
     // let result = telegram_client.interact_with_client(update, None, None).await;

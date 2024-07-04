@@ -23,7 +23,7 @@ pub trait Session: SessionBase{
     async fn is_valid(&self, valid_duration: &Option<i64>) -> bool{
         if let Some(duration) = valid_duration{
             let now = Utc::now().timestamp();
-            if let Some(last_interaction) = &self.get_last_interaction().await{
+            if let Some(last_interaction) = self.get_last_interaction().await{
                 !(now - last_interaction > *duration)
             }
             else{

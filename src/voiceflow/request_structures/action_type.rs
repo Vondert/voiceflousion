@@ -2,7 +2,7 @@ use std::fmt::Display;
 use serde::Serialize;
 
 #[derive(Debug, Serialize)]
-pub enum ActionType {
+pub(crate) enum ActionType {
     #[serde(rename = "launch")]
     Launch,
     #[serde(rename = "text")]

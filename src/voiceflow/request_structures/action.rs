@@ -4,14 +4,14 @@ use crate::voiceflow::request_structures::ActionType;
 use crate::voiceflow::request_structures::payload::Payload;
 
 #[derive(Debug, Serialize)]
-pub struct Action {
+pub(crate) struct Action {
     #[serde(rename = "type")]
     action_type: ActionType,
     #[serde(skip_serializing_if = "Option::is_none")]
     payload: Option<Payload>,
 }
 
-pub struct ActionBuilder {
+pub(crate) struct ActionBuilder {
     action_type: ActionType,
     payload: Option<Payload>,
 }

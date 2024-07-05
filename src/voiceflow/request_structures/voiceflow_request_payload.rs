@@ -1,6 +1,7 @@
 use serde::Serialize;
-use crate::voiceflow::request_structures::{VoiceflowSession, State};
+use crate::voiceflow::request_structures::State;
 use crate::voiceflow::request_structures::action::Action;
+use crate::voiceflow::VoiceflowSession;
 
 #[derive(Debug, Serialize)]
 pub(crate) struct VoiceflowRequestBody<'a> {

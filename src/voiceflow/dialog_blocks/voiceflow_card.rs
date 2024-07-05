@@ -1,9 +1,9 @@
 use serde_json::Value;
-use crate::voiceflow::dialog_blocks::traits::{FromValue, VoiceflowBlock};
-use crate::voiceflow::dialog_blocks::voiceflow_buttons::VoiceflowButtons;
+use crate::voiceflow::dialog_blocks::traits::FromValue;
+use crate::voiceflow::dialog_blocks::VoiceflowButtons;
 use crate::voiceflow::VoiceflowError;
 #[derive(Debug)]
-pub(super) struct VoiceflowCard{
+pub struct VoiceflowCard{
     image_url: String,
     title: String,
     description: String,
@@ -20,7 +20,6 @@ impl VoiceflowCard{
     }
 }
 
-impl VoiceflowBlock for VoiceflowCard {}
 
 impl FromValue for VoiceflowCard{
     type Error = VoiceflowError;

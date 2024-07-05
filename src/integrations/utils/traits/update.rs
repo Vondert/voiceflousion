@@ -1,6 +1,6 @@
 use crate::integrations::interaction_type::InteractionType;
 
-pub trait Update{
+pub trait Update: Send + Sync{
     fn bot_id(&self) -> &str;
     fn chat_id_cloned(&self) -> String;
     fn interaction_time(&self) -> i64;

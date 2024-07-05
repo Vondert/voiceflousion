@@ -1,9 +1,9 @@
 use std::time::Duration;
 use reqwest::{Client, header::{AUTHORIZATION, CONTENT_TYPE, ACCEPT}};
 use crate::voiceflow::dialog_blocks::{VoiceflowMessage, VoiceflowMessageBuilder};
-use crate::voiceflow::request_structures::{ActionBuilder, ActionType, VoiceflowSession, State, VoiceflowRequestBody, VoiceflowRequestBodyBuilder};
+use crate::voiceflow::request_structures::{ActionBuilder, ActionType, VoiceflowRequestBody, VoiceflowRequestBodyBuilder};
 use crate::voiceflow::response_structures::VoiceflowResponse;
-use crate::voiceflow::VoiceflowError;
+use crate::voiceflow::{State, VoiceflowError, VoiceflowSession};
 
 const VOICEFLOW_URL: &str = "https://general-runtime.voiceflow.com/v2beta1/interact";
 #[derive(Debug)]

@@ -1,20 +1,13 @@
 use std::ops::Deref;
 use serde_json::Value;
-use crate::voiceflow::dialog_blocks::traits::{FromValue, VoiceflowBlock};
-use crate::voiceflow::dialog_blocks::voiceflow_button::VoiceflowButton;
-use crate::voiceflow::dialog_blocks::voiceflow_image::VoiceflowImage;
-use crate::voiceflow::dialog_blocks::voiceflow_text::VoiceflowText;
+use crate::voiceflow::dialog_blocks::enums::VoiceflowButtonsOption;
+use crate::voiceflow::dialog_blocks::traits::FromValue;
+use crate::voiceflow::dialog_blocks::VoiceflowButton;
 use crate::voiceflow::VoiceflowError;
 #[derive(Debug)]
-pub(super) struct VoiceflowButtons{
+pub struct VoiceflowButtons{
     option: VoiceflowButtonsOption,
     buttons: Vec<VoiceflowButton>
-}
-#[derive(Debug)]
-pub(super) enum VoiceflowButtonsOption{
-    Text(VoiceflowText),
-    Image(VoiceflowImage),
-    Empty
 }
 impl VoiceflowButtons{
     pub fn new(buttons: Vec<VoiceflowButton>) -> Self{
@@ -34,8 +27,6 @@ impl Deref for VoiceflowButtons{
         &self.buttons
     }
 }
-
-impl VoiceflowBlock for VoiceflowButtons {}
 
 impl FromValue for VoiceflowButtons{
     type Error = VoiceflowError;

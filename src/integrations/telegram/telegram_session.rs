@@ -3,8 +3,7 @@ use std::sync::Arc;
 use async_trait::async_trait;
 use tokio::sync::{Mutex, RwLock};
 use crate::integrations::utils::traits::{Session, SessionBase};
-use crate::voiceflow::request_structures::VoiceflowSession;
-
+use crate::voiceflow::VoiceflowSession;
 
 pub struct TelegramSession{
     chat_id: String,
@@ -12,12 +11,6 @@ pub struct TelegramSession{
     lock: Arc<Mutex<bool>>,
     status: Arc<RwLock<bool>>,
     last_interaction: Arc<RwLock<Option<i64>>>
-}
-impl Deref for TelegramSession{
-    type Target = VoiceflowSession;
-    fn deref(&self) -> &Self::Target {
-        &self.voiceflow_session
-    }
 }
 impl TelegramSession{
     fn new (chat_id: String, voiceflow_session: VoiceflowSession, last_interaction: Option<i64>) -> Self{
@@ -54,6 +47,10 @@ impl SessionBase for TelegramSession{
 
     fn status(&self) -> &Arc<RwLock<bool>> {
         &self.status
+    }
+
+    fn voiceflow_session(&self) -> &VoiceflowSession {
+        &self.voiceflow_session
     }
 }
 #[async_trait]

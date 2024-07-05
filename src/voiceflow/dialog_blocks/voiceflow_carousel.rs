@@ -1,10 +1,10 @@
 use std::ops::Deref;
 use serde_json::Value;
-use crate::voiceflow::dialog_blocks::traits::{FromValue, VoiceflowBlock};
-use crate::voiceflow::dialog_blocks::voiceflow_card::VoiceflowCard;
+use crate::voiceflow::dialog_blocks::traits::FromValue;
+use crate::voiceflow::dialog_blocks::VoiceflowCard;
 use crate::voiceflow::VoiceflowError;
 #[derive(Debug)]
-pub(super) struct VoiceflowCarousel{
+pub struct VoiceflowCarousel{
     cards: Vec<VoiceflowCard>
 }
 
@@ -22,8 +22,6 @@ impl Deref for VoiceflowCarousel{
         &self.cards
     }
 }
-
-impl VoiceflowBlock for VoiceflowCarousel {}
 
 impl FromValue for VoiceflowCarousel{
     type Error = VoiceflowError;

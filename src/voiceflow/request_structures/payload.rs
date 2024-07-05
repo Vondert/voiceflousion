@@ -3,7 +3,7 @@ use serde_json::Value;
 
 #[derive(Debug, Serialize)]
 #[serde(untagged)]
-pub(super) enum Payload {
+pub(crate) enum Payload {
     Single(Value),
     Object(Value),
 }

@@ -1,16 +1,12 @@
 use serde_json::Value;
-use crate::voiceflow::dialog_blocks::traits::{FromValue, VoiceflowBlock};
+use crate::voiceflow::dialog_blocks::enums::VoiceflowButtonActionType;
+use crate::voiceflow::dialog_blocks::traits::FromValue;
 use crate::voiceflow::VoiceflowError;
 
 #[derive(Debug)]
-pub(super) struct VoiceflowButton{
+pub struct VoiceflowButton{
     action_type: VoiceflowButtonActionType,
     name: String
-}
-#[derive(Debug)]
-pub(crate) enum VoiceflowButtonActionType{
-    OpenUrl(String),
-    Path
 }
 impl VoiceflowButton{
     pub fn new(name: String, action_type: VoiceflowButtonActionType) -> Self{
@@ -20,7 +16,6 @@ impl VoiceflowButton{
         }
     }
 }
-impl VoiceflowBlock for VoiceflowButton{}
 impl FromValue for VoiceflowButton{
     type Error = VoiceflowError;
 

@@ -1,4 +1,3 @@
-use std::ops::Deref;
 use std::sync::Arc;
 use async_trait::async_trait;
 use tokio::sync::{Mutex, RwLock};
@@ -31,10 +30,6 @@ impl SessionBase for TelegramSession{
 
     fn get_chat_id(&self) -> &String {
         &self.chat_id
-    }
-
-    fn get_cloned_chat_id(&self) -> String {
-        self.chat_id.clone()
     }
 
     fn get_lock(&self) -> &Arc<Mutex<bool>> {

@@ -1,9 +1,8 @@
-use std::ops::Deref;
 use std::sync::Arc;
 use async_trait::async_trait;
 use crate::integrations::session_map::SessionMap;
 use crate::integrations::TelegramSession;
-use crate::integrations::utils::traits::{Session, Client};
+use crate::integrations::utils::traits::{Session, ClientBase, Client};
 use crate::integrations::interaction_type::InteractionType;
 use crate::integrations::locked_session::LockedSession;
 use crate::integrations::telegram::telegram_update::TelegramUpdate;
@@ -31,20 +30,22 @@ impl TelegramClient{
         }
     }
 }
-#[async_trait]
-impl Client for TelegramClient {
+impl ClientBase for TelegramClient {
     type ClientSession = TelegramSession;
     type ClientUpdate = TelegramUpdate;
 
     fn sessions(&self) -> &SessionMap<Self::ClientSession> {
         &self.sessions
     }
-    fn session_duration(&self) -> Option<i64> {
-        self.session_duration
+    fn session_duration(&self) -> &Option<i64> {
+        &self.session_duration
     }
     fn voiceflow_client(&self) -> &Arc<VoiceflowClient> {
         &self.voiceflow_client
     }
+}
+#[async_trait]
+impl Client for TelegramClient{
     async fn interact_with_client(&self, update: Self::ClientUpdate, launch_state: Option<State>, update_state: Option<State>) -> Result<VoiceflowMessage, VoiceflowError>{
         let interaction_time =  update.interaction_time();
         if let Some(telegram_session) = self.sessions().get_session(update.chat_id_cloned()).await {

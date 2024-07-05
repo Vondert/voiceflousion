@@ -1,8 +1,7 @@
 use async_trait::async_trait;
-use crate::integrations::LockedSession;
+use crate::integrations::utils::LockedSession;
 use crate::integrations::utils::traits::{ClientBase, Session, SessionBase};
-use crate::voiceflow::dialog_blocks::VoiceflowMessage;
-use crate::voiceflow::{State, VoiceflowError};
+use crate::voiceflow::{State, VoiceflowError, VoiceflowMessage};
 
 #[async_trait]
 pub trait Client: ClientBase {

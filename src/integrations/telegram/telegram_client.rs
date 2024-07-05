@@ -1,14 +1,11 @@
 use std::sync::Arc;
 use async_trait::async_trait;
-use crate::integrations::session_map::SessionMap;
-use crate::integrations::TelegramSession;
 use crate::integrations::utils::traits::{Session, ClientBase, Client};
-use crate::integrations::interaction_type::InteractionType;
-use crate::integrations::locked_session::LockedSession;
 use crate::integrations::telegram::telegram_update::TelegramUpdate;
+use crate::integrations::telegram::TelegramSession;
+use crate::integrations::utils::{InteractionType, LockedSession, SessionMap};
 use crate::integrations::utils::traits::Update;
-use crate::voiceflow::{VoiceflowClient, VoiceflowError};
-use crate::voiceflow::dialog_blocks::VoiceflowMessage;
+use crate::voiceflow::{VoiceflowClient, VoiceflowError, VoiceflowMessage};
 use crate::voiceflow::request_structures::State;
 
 pub struct TelegramClient{

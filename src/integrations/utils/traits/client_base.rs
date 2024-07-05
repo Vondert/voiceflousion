@@ -1,5 +1,5 @@
 use std::sync::Arc;
-use crate::integrations::session_map::SessionMap;
+use crate::integrations::utils::session_map::SessionMap;
 use crate::integrations::utils::traits::Session;
 use crate::integrations::utils::traits::update::Update;
 use crate::voiceflow::VoiceflowClient;

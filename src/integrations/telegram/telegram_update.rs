@@ -1,4 +1,4 @@
-use crate::integrations::interaction_type::InteractionType;
+use crate::integrations::utils::InteractionType;
 use crate::integrations::utils::traits::Update;
 
 pub struct TelegramUpdate{

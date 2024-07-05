@@ -1,4 +1,4 @@
-use crate::integrations::interaction_type::InteractionType;
+use crate::integrations::utils::interaction_type::InteractionType;
 
 pub trait Update: Send + Sync{
     fn bot_id(&self) -> &str;

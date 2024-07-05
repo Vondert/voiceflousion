@@ -1,9 +1,9 @@
 use std::fmt::Debug;
-use crate::voiceflow::dialog_blocks::enums::{VoiceflowBlock, VoiceflowButtonsOption};
-use crate::voiceflow::dialog_blocks::traits::FromValue;
+use crate::voiceflow::dialog_blocks::enums::VoiceflowButtonsOption;
 use crate::voiceflow::dialog_blocks::{VoiceflowButtons, VoiceflowCard, VoiceflowCarousel, VoiceflowImage, VoiceflowText};
 use crate::voiceflow::response_structures::{VoiceflowResponseBlock, VoiceflowResponseBlockType};
-use crate::voiceflow::VoiceflowError;
+use crate::voiceflow::{VoiceflowBlock, VoiceflowError};
+use crate::voiceflow::dialog_blocks::traits::FromValue;
 
 #[derive(Debug)]
 pub struct VoiceflowMessage{
@@ -21,7 +21,7 @@ impl Default for VoiceflowMessage{
         }
     }
 }
-pub(crate) struct VoiceflowMessageBuilder;
+pub(super) struct VoiceflowMessageBuilder;
 impl VoiceflowMessageBuilder {
     pub fn new() -> Self {
         Self

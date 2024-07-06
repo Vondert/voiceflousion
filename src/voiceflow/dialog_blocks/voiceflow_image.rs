@@ -15,6 +15,15 @@ impl VoiceflowImage{
             width
         }
     }
+    pub fn url(&self) -> &String{
+        &self.url
+    }
+    pub fn height(&self) -> u32{
+        self.height
+    }
+    pub fn width(&self) -> u32{
+        self.width
+    }
 }
 
 impl FromValue for VoiceflowImage{

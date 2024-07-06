@@ -11,6 +11,9 @@ impl VoiceflowText{
             message
         }
     }
+    pub fn message(&self) -> &String{
+        &self.message
+    }
 }
 
 impl FromValue for VoiceflowText{
@@ -20,8 +23,10 @@ impl FromValue for VoiceflowText{
             .and_then(|trace| trace.get("payload"))
             .and_then(|payload| payload.get("message"))
             .ok_or_else(|| VoiceflousionError::BlockConvertationError(("Text".to_string(), value.clone())))?
-            .to_string();
+            .as_str()
+            .map(|s| s.trim_matches('"').to_string())
+            .ok_or_else(|| VoiceflousionError::BlockConvertationError(("Text".to_string(), value.clone())))?;
 
-        Ok(Self::new(message.to_string()))
+        Ok(Self::new(message))
     }
 }

@@ -1,14 +1,12 @@
 use std::sync::Arc;
 use async_trait::async_trait;
-use crate::integrations::utils::traits::{Session, ClientBase, Client, Update, Sender};
-use crate::integrations::telegram::{TelegramMessage, TelegramSender, TelegramSession, TelegramUpdate};
-use crate::integrations::utils::{InteractionType, LockedSession, SessionMap};
-use crate::voiceflow::{VoiceflowClient, VoiceflousionError};
-use crate::voiceflow::request_structures::State;
+use crate::integrations::utils::traits::{ClientBase, Client};
+use crate::integrations::telegram::{TelegramSender, TelegramSession, TelegramUpdate};
+use crate::integrations::utils::SessionMap;
+use crate::voiceflow::VoiceflowClient;
 
 pub struct TelegramClient{
     bot_id: String,
-    bot_token: String,
     voiceflow_client: Arc<VoiceflowClient>,
     sessions: SessionMap<TelegramSession>,
     session_duration: Option<i64>,
@@ -19,18 +17,17 @@ impl TelegramClient{
         let bot_id = bot_token.split(':').next().unwrap().to_string();
         Self{
             bot_id,
-            bot_token,
             voiceflow_client,
             sessions: SessionMap::from(telegram_session),
             session_duration,
-            sender: TelegramSender::new(max_sessions_per_moment)
+            sender: TelegramSender::new(max_sessions_per_moment, bot_token)
         }
     }
 }
 impl ClientBase for TelegramClient {
     type ClientSession = TelegramSession;
     type ClientUpdate = TelegramUpdate;
-    type ClientMessage = TelegramMessage;
+    //type ClientMessage = TelegramMessage;
     type ClientSender = TelegramSender;
     fn sessions(&self) -> &SessionMap<Self::ClientSession> {
         &self.sessions
@@ -43,7 +40,7 @@ impl ClientBase for TelegramClient {
     }
 
     fn sender(&self) -> &Self::ClientSender {
-        todo!()
+        &self.sender
     }
 }
 #[async_trait]

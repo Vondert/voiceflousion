@@ -15,6 +15,12 @@ impl VoiceflowButton{
             action_type
         }
     }
+    pub fn action_type(&self) -> &VoiceflowButtonActionType{
+        &self.action_type
+    }
+    pub fn name(&self) -> &String{
+        &self.name
+    }
 }
 impl FromValue for VoiceflowButton{
     type Error = VoiceflousionError;

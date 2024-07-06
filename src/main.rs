@@ -21,7 +21,7 @@ async fn main() {
     let telegram_bot_token = env::var("TELEGRAM_BOT_TOKEN").unwrap_or_else(|_| "".to_string());
     let voiceflow_client = Arc::new(VoiceflowClient::new(vf_api_key, bot_id.clone(), version_id, 10));
 
-    let chat_id = format!("gdfgfdgfdgfdg");
+    let chat_id = format!("510947895");
     let telegram_client = Arc::new(TelegramClient::new(telegram_bot_token, voiceflow_client.clone(), None, None, 10));
 
     let now = Utc::now().timestamp();

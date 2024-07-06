@@ -1,4 +1,5 @@
 use std::fmt::Debug;
+use std::ops::Deref;
 use crate::voiceflow::dialog_blocks::enums::VoiceflowButtonsOption;
 use crate::voiceflow::dialog_blocks::{VoiceflowButtons, VoiceflowCard, VoiceflowCarousel, VoiceflowImage, VoiceflowText};
 use crate::voiceflow::response_structures::{VoiceflowResponseBlock, VoiceflowResponseBlockType};
@@ -19,6 +20,13 @@ impl Default for VoiceflowMessage{
         Self{
             content: Vec::new()
         }
+    }
+}
+impl Deref for VoiceflowMessage{
+    type Target = Vec<VoiceflowBlock>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.content
     }
 }
 pub(super) struct VoiceflowMessageBuilder;

@@ -16,6 +16,9 @@ impl VoiceflowButtons{
             option: VoiceflowButtonsOption::Empty
         }
     }
+    pub fn option(&self) -> &VoiceflowButtonsOption{
+        &self.option
+    }
     pub fn set_option(&mut self,  buttons_option: VoiceflowButtonsOption) -> (){
         self.option = buttons_option;
     }

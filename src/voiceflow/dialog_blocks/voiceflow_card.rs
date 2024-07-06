@@ -18,6 +18,18 @@ impl VoiceflowCard{
             buttons
         }
     }
+    pub fn image_url(&self) -> &String{
+        &self.image_url
+    }
+    pub fn title(&self) -> &String{
+        &self.title
+    }
+    pub fn description(&self) -> &String{
+        &self.description
+    }
+    pub fn buttons(&self) -> &VoiceflowButtons{
+        &self.buttons
+    }
 }
 
 

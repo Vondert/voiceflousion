@@ -3,7 +3,7 @@ use reqwest::Response;
 use serde_json::Value;
 use crate::voiceflow::response_structures::voiceflow_response_block::VoiceflowResponseBlock;
 use crate::voiceflow::response_structures::voiceflow_response_block_type::VoiceflowResponseBlockType;
-use crate::voiceflow::VoiceflowError;
+use crate::voiceflow::VoiceflousionError;
 
 #[derive(Debug)]
 pub(crate) struct VoiceflowResponse{
@@ -17,8 +17,8 @@ impl VoiceflowResponse{
     }
 }
 impl VoiceflowResponse{
-    pub(crate) async fn to_blocks(self) -> Result<Vec<VoiceflowResponseBlock>, VoiceflowError> {
-        let text = self.response.text().await.map_err(|error| VoiceflowError::ResponseReadingError(error.to_string()))?;
+    pub(crate) async fn to_blocks(self) -> Result<Vec<VoiceflowResponseBlock>, VoiceflousionError> {
+        let text = self.response.text().await.map_err(|error| VoiceflousionError::ResponseReadingError(error.to_string()))?;
         let events = parse_sse(text.lines());
 
         let mut blocks = Vec::new();

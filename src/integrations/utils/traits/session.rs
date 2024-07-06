@@ -2,13 +2,13 @@ use async_trait::async_trait;
 use chrono::Utc;
 use tokio::sync::MutexGuard;
 use crate::integrations::utils::traits::SessionBase;
-use crate::voiceflow::VoiceflowError;
+use crate::voiceflow::VoiceflousionError;
 
 #[async_trait]
 pub trait Session: SessionBase{
-    fn try_lock_sync(&self) -> Result<MutexGuard<'_, bool>, VoiceflowError>{
+    fn try_lock_sync(&self) -> Result<MutexGuard<'_, bool>, VoiceflousionError>{
         let binding = self.get_lock();
-        binding.try_lock().map_err(|_| VoiceflowError::SessionLockError)
+        binding.try_lock().map_err(|_| VoiceflousionError::SessionLockError)
     }
     async fn get_last_interaction(&self) -> Option<i64> {
         let binding = self.last_interaction();

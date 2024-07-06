@@ -2,7 +2,7 @@ use std::fmt::Debug;
 use crate::voiceflow::dialog_blocks::enums::VoiceflowButtonsOption;
 use crate::voiceflow::dialog_blocks::{VoiceflowButtons, VoiceflowCard, VoiceflowCarousel, VoiceflowImage, VoiceflowText};
 use crate::voiceflow::response_structures::{VoiceflowResponseBlock, VoiceflowResponseBlockType};
-use crate::voiceflow::{VoiceflowBlock, VoiceflowError};
+use crate::voiceflow::{VoiceflowBlock, VoiceflousionError};
 use crate::voiceflow::dialog_blocks::traits::FromValue;
 
 #[derive(Debug)]
@@ -26,7 +26,7 @@ impl VoiceflowMessageBuilder {
     pub fn new() -> Self {
         Self
     }
-    pub fn build_message(self, blocks: Vec<VoiceflowResponseBlock>) -> Result<VoiceflowMessage, VoiceflowError> {
+    pub fn build_message(self, blocks: Vec<VoiceflowResponseBlock>) -> Result<VoiceflowMessage, VoiceflousionError> {
         let mut message = VoiceflowMessage {
             content: Vec::with_capacity(blocks.len()),
         };

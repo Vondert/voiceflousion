@@ -22,7 +22,7 @@ async fn main() {
     let voiceflow_client = Arc::new(VoiceflowClient::new(vf_api_key, bot_id.clone(), version_id, 10));
 
     let chat_id = format!("gdfgfdgfdgfdg");
-    let telegram_client = Arc::new(TelegramClient::new(telegram_bot_token, voiceflow_client.clone(), None, None));
+    let telegram_client = Arc::new(TelegramClient::new(telegram_bot_token, voiceflow_client.clone(), None, None, 10));
 
     let now = Utc::now().timestamp();
     let update =  TelegramUpdate::new(bot_id.clone(), chat_id.clone(), now, InteractionType::new(String::new(), String::from("text")));

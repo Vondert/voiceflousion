@@ -1,7 +1,7 @@
 use serde_json::Value;
 use crate::voiceflow::dialog_blocks::enums::VoiceflowButtonActionType;
 use crate::voiceflow::dialog_blocks::traits::FromValue;
-use crate::voiceflow::VoiceflowError;
+use crate::voiceflow::VoiceflousionError;
 
 #[derive(Debug)]
 pub struct VoiceflowButton{
@@ -17,18 +17,18 @@ impl VoiceflowButton{
     }
 }
 impl FromValue for VoiceflowButton{
-    type Error = VoiceflowError;
+    type Error = VoiceflousionError;
 
     fn from_value(value: &Value) -> Result<Self, Self::Error> {
         let name = value.get("name")
             .and_then(|name| name.as_str())
-            .ok_or_else(|| VoiceflowError::BlockConvertationError(("Button".to_string(), value.clone())))?
+            .ok_or_else(|| VoiceflousionError::BlockConvertationError(("Button".to_string(), value.clone())))?
             .to_string();
         let actions = value.get("request")
             .and_then(|request| request.get("payload"))
             .and_then(|payload| payload.get("actions"))
             .and_then(|actions| actions.as_array())
-            .ok_or_else(|| VoiceflowError::BlockConvertationError(("Button".to_string(), value.clone())))?;
+            .ok_or_else(|| VoiceflousionError::BlockConvertationError(("Button".to_string(), value.clone())))?;
 
         let action_type = if let Some(action) = actions.iter().find(|action| {
                 action.get("type")
@@ -40,7 +40,7 @@ impl FromValue for VoiceflowButton{
                     .get("payload")
                     .and_then(|payload| payload.get("url"))
                     .and_then(|url| url.as_str())
-                    .ok_or_else(|| VoiceflowError::BlockConvertationError(("Button".to_string(), value.clone())))?
+                    .ok_or_else(|| VoiceflousionError::BlockConvertationError(("Button".to_string(), value.clone())))?
                     .to_string();
                 VoiceflowButtonActionType::OpenUrl(url)
             } else {

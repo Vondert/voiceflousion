@@ -3,30 +3,30 @@ use std::fmt::{Debug, Display, Formatter};
 use serde_json::Value;
 
 #[derive(Debug)]
-pub enum VoiceflowError {
+pub enum VoiceflousionError {
     BlockConvertationError((String, Value)),
     RequestError(String),
     ResponseReadingError(String),
     SessionLockError
 }
 
-impl Display for VoiceflowError {
+impl Display for VoiceflousionError {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), std::fmt::Error>{
         match self {
-            VoiceflowError::BlockConvertationError(block) => {
+            VoiceflousionError::BlockConvertationError(block) => {
                 write!(f, "Failed to convert block: {:?}", block)
             },
-            VoiceflowError::RequestError(error) => {
+            VoiceflousionError::RequestError(error) => {
                 write!(f, "Request to voiceflow failed: {:?}", error)
             },
-            VoiceflowError::ResponseReadingError(error) => {
+            VoiceflousionError::ResponseReadingError(error) => {
                 write!(f, "Voiceflow response reading: {:?}", error)
             },
-            VoiceflowError::SessionLockError =>{
+            VoiceflousionError::SessionLockError =>{
                 write!(f, "Session is locked")
             }
         }
     }
 }
 
-impl Error for VoiceflowError {}
+impl Error for VoiceflousionError {}

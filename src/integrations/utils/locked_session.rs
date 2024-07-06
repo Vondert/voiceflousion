@@ -2,7 +2,7 @@ use std::ops::Deref;
 use std::sync::Arc;
 use tokio::sync::MutexGuard;
 use crate::integrations::utils::traits::Session;
-use crate::voiceflow::VoiceflowError;
+use crate::voiceflow::VoiceflousionError;
 
 pub struct LockedSession<'g, S: Session>{
     session: &'g Arc<S>,
@@ -16,7 +16,7 @@ impl<'g, S: Session> Deref for LockedSession<'g, S>{
     }
 }
 impl<'g, S: Session> LockedSession<'g, S>{
-    pub fn try_from_session(session: &'g Arc<S>) -> Result<Self, VoiceflowError>{
+    pub fn try_from_session(session: &'g Arc<S>) -> Result<Self, VoiceflousionError>{
         let guard = session.try_lock_sync()?;
         Ok(Self{
             session,

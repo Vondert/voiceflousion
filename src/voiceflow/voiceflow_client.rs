@@ -2,10 +2,10 @@ use std::time::Duration;
 use reqwest::{Client, header::{AUTHORIZATION, CONTENT_TYPE, ACCEPT}};
 use crate::voiceflow::request_structures::{ActionBuilder, ActionType, VoiceflowRequestBody, VoiceflowRequestBodyBuilder};
 use crate::voiceflow::response_structures::VoiceflowResponse;
-use crate::voiceflow::{State, VoiceflowError, VoiceflowMessage, VoiceflowSession};
+use crate::voiceflow::{State, VoiceflousionError, VoiceflowMessage, VoiceflowSession};
 use crate::voiceflow::voiceflow_message::VoiceflowMessageBuilder;
 
-const VOICEFLOW_URL: &str = "https://general-runtime.voiceflow.com/v2beta1/interact";
+static VOICEFLOW_API_URL: &str = "https://general-runtime.voiceflow.com/v2beta1/interact";
 #[derive(Debug)]
 pub struct VoiceflowClient{
     voiceflow_api_key:  String,
@@ -25,7 +25,7 @@ impl VoiceflowClient{
                 .build().unwrap()
         }
     }
-    pub async fn launch_dialog(&self, session: &VoiceflowSession, state: Option<State>) -> Result<VoiceflowMessage, VoiceflowError> {
+    pub async fn launch_dialog(&self, session: &VoiceflowSession, state: Option<State>) -> Result<VoiceflowMessage, VoiceflousionError> {
         let action = ActionBuilder::new(ActionType::Launch).build();
         let body = VoiceflowRequestBodyBuilder::new(action).session(Some(session)).state(state).build();
         let response = self.send_stream_request(body).await;
@@ -35,7 +35,7 @@ impl VoiceflowClient{
         return Ok(message?);
     }
 
-    pub async fn send_message(&self, session: &VoiceflowSession, state: Option<State>, text: String) -> Result<VoiceflowMessage, VoiceflowError> {
+    pub async fn send_message(&self, session: &VoiceflowSession, state: Option<State>, text: String) -> Result<VoiceflowMessage, VoiceflousionError> {
         let action = ActionBuilder::new(ActionType::Text).text(text).build();
         let body = VoiceflowRequestBodyBuilder::new(action).session(Some(session)).state(state).build();
         let voiceflow_response = self.send_stream_request(body).await?;
@@ -44,7 +44,7 @@ impl VoiceflowClient{
         return Ok(message?);
     }
 
-    pub async fn choose_button(&self, session: &VoiceflowSession, state: Option<State>, button_name: String) -> Result<VoiceflowMessage, VoiceflowError> {
+    pub async fn choose_button(&self, session: &VoiceflowSession, state: Option<State>, button_name: String) -> Result<VoiceflowMessage, VoiceflousionError> {
         let action = ActionBuilder::new(ActionType::Text).text(button_name).build();
         let body = VoiceflowRequestBodyBuilder::new(action).session(Some(session)).state(state).build();
         let voiceflow_response = self.send_stream_request(body).await?;
@@ -52,8 +52,8 @@ impl VoiceflowClient{
         let message = VoiceflowMessageBuilder::new().build_message(blocks);
         return Ok(message?);
     }
-    async fn send_stream_request<'a>(&self, body: VoiceflowRequestBody<'a>) -> Result<VoiceflowResponse, VoiceflowError>{
-        let general_runtime_url = format!("{}/{}/{}/stream", VOICEFLOW_URL, &self.project_id, &self.version_id);
+    async fn send_stream_request<'a>(&self, body: VoiceflowRequestBody<'a>) -> Result<VoiceflowResponse, VoiceflousionError>{
+        let general_runtime_url = format!("{}/{}/{}/stream", VOICEFLOW_API_URL, &self.project_id, &self.version_id);
         let response = self.client.post(general_runtime_url)
             .header(AUTHORIZATION, &self.voiceflow_api_key)
             .header(CONTENT_TYPE, "application/json")
@@ -61,7 +61,7 @@ impl VoiceflowClient{
             .body(body.to_json()).send().await;
         match response{
             Ok(valid_response) => Ok(VoiceflowResponse::new(valid_response)),
-            Err(e) => Err(VoiceflowError::RequestError(e.to_string()))
+            Err(e) => Err(VoiceflousionError::RequestError(e.to_string()))
         }
     }
 }

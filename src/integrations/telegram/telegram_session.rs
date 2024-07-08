@@ -1,7 +1,6 @@
 use std::sync::Arc;
-use async_trait::async_trait;
 use tokio::sync::{Mutex, RwLock};
-use crate::integrations::utils::traits::{Session, SessionBase};
+use crate::integrations::utils::traits::{Session};
 use crate::voiceflow::VoiceflowSession;
 
 pub struct TelegramSession{
@@ -22,7 +21,7 @@ impl TelegramSession{
         }
     }
 }
-impl SessionBase for TelegramSession{
+impl Session for TelegramSession{
     fn from_chat_id(chat_id: String, interaction: Option<i64>) -> Self{
         let voiceflow_session = VoiceflowSession::from_chat_id(&chat_id);
         Self::new(chat_id, voiceflow_session, interaction)
@@ -48,5 +47,3 @@ impl SessionBase for TelegramSession{
         &self.voiceflow_session
     }
 }
-#[async_trait]
-impl Session for TelegramSession{}

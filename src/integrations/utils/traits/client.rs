@@ -1,7 +1,7 @@
 use async_trait::async_trait;
 use reqwest::Response;
 use crate::integrations::utils::{InteractionType, LockedSession};
-use crate::integrations::utils::traits::{ClientBase, Sender, Session, SessionBase, Update};
+use crate::integrations::utils::traits::{ClientBase, Sender, Session, Update};
 use crate::voiceflow::{State, VoiceflousionError, VoiceflowMessage};
 
 #[async_trait]

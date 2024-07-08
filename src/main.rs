@@ -5,7 +5,7 @@ use dotenv::dotenv;
 use tokio::task;
 use crate::integrations::telegram::{TelegramClient, TelegramUpdate, TelegramSession};
 use crate::integrations::utils::InteractionType;
-use crate::integrations::utils::traits::{Session, Client, Update};
+use crate::integrations::utils::traits::{Client, Update};
 use crate::voiceflow::VoiceflowClient;
 
 mod voiceflow;

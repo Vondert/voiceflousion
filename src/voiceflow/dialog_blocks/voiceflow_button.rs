@@ -6,12 +6,14 @@ use crate::voiceflow::VoiceflousionError;
 #[derive(Debug)]
 pub struct VoiceflowButton{
     action_type: VoiceflowButtonActionType,
+    path: String,
     name: String
 }
 impl VoiceflowButton{
-    pub fn new(name: String, action_type: VoiceflowButtonActionType) -> Self{
+    pub fn new(name: String, path: String, action_type: VoiceflowButtonActionType) -> Self{
         Self{
             name,
+            path,
             action_type
         }
     }
@@ -20,6 +22,9 @@ impl VoiceflowButton{
     }
     pub fn name(&self) -> &String{
         &self.name
+    }
+    pub fn path(&self) -> &String{
+        &self.path
     }
 }
 impl FromValue for VoiceflowButton{
@@ -30,8 +35,17 @@ impl FromValue for VoiceflowButton{
             .and_then(|name| name.as_str())
             .ok_or_else(|| VoiceflousionError::BlockConvertationError(("Button".to_string(), value.clone())))?
             .to_string();
-        let actions = value.get("request")
-            .and_then(|request| request.get("payload"))
+
+        let request = value.get("request")
+            .ok_or_else(|| VoiceflousionError::BlockConvertationError(("Button".to_string(), value.clone())))?;
+
+        let path = request.get("type")
+            .and_then(|path|  path.as_str())
+            .ok_or_else(|| VoiceflousionError::BlockConvertationError(("Button".to_string(), value.clone())))?
+            .to_string();
+
+
+        let actions = request.get("payload")
             .and_then(|payload| payload.get("actions"))
             .and_then(|actions| actions.as_array())
             .ok_or_else(|| VoiceflousionError::BlockConvertationError(("Button".to_string(), value.clone())))?;
@@ -52,6 +66,6 @@ impl FromValue for VoiceflowButton{
             } else {
                 VoiceflowButtonActionType::Path
             };
-        Ok(Self::new(name, action_type))
+        Ok(Self::new(name, path, action_type))
     }
 }

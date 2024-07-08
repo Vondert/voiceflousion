@@ -29,14 +29,25 @@ impl ActionBuilder {
         self.payload = Some(Payload::Single(json_value));
         self
     }
-    pub fn intent(mut self, query: String) -> Self {
+    pub fn intent(mut self, name: String, path: String) -> Self {
         let json_value: Value = serde_json::json!({
-            "query": query
+            "query": name,
+            "intent":{
+                "name": path
+            }
         });
+        println!("{:?}", &json_value);
         self.payload = Some(Payload::Object(json_value));
         self
     }
-
+    pub fn path(mut self, button_name: String) -> Self{
+        let json_value: Value = serde_json::json!({
+            "label": button_name,
+        });
+        println!("{:?}", &json_value);
+        self.payload = Some(Payload::Object(json_value));
+        self
+    }
     pub fn build(self) -> Action {
         Action {
             action_type: self.action_type,

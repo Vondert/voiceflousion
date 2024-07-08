@@ -18,10 +18,10 @@ pub trait Client: ClientBase {
         let voiceflow_message = self.voiceflow_client().send_message(voiceflow_session, state, message).await?;
         self.sender().send_message(locked_session.get_chat_id(), voiceflow_message).await
     }
-    async fn choose_button_in_voiceflow_dialog(&self,locked_session: &LockedSession<Self::ClientSession>,  interaction_time: i64, button_name: String, state: Option<State>) -> Result<Vec<Response>, VoiceflousionError> {
+    async fn choose_button_in_voiceflow_dialog(&self,locked_session: &LockedSession<Self::ClientSession>,  interaction_time: i64, button_name: String, button_path: String, state: Option<State>) -> Result<Vec<Response>, VoiceflousionError> {
         locked_session.set_last_interaction(interaction_time).await;
         let voiceflow_session = locked_session.voiceflow_session();
-        let voiceflow_message = self.voiceflow_client().choose_button(voiceflow_session, state, button_name).await?;
+        let voiceflow_message = self.voiceflow_client().choose_button(voiceflow_session, state, button_name, button_path).await?;
         self.sender().send_message(locked_session.get_chat_id(), voiceflow_message).await
     }
     async fn interact_with_client(&self, update: Self::ClientUpdate, launch_state: Option<State>, update_state: Option<State>) -> Result<Vec<Response>, VoiceflousionError>{
@@ -33,8 +33,8 @@ pub trait Client: ClientBase {
                return self.launch_voiceflow_dialog(&locked_session, interaction_time, launch_state).await;
             }
             match update.interaction_type(){
-                InteractionType::Button(button_name) => {
-                    self.choose_button_in_voiceflow_dialog(&locked_session, interaction_time, button_name, update_state).await
+                InteractionType::Button(button_name, button_path) => {
+                    self.choose_button_in_voiceflow_dialog(&locked_session, interaction_time, button_name, button_path, update_state).await
                 },
                 InteractionType::Undefined(message) | InteractionType::Text(message) => {
                     self.send_message_to_voiceflow_dialog(&locked_session,interaction_time, message, update_state).await

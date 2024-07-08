@@ -149,6 +149,7 @@ impl Sender for TelegramSender{
     }
 }
 fn buttons_to_keyboard(buttons: &VoiceflowButtons) -> Vec<Vec<Value>>{
+    println!("{:?}", buttons);
     buttons.iter().map(|b| {
         match &b.action_type() {
             VoiceflowButtonActionType::OpenUrl(url) => {
@@ -158,9 +159,9 @@ fn buttons_to_keyboard(buttons: &VoiceflowButtons) -> Vec<Vec<Value>>{
                 else{
                     url
                 };
-                json!({ "text": b.name(), "url": url })
+                json!({ "text": b.name(), "url": url, "callback_data": b.path() })
             },
-            VoiceflowButtonActionType::Path => json!({ "text": b.name(), "callback_data": b.name() }),
+            VoiceflowButtonActionType::Path => json!({ "text": b.name(), "callback_data": b.path() }),
         }
     }).map(|key| vec![key]).collect()
 }

@@ -1,14 +1,13 @@
 pub enum InteractionType{
     Text(String),
-    Button(String),
+    Button(String, String),
     Undefined(String)
 }
 impl InteractionType{
-    pub fn new(message: String, interaction_type: String) -> Self{
-        match interaction_type.as_str(){
-            "button" => InteractionType::Button(message),
-            "text" => InteractionType::Text(message),
-            _ => InteractionType::Undefined(message)
+        pub fn new(message: String, button_path: Option<String>) -> Self{
+        match button_path{
+            Some(path) => InteractionType::Button(message, path),
+            None => InteractionType::Text(message)
         }
     }
 }

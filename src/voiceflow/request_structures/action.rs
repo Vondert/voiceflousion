@@ -36,15 +36,13 @@ impl ActionBuilder {
                 "name": path
             }
         });
-        println!("{:?}", &json_value);
         self.payload = Some(Payload::Object(json_value));
         self
     }
-    pub fn path(mut self, button_name: String) -> Self{
+    pub fn path(mut self, text: String) -> Self{
         let json_value: Value = serde_json::json!({
-            "label": button_name,
+            "label": text,
         });
-        println!("{:?}", &json_value);
         self.payload = Some(Payload::Object(json_value));
         self
     }

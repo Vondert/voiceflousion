@@ -44,12 +44,12 @@ impl VoiceflowClient{
         return Ok(message?);
     }
 
-    pub async fn choose_button(&self, session: &VoiceflowSession, state: Option<State>, button_name: String, button_path: String) -> Result<VoiceflowMessage, VoiceflousionError> {
+    pub async fn choose_button(&self, session: &VoiceflowSession, state: Option<State>, text: String, button_path: String) -> Result<VoiceflowMessage, VoiceflousionError> {
         let action = if button_path.as_str().starts_with("path-"){
-            ActionBuilder::new(ActionType::Path(button_path)).path(button_name).build()
+            ActionBuilder::new(ActionType::Path(button_path)).path(text).build()
         }
         else{
-            ActionBuilder::new(ActionType::Intent).intent(button_name, button_path).build()
+            ActionBuilder::new(ActionType::Intent).intent(text, button_path).build()
         };
         let body = VoiceflowRequestBodyBuilder::new(action).session(Some(session)).state(state).build();
         let voiceflow_response = self.send_stream_request(body).await?;
@@ -59,7 +59,6 @@ impl VoiceflowClient{
     }
     async fn send_stream_request<'a>(&self, body: VoiceflowRequestBody<'a>) -> Result<VoiceflowResponse, VoiceflousionError>{
         let general_runtime_url = format!("{}/{}/{}/stream", VOICEFLOW_API_URL, &self.project_id, &self.version_id);
-        println!("{:?}", body.to_json());
         let response = self.client.post(general_runtime_url)
             .header(AUTHORIZATION, &self.voiceflow_api_key)
             .header(CONTENT_TYPE, "application/json")

@@ -1,5 +1,5 @@
 use std::fmt::Debug;
-use std::ops::Deref;
+use std::ops::{Deref, DerefMut};
 use crate::voiceflow::dialog_blocks::enums::VoiceflowButtonsOption;
 use crate::voiceflow::dialog_blocks::{VoiceflowButtons, VoiceflowCard, VoiceflowCarousel, VoiceflowImage, VoiceflowText};
 use crate::voiceflow::response_structures::{VoiceflowResponseBlock, VoiceflowResponseBlockType};
@@ -27,6 +27,11 @@ impl Deref for VoiceflowMessage{
 
     fn deref(&self) -> &Self::Target {
         &self.content
+    }
+}
+impl DerefMut for VoiceflowMessage{
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.content
     }
 }
 pub(super) struct VoiceflowMessageBuilder;

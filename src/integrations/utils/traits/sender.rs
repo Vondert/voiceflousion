@@ -9,7 +9,7 @@ use crate::voiceflow::dialog_blocks::{VoiceflowButtons, VoiceflowCard, Voiceflow
 pub trait Sender: Send + Sync{
     fn sender_http_client(&self) -> &SenderHttpClient;
     fn api_key(&self) -> &String;
-    async fn send_message(&self, chat_id: &String, message: VoiceflowMessage) -> Result<Vec<Response>, VoiceflousionError>{
+    async fn send_message(&self, chat_id: &String, message: &VoiceflowMessage) -> Result<Vec<Response>, VoiceflousionError>{
         let sender_http_client = self.sender_http_client();
         let api_key = self.api_key();
         let mut responses = Vec::with_capacity(message.len());
@@ -33,8 +33,10 @@ pub trait Sender: Send + Sync{
                     responses.push(result)
                 },
                 VoiceflowBlock::Carousel(carousel) => {
-                    let mut result = self.send_carousel(carousel, chat_id, sender_http_client, api_key).await?;
-                    responses.append(&mut result)
+                    if !carousel.is_empty(){
+                        let result = self.send_carousel(carousel, chat_id, sender_http_client, api_key).await?;
+                        responses.push(result)
+                    }
                 },
             }
         }
@@ -45,5 +47,5 @@ pub trait Sender: Send + Sync{
     async fn send_image(&self, image: &VoiceflowImage, chat_id: &String, sender_http_client: &SenderHttpClient, api_key: &String) -> Result<Response, VoiceflousionError>;
     async fn send_buttons(&self, buttons: &VoiceflowButtons, chat_id: &String, sender_http_client: &SenderHttpClient, api_key: &String) -> Result<Response, VoiceflousionError>;
     async fn send_card(&self, card: &VoiceflowCard, chat_id: &String, sender_http_client: &SenderHttpClient, api_key: &String) -> Result<Response, VoiceflousionError>;
-    async fn send_carousel(&self, carousel: &VoiceflowCarousel, chat_id: &String, sender_http_client: &SenderHttpClient, api_key: &String) -> Result<Vec<Response>, VoiceflousionError>;
+    async fn send_carousel(&self, carousel: &VoiceflowCarousel, chat_id: &String, sender_http_client: &SenderHttpClient, api_key: &String) -> Result<Response, VoiceflousionError>;
 }

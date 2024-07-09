@@ -32,7 +32,14 @@ async fn main() {
         Err(e) => println!("Task: Error {:?}", e),
     }
     // let now = Utc::now().timestamp();
-    // let update =  TelegramUpdate::new(bot_id.clone(), chat_id.clone(), now, InteractionType::new(String::from("dgfdgf"), Some(String::from("path-b627r3gsc"))));
+    // let update =  TelegramUpdate::new(bot_id.clone(), chat_id.clone(), now, InteractionType::new(String::from("buy"), None));
+    // let result = telegram_client.interact_with_client(update, None, None).await;
+    // match result {
+    //     Ok(message) => println!("Task: {:?}", message),
+    //     Err(e) => println!("Task: Error {:?}", e),
+    // }
+    // let now = Utc::now().timestamp();
+    // let update =  TelegramUpdate::new(bot_id.clone(), chat_id.clone(), now, InteractionType::new(String::from("fdgdfgdfg"), Some(String::from("fdgdfgdfg-aopiakpe"))));
     // let result = telegram_client.interact_with_client(update, None, None).await;
     // match result {
     //     Ok(message) => println!("Task: {:?}", message),

@@ -1,21 +1,19 @@
 use std::sync::Arc;
-use tokio::sync::{Mutex, RwLock};
+use tokio::sync::RwLock;
 use crate::integrations::utils::traits::{Session};
-use crate::voiceflow::VoiceflowSession;
+use crate::voiceflow::{VoiceflowSession};
 
 pub struct TelegramSession{
     chat_id: String,
     voiceflow_session: VoiceflowSession,
-    lock: Arc<Mutex<bool>>,
     status: Arc<RwLock<bool>>,
-    last_interaction: Arc<RwLock<Option<i64>>>
+    last_interaction: Arc<RwLock<Option<i64>>>,
 }
 impl TelegramSession{
     fn new (chat_id: String, voiceflow_session: VoiceflowSession, last_interaction: Option<i64>) -> Self{
         Self{
             chat_id,
             voiceflow_session,
-            lock: Arc::new(Mutex::new(true)),
             status: Arc::new(RwLock::new(true)),
             last_interaction: Arc::new(RwLock::new(last_interaction))
         }
@@ -29,10 +27,6 @@ impl Session for TelegramSession{
 
     fn get_chat_id(&self) -> &String {
         &self.chat_id
-    }
-
-    fn get_lock(&self) -> &Arc<Mutex<bool>> {
-        &self.lock
     }
 
     fn last_interaction(&self) -> &Arc<RwLock<Option<i64>>> {

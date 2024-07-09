@@ -1,11 +1,14 @@
 use std::ops::{Deref, DerefMut};
+use std::sync::Arc;
 use chrono::Utc;
-use tokio::sync::MutexGuard;
+use tokio::sync::{Mutex, MutexGuard, RwLock, RwLockReadGuard, RwLockWriteGuard};
 use crate::integrations::utils::traits::Session;
-use crate::voiceflow::VoiceflousionError;
+use crate::voiceflow::{VoiceflousionError, VoiceflowBlock, VoiceflowMessage};
 
 pub struct SessionWrapper<S: Session>{
-    session: S
+    session: S,
+    previous_message: Arc<RwLock<Option<VoiceflowBlock>>>,
+    lock: Arc<Mutex<bool>>,
 }
 
 impl<S: Session> Deref for SessionWrapper<S> {
@@ -25,11 +28,24 @@ impl<S: Session> DerefMut for SessionWrapper<S>{
 impl<S: Session> SessionWrapper<S>{
     pub fn new(session: S) -> Self{
         Self{
-            session
+            session,
+            previous_message: Arc::new(RwLock::new(None)),
+            lock: Arc::new(Mutex::new(true)),
         }
     }
+
+    pub async fn previous_message(&self) -> RwLockWriteGuard<'_, Option<VoiceflowBlock>> {
+        let binding = &self.previous_message;
+        let message = binding.write().await;
+        message
+    }
+    pub async fn set_previous_message(&self, mut message: VoiceflowMessage) -> (){
+        let binding = &self.previous_message;
+        let mut previous = binding.write().await;
+        *previous = message.pop();
+    }
     pub fn try_lock_sync(&self) -> Result<MutexGuard<'_, bool>, VoiceflousionError>{
-        let binding = self.get_lock();
+        let binding = &self.lock;
         binding.try_lock().map_err(|_| VoiceflousionError::SessionLockError)
     }
     pub async fn get_last_interaction(&self) -> Option<i64> {

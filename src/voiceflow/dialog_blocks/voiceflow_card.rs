@@ -4,13 +4,13 @@ use crate::voiceflow::dialog_blocks::VoiceflowButtons;
 use crate::voiceflow::VoiceflousionError;
 #[derive(Debug)]
 pub struct VoiceflowCard{
-    image_url: String,
+    image_url: Option<String>,
     title: String,
     description: String,
     buttons: VoiceflowButtons
 }
 impl VoiceflowCard{
-    pub fn new(image_url: String, title: String, description: String, buttons: VoiceflowButtons) -> Self{
+    pub fn new(image_url: Option<String>, title: String, description: String, buttons: VoiceflowButtons) -> Self{
         Self{
             image_url,
             title,
@@ -18,7 +18,7 @@ impl VoiceflowCard{
             buttons
         }
     }
-    pub fn image_url(&self) -> &String{
+    pub fn image_url(&self) -> &Option<String>{
         &self.image_url
     }
     pub fn title(&self) -> &String{
@@ -44,10 +44,17 @@ impl FromValue for VoiceflowCard{
             .and_then(|text| text.as_str())
             .ok_or_else(|| VoiceflousionError::BlockConvertationError(("Card description".to_string(), value.clone())))?
             .to_string();
-        let image_url = payload.get("imageUrl")
+
+        let image_url_string = payload.get("imageUrl")
             .and_then(|url| url.as_str())
             .ok_or_else(|| VoiceflousionError::BlockConvertationError(("Card image url".to_string(), value.clone())))?
             .to_string();
+        let image_url = if image_url_string.is_empty(){
+            None
+        }
+        else{
+            Some(image_url_string)
+        };
         let title = payload.get("title")
             .and_then(|title| title.as_str())
             .ok_or_else(|| VoiceflousionError::BlockConvertationError(("Card title".to_string(), value.clone())))?

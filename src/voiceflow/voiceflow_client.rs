@@ -45,12 +45,7 @@ impl VoiceflowClient{
     }
 
     pub async fn choose_button(&self, session: &VoiceflowSession, state: Option<State>, text: String, button_path: String) -> Result<VoiceflowMessage, VoiceflousionError> {
-        let action = if button_path.as_str().starts_with("path-"){
-            ActionBuilder::new(ActionType::Path(button_path)).path(text).build()
-        }
-        else{
-            ActionBuilder::new(ActionType::Intent).intent(text, button_path).build()
-        };
+        let action = ActionBuilder::new(ActionType::Path(button_path)).path(text).build();
         let body = VoiceflowRequestBodyBuilder::new(action).session(Some(session)).state(state).build();
         let voiceflow_response = self.send_stream_request(body).await?;
         let blocks = voiceflow_response.to_blocks().await?;

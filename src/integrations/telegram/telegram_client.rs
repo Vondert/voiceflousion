@@ -1,9 +1,12 @@
+use std::ops::Deref;
 use std::sync::Arc;
 use async_trait::async_trait;
-use crate::integrations::utils::traits::{ClientBase, Client};
+use reqwest::Response;
+use crate::integrations::utils::traits::{ClientBase, Client, Update, Session};
 use crate::integrations::telegram::{TelegramSender, TelegramSession, TelegramUpdate};
-use crate::integrations::utils::SessionMap;
-use crate::voiceflow::VoiceflowClient;
+use crate::integrations::utils::{InteractionType, LockedSession, SessionMap};
+use crate::voiceflow::{State, VoiceflousionError, VoiceflowBlock, VoiceflowClient};
+use crate::voiceflow::dialog_blocks::VoiceflowCarousel;
 
 pub struct TelegramClient{
     bot_id: String,
@@ -22,6 +25,10 @@ impl TelegramClient{
             session_duration,
             sender: TelegramSender::new(max_sessions_per_moment, bot_token)
         }
+    }
+    pub async fn switch_carousel_card(&self, locked_session: &LockedSession<'_, TelegramSession>,  carousel: &VoiceflowCarousel,  message_id: &String, index: usize, interaction_time: i64) -> Result<Response, VoiceflousionError> {
+        locked_session.set_last_interaction(interaction_time).await;
+        self.sender.update_carousel(carousel, index, locked_session.get_chat_id(), message_id).await
     }
 }
 impl ClientBase for TelegramClient {
@@ -44,4 +51,33 @@ impl ClientBase for TelegramClient {
     }
 }
 #[async_trait]
-impl Client for TelegramClient{}
+impl Client for TelegramClient{
+    async fn interact_with_client(&self, update: Self::ClientUpdate, launch_state: Option<State>, update_state: Option<State>) -> Result<Vec<Response>, VoiceflousionError>{
+        let interaction_time =  update.interaction_time();
+        if let Some(telegram_session) = self.sessions().get_session(update.chat_id_cloned()).await {
+            let locked_session = LockedSession::try_from_session(&telegram_session)?;
+            let is_valid = locked_session.is_valid(&self.session_duration()).await;
+            if !is_valid {
+                return self.launch_voiceflow_dialog(&locked_session, interaction_time, launch_state).await;
+            }
+            match update.interaction_type(){
+                InteractionType::Button(message, button_path) => {
+                    if let Some(block) = locked_session.previous_message().await.deref(){
+                        if let VoiceflowBlock::Carousel(carousel) = block{
+
+                        }
+                    }
+                    self.choose_button_in_voiceflow_dialog(&locked_session, interaction_time, message, button_path, update_state).await
+                },
+                InteractionType::Text(message) | InteractionType::Undefined(message) => {
+                    self.send_message_to_voiceflow_dialog(&locked_session, interaction_time, message, update_state).await
+                }
+            }
+        }
+        else{
+            let telegram_session = self.sessions().add_session(update.chat_id_cloned()).await;
+            let locked_session = LockedSession::try_from_session(&telegram_session)?;
+            self.launch_voiceflow_dialog(&locked_session, interaction_time, launch_state).await
+        }
+    }
+}

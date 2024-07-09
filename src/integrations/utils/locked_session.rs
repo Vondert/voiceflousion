@@ -1,4 +1,4 @@
-use std::ops::Deref;
+use std::ops::{Deref, DerefMut};
 use std::sync::Arc;
 use tokio::sync::MutexGuard;
 use crate::integrations::utils::SessionWrapper;

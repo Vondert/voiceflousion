@@ -32,14 +32,13 @@ impl VoiceflowResponse{
                     | VoiceflowResponseBlockType::Visual
                     | VoiceflowResponseBlockType::Carousel => {
                         let block = VoiceflowResponseBlock::new(response_type, json);
-                        //println!("\n Block: {:?}", &block);
+                        println!("\n Block: {:?}", &block);
                         blocks.push(block);
                     },
                     _ => {}
                 }
             }
         }
-
         Ok(blocks)
     }
 }

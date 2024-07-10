@@ -33,7 +33,7 @@ impl Deref for VoiceflowButtons{
 
 impl FromValue for VoiceflowButtons{
     type Error = VoiceflousionError;
-    fn from_value(value: &Value) -> Result<Self, Self::Error> {
+    fn from_value(value: &Value) -> Result<Option<Self>, Self::Error> {
 
         let buttons_value = match value.get("trace").and_then(|trace| trace.get("payload"))
             .and_then(|payload| payload.get("buttons")){
@@ -42,11 +42,13 @@ impl FromValue for VoiceflowButtons{
         }.ok_or_else(|| VoiceflousionError::BlockConvertationError(("Buttons".to_string(), value.clone())))?;
 
 
-        let buttons: Result<Vec<VoiceflowButton>, Self::Error> = buttons_value.into_iter()
+        let buttons_option: Result<Vec<Option<VoiceflowButton>>, Self::Error> = buttons_value.into_iter()
             .map(|button| VoiceflowButton::from_value(button))
             .collect();
-        let buttons = buttons?;
-
-       Ok(Self::new(buttons))
+        let buttons: Vec<VoiceflowButton> = buttons_option?.into_iter().filter_map(|button| button).collect();
+        if buttons.is_empty(){
+            return Ok(None)
+        }
+       Ok(Some(Self::new(buttons)))
     }
 }

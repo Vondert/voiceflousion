@@ -49,34 +49,40 @@ impl VoiceflowMessageBuilder {
             if let VoiceflowButtonsOption::Empty = buttons_options {
                 match block.block_type() {
                     VoiceflowResponseBlockType::Text => {
-                        let text = VoiceflowText::from_value(block.json())?;
-                        buttons_options = VoiceflowButtonsOption::Text(text);
+                        if let Some(text) = VoiceflowText::from_value(block.json())?{
+                            buttons_options = VoiceflowButtonsOption::Text(text);
+                        }
                     },
                     VoiceflowResponseBlockType::Choice => {
-                        let buttons = VoiceflowBlock::Buttons(VoiceflowButtons::from_value(block.json())?);
-                        message.content.push(buttons);
+                        if let Some(buttons) = VoiceflowButtons::from_value(block.json())?{
+                            message.content.push(VoiceflowBlock::Buttons(buttons));
+                        }
                     },
                     VoiceflowResponseBlockType::CardV2 => {
-                        let card = VoiceflowBlock::Card(VoiceflowCard::from_value(block.json())?);
-                        message.content.push(card);
+                        if let Some(card) = VoiceflowCard::from_value(block.json())?{
+                            message.content.push(VoiceflowBlock::Card(card));
+                        }
                     },
                     VoiceflowResponseBlockType::Visual => {
-                        let image = VoiceflowImage::from_value(block.json())?;
-                        buttons_options = VoiceflowButtonsOption::Image(image);
+                        if let Some(image) = VoiceflowImage::from_value(block.json())?{
+                            buttons_options = VoiceflowButtonsOption::Image(image);
+                        }
                     },
                     VoiceflowResponseBlockType::Carousel => {
-                        let carousel = VoiceflowBlock::Carousel(VoiceflowCarousel::from_value(block.json())?);
-                        message.content.push(carousel);
+                        if let Some(carousel) = VoiceflowCarousel::from_value(block.json())?{
+                            message.content.push(VoiceflowBlock::Carousel(carousel));
+                        }
                     },
                     _ => {},
                 }
             } else {
                 match block.block_type() {
                     VoiceflowResponseBlockType::Choice => {
-                        let mut buttons = VoiceflowButtons::from_value(block.json())?;
-                        buttons.set_option(buttons_options);
-                        message.content.push(VoiceflowBlock::Buttons(buttons));
-                        buttons_options = VoiceflowButtonsOption::Empty;
+                        if let Some(mut buttons) = VoiceflowButtons::from_value(block.json())?{
+                            buttons.set_option(buttons_options);
+                            message.content.push(VoiceflowBlock::Buttons(buttons));
+                            buttons_options = VoiceflowButtonsOption::Empty;
+                        }
                     },
                     _ => {
                         match buttons_options {
@@ -88,20 +94,24 @@ impl VoiceflowMessageBuilder {
 
                         match block.block_type() {
                             VoiceflowResponseBlockType::Text => {
-                                let text = VoiceflowText::from_value(block.json())?;
-                                buttons_options = VoiceflowButtonsOption::Text(text);
-                            },
-                            VoiceflowResponseBlockType::Visual => {
-                                let image = VoiceflowImage::from_value(block.json())?;
-                                buttons_options = VoiceflowButtonsOption::Image(image);
+                                if let Some(text) = VoiceflowText::from_value(block.json())?{
+                                    buttons_options = VoiceflowButtonsOption::Text(text);
+                                }
                             },
                             VoiceflowResponseBlockType::CardV2 => {
-                                let card = VoiceflowBlock::Card(VoiceflowCard::from_value(block.json())?);
-                                message.content.push(card);
+                                if let Some(card) = VoiceflowCard::from_value(block.json())?{
+                                    message.content.push(VoiceflowBlock::Card(card));
+                                }
+                            },
+                            VoiceflowResponseBlockType::Visual => {
+                                if let Some(image) = VoiceflowImage::from_value(block.json())?{
+                                    buttons_options = VoiceflowButtonsOption::Image(image);
+                                }
                             },
                             VoiceflowResponseBlockType::Carousel => {
-                                let carousel = VoiceflowBlock::Carousel(VoiceflowCarousel::from_value(block.json())?);
-                                message.content.push(carousel);
+                                if let Some(carousel) = VoiceflowCarousel::from_value(block.json())?{
+                                    message.content.push(VoiceflowBlock::Carousel(carousel));
+                                }
                             },
                             _ => {},
                         }

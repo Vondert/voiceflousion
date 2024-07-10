@@ -18,7 +18,7 @@ impl VoiceflowText{
 
 impl FromValue for VoiceflowText{
     type Error = VoiceflousionError;
-    fn from_value(value: &Value) -> Result<Self, Self::Error> {
+    fn from_value(value: &Value) -> Result<Option<Self>, Self::Error> {
         let message = value.get("trace")
             .and_then(|trace| trace.get("payload"))
             .and_then(|payload| payload.get("message"))
@@ -27,6 +27,9 @@ impl FromValue for VoiceflowText{
             .map(|s| s.trim_matches('"').to_string())
             .ok_or_else(|| VoiceflousionError::BlockConvertationError(("Text".to_string(), value.clone())))?;
 
-        Ok(Self::new(message))
+        if message.is_empty(){
+            return Ok(None)
+        }
+        Ok(Some(Self::new(message)))
     }
 }

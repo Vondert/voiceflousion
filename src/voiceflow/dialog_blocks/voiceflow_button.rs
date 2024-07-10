@@ -30,7 +30,7 @@ impl VoiceflowButton{
 impl FromValue for VoiceflowButton{
     type Error = VoiceflousionError;
 
-    fn from_value(value: &Value) -> Result<Self, Self::Error> {
+    fn from_value(value: &Value) -> Result<Option<Self>, Self::Error> {
         let name = value.get("name")
             .and_then(|name| name.as_str())
             .ok_or_else(|| VoiceflousionError::BlockConvertationError(("Button".to_string(), value.clone())))?
@@ -66,6 +66,6 @@ impl FromValue for VoiceflowButton{
             } else {
                 VoiceflowButtonActionType::Path
             };
-        Ok(Self::new(name, path, action_type))
+        Ok(Some(Self::new(name, path, action_type)))
     }
 }

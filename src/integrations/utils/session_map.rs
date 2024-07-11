@@ -59,8 +59,9 @@ impl<T: Session> SessionMap<T>{
     }
     pub async fn add_session(&self, chat_id: String) -> Arc<SessionWrapper<T>> {
         let mut write_lock = self.sessions.write().await;
-        let session = Arc::new(SessionWrapper::new(T::from_chat_id(chat_id.clone(), None)));
-        write_lock.insert(chat_id.clone(), session.clone());
+        let session = write_lock.entry(chat_id.clone())
+            .or_insert_with(|| Arc::new(SessionWrapper::new(T::from_chat_id(chat_id.clone(), None))))
+            .clone();
         session
     }
     async fn is_valid_session(&self, session: &Arc<SessionWrapper<T>>) -> bool{

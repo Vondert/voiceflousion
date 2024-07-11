@@ -25,7 +25,7 @@ async fn main() {
     let telegram_client = Arc::new(TelegramClient::new(telegram_bot_token, voiceflow_client.clone(), None, None, 10));
 
     let now = Utc::now().timestamp();
-    let update =  TelegramUpdate::new(bot_id.clone(), chat_id.clone(), now, InteractionType::new(String::new(), None));
+    let update =  TelegramUpdate::new(bot_id.clone(), chat_id.clone(), now, InteractionType::new(String::new(), None), None);
     let result = telegram_client.interact_with_client(update, None, None).await;
     match result {
         Ok(message) => println!("Task: {:?}", message),

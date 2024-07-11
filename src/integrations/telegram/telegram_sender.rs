@@ -204,7 +204,7 @@ impl Sender for TelegramSender{
     }
 }
 fn buttons_to_keyboard(buttons: &VoiceflowButtons) -> Vec<Vec<Value>>{
-    println!("{:?}", buttons);
+    //println!("{:?}", buttons);
     buttons.iter().map(|b| {
         match &b.action_type() {
             VoiceflowButtonActionType::OpenUrl(url) => {

@@ -14,7 +14,7 @@ pub trait Client: ClientBase {
         locked_session.set_previous_message(voiceflow_message).await;
         Ok(response)
     }
-    async fn send_message_to_voiceflow_dialog(&self, locked_session: &LockedSession<Self::ClientSession>, interaction_time: i64, message: String, state: Option<State>) -> Result<Vec<Response>, VoiceflousionError> {
+    async fn send_message_to_voiceflow_dialog(&self, locked_session: &LockedSession<Self::ClientSession>, interaction_time: i64, message: &String, state: Option<State>) -> Result<Vec<Response>, VoiceflousionError> {
         locked_session.set_last_interaction(interaction_time).await;
         let voiceflow_session = locked_session.voiceflow_session();
         let voiceflow_message = self.voiceflow_client().send_message(voiceflow_session, state, message).await?;
@@ -22,7 +22,7 @@ pub trait Client: ClientBase {
         locked_session.set_previous_message(voiceflow_message).await;
         Ok(response)
     }
-    async fn choose_button_in_voiceflow_dialog(&self, locked_session: &LockedSession<Self::ClientSession>,  interaction_time: i64, message: String, button_data: String, state: Option<State>) -> Result<Vec<Response>, VoiceflousionError> {
+    async fn choose_button_in_voiceflow_dialog(&self, locked_session: &LockedSession<Self::ClientSession>,  interaction_time: i64, message: &String, button_data: &String, state: Option<State>) -> Result<Vec<Response>, VoiceflousionError> {
         locked_session.set_last_interaction(interaction_time).await;
         let voiceflow_session = locked_session.voiceflow_session();
         let voiceflow_message = self.voiceflow_client().choose_button(voiceflow_session, state, message, button_data).await?;

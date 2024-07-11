@@ -3,7 +3,7 @@ use std::sync::Arc;
 use tokio::sync::MutexGuard;
 use crate::integrations::utils::SessionWrapper;
 use crate::integrations::utils::traits::Session;
-use crate::voiceflow::VoiceflousionError;
+use crate::voiceflow::{VoiceflousionError, VoiceflowBlock, VoiceflowMessage};
 
 pub struct LockedSession<'g, S: Session>{
     session: &'g Arc<SessionWrapper<S>>,
@@ -23,6 +23,14 @@ impl<'g, S: Session> LockedSession<'g, S>{
             session,
             _guard: guard
         })
+    }
+    pub async fn set_previous_message(&self, mut message: VoiceflowMessage) -> () {
+        let mut write = self.session.write_previous_message().await;
+        *write = message.pop();
+    }
+    pub async fn set_last_interaction(&self, interaction: i64) -> (){
+        let mut write = self.write_last_interaction().await;
+        *write = Some(interaction);
     }
     pub fn session(&self) -> Arc<SessionWrapper<S>>{
         self.session.clone()

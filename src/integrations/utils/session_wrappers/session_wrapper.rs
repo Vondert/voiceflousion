@@ -1,9 +1,10 @@
+use std::cell::{Ref, RefCell, RefMut};
 use std::ops::{Deref, DerefMut};
 use std::sync::Arc;
 use chrono::Utc;
 use tokio::sync::{Mutex, MutexGuard, RwLock, RwLockReadGuard, RwLockWriteGuard};
 use crate::integrations::utils::traits::Session;
-use crate::voiceflow::{VoiceflousionError, VoiceflowBlock, VoiceflowMessage};
+use crate::voiceflow::{VoiceflousionError, VoiceflowBlock};
 
 pub struct SessionWrapper<S: Session>{
     session: S,
@@ -33,30 +34,29 @@ impl<S: Session> SessionWrapper<S>{
             lock: Arc::new(Mutex::new(true)),
         }
     }
-
-    pub async fn previous_message(&self) -> RwLockWriteGuard<'_, Option<VoiceflowBlock>> {
-        let binding = &self.previous_message;
-        let message = binding.write().await;
-        message
-    }
-    pub async fn set_previous_message(&self, mut message: VoiceflowMessage) -> (){
-        let binding = &self.previous_message;
-        let mut previous = binding.write().await;
-        *previous = message.pop();
-    }
     pub fn try_lock_sync(&self) -> Result<MutexGuard<'_, bool>, VoiceflousionError>{
         let binding = &self.lock;
         binding.try_lock().map_err(|_| VoiceflousionError::SessionLockError)
+    }
+    pub async fn previous_message(&self) -> RwLockReadGuard<'_, Option<VoiceflowBlock>> {
+        let binding = &self.previous_message;
+        let message = binding.read().await;
+        message
     }
     pub async fn get_last_interaction(&self) -> Option<i64> {
         let binding = self.last_interaction();
         let last_interaction = binding.read().await;
         *last_interaction
     }
-    pub async fn set_last_interaction(&self, interaction: i64) -> (){
+    pub(super) async fn write_previous_message(&self) -> RwLockWriteGuard<'_, Option<VoiceflowBlock>>{
+        let binding = &self.previous_message;
+        let mut previous = binding.write().await;
+        previous
+    }
+    pub(super) async fn write_last_interaction(&self) ->  RwLockWriteGuard<'_, Option<i64>>{
         let binding = self.last_interaction();
         let mut last_interaction = binding.write().await;
-        *last_interaction = Some(interaction);
+        last_interaction
     }
     pub async fn is_valid(&self, valid_duration: &Option<i64>) -> bool{
         if let Some(duration) = valid_duration{

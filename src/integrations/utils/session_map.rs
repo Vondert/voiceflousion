@@ -33,17 +33,17 @@ impl<T: Session> SessionMap<T>{
             None => Self::new()
         }
     }
-    pub async fn get_or_add_session(&self, chat_id: String) ->  Arc<SessionWrapper<T>> {
-        if let Some(session) = self.get_session(chat_id.clone()).await{
+    pub async fn get_or_add_session(&self, chat_id: &String) ->  Arc<SessionWrapper<T>> {
+        if let Some(session) = self.get_session(chat_id).await{
             session
         }
         else{
-           self.add_session(chat_id).await
+           self.add_session(chat_id.clone()).await
         }
     }
-    pub async fn get_session(&self, chat_id: String) -> Option<Arc<SessionWrapper<T>>> {
+    pub async fn get_session(&self, chat_id: &String) -> Option<Arc<SessionWrapper<T>>> {
         let read_lock = self.sessions.read().await;
-        let session = if let Some(session) = read_lock.get(&chat_id) {
+        let session = if let Some(session) = read_lock.get(chat_id) {
             Some(session.clone())
         }
         else{

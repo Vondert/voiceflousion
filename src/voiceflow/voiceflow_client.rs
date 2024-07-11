@@ -35,8 +35,8 @@ impl VoiceflowClient{
         return Ok(message?);
     }
 
-    pub async fn send_message(&self, session: &VoiceflowSession, state: Option<State>, text: String) -> Result<VoiceflowMessage, VoiceflousionError> {
-        let action = ActionBuilder::new(ActionType::Text).text(text).build();
+    pub async fn send_message(&self, session: &VoiceflowSession, state: Option<State>, text: &String) -> Result<VoiceflowMessage, VoiceflousionError> {
+        let action = ActionBuilder::new(ActionType::Text).text(text.clone()).build();
         let body = VoiceflowRequestBodyBuilder::new(action).session(Some(session)).state(state).build();
         let voiceflow_response = self.send_stream_request(body).await?;
         let blocks = voiceflow_response.to_blocks().await?;
@@ -44,8 +44,8 @@ impl VoiceflowClient{
         return Ok(message?);
     }
 
-    pub async fn choose_button(&self, session: &VoiceflowSession, state: Option<State>, text: String, button_path: String) -> Result<VoiceflowMessage, VoiceflousionError> {
-        let action = ActionBuilder::new(ActionType::Path(button_path)).path(text).build();
+    pub async fn choose_button(&self, session: &VoiceflowSession, state: Option<State>, text: &String, button_path: &String) -> Result<VoiceflowMessage, VoiceflousionError> {
+        let action = ActionBuilder::new(ActionType::Path(button_path.clone())).path(text.clone()).build();
         let body = VoiceflowRequestBodyBuilder::new(action).session(Some(session)).state(state).build();
         let voiceflow_response = self.send_stream_request(body).await?;
         let blocks = voiceflow_response.to_blocks().await?;

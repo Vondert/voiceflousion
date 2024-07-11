@@ -54,7 +54,7 @@ impl ClientBase for TelegramClient {
 impl Client for TelegramClient{
     async fn interact_with_client(&self, update: Self::ClientUpdate, launch_state: Option<State>, update_state: Option<State>) -> Result<Vec<Response>, VoiceflousionError>{
         let interaction_time =  update.interaction_time();
-        if let Some(telegram_session) = self.sessions().get_session(update.chat_id_cloned()).await {
+        if let Some(telegram_session) = self.sessions().get_session(update.chat_id()).await {
             let locked_session = LockedSession::try_from_session(&telegram_session)?;
             let is_valid = locked_session.is_valid(&self.session_duration()).await;
             if !is_valid {
@@ -62,9 +62,11 @@ impl Client for TelegramClient{
             }
             match update.interaction_type(){
                 InteractionType::Button(message, button_path) => {
-                    if let Some(block) = locked_session.previous_message().await.deref(){
-                        if let VoiceflowBlock::Carousel(carousel) = block{
-
+                    if let Some(block) = locked_session.previous_message().await.deref() {
+                        if let VoiceflowBlock::Carousel(carousel) = block {
+                            if let Some(index) = update.carousel_card_index() {
+                                return Ok(vec![self.switch_carousel_card(&locked_session, carousel, &"".to_string(), index, interaction_time).await?])
+                            }
                         }
                     }
                     self.choose_button_in_voiceflow_dialog(&locked_session, interaction_time, message, button_path, update_state).await
@@ -75,7 +77,7 @@ impl Client for TelegramClient{
             }
         }
         else{
-            let telegram_session = self.sessions().add_session(update.chat_id_cloned()).await;
+            let telegram_session = self.sessions().add_session(update.chat_id().clone()).await;
             let locked_session = LockedSession::try_from_session(&telegram_session)?;
             self.launch_voiceflow_dialog(&locked_session, interaction_time, launch_state).await
         }

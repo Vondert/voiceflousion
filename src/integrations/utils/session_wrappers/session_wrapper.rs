@@ -1,7 +1,5 @@
-use std::cell::{Ref, RefCell, RefMut};
-use std::ops::{Deref, DerefMut};
+use std::ops::Deref;
 use std::sync::Arc;
-use chrono::Utc;
 use tokio::sync::{Mutex, MutexGuard, RwLock, RwLockReadGuard, RwLockWriteGuard};
 use crate::integrations::utils::traits::Session;
 use crate::voiceflow::{VoiceflousionError, VoiceflowBlock};
@@ -17,12 +15,6 @@ impl<S: Session> Deref for SessionWrapper<S> {
 
     fn deref(&self) -> &Self::Target {
         &self.session
-    }
-}
-
-impl<S: Session> DerefMut for SessionWrapper<S>{
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.session
     }
 }
 
@@ -50,27 +42,13 @@ impl<S: Session> SessionWrapper<S>{
     }
     pub(super) async fn write_previous_message(&self) -> RwLockWriteGuard<'_, Option<VoiceflowBlock>>{
         let binding = &self.previous_message;
-        let mut previous = binding.write().await;
+        let previous = binding.write().await;
         previous
     }
     pub(super) async fn write_last_interaction(&self) ->  RwLockWriteGuard<'_, Option<i64>>{
         let binding = self.last_interaction();
-        let mut last_interaction = binding.write().await;
+        let last_interaction = binding.write().await;
         last_interaction
-    }
-    pub async fn is_valid(&self, valid_duration: &Option<i64>) -> bool{
-        if let Some(duration) = valid_duration{
-            let now = Utc::now().timestamp();
-            if let Some(last_interaction) = self.get_last_interaction().await{
-                !(now - last_interaction > *duration)
-            }
-            else{
-                false
-            }
-        }
-        else{
-            true
-        }
     }
     pub async fn activate(&self) ->  (){
         let binding = self.status();

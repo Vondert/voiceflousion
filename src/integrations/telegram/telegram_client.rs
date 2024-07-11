@@ -12,7 +12,6 @@ pub struct TelegramClient{
     bot_id: String,
     voiceflow_client: Arc<VoiceflowClient>,
     sessions: SessionMap<TelegramSession>,
-    session_duration: Option<i64>,
     sender: TelegramSender
 }
 impl TelegramClient{
@@ -21,8 +20,7 @@ impl TelegramClient{
         Self{
             bot_id,
             voiceflow_client,
-            sessions: SessionMap::from(telegram_session),
-            session_duration,
+            sessions: SessionMap::from(telegram_session, session_duration),
             sender: TelegramSender::new(max_sessions_per_moment, bot_token)
         }
     }
@@ -39,9 +37,6 @@ impl ClientBase for TelegramClient {
     fn sessions(&self) -> &SessionMap<Self::ClientSession> {
         &self.sessions
     }
-    fn session_duration(&self) -> &Option<i64> {
-        &self.session_duration
-    }
     fn voiceflow_client(&self) -> &Arc<VoiceflowClient> {
         &self.voiceflow_client
     }
@@ -56,10 +51,6 @@ impl Client for TelegramClient{
         let interaction_time =  update.interaction_time();
         if let Some(telegram_session) = self.sessions().get_session(update.chat_id()).await {
             let locked_session = LockedSession::try_from_session(&telegram_session)?;
-            let is_valid = locked_session.is_valid(&self.session_duration()).await;
-            if !is_valid {
-                return self.launch_voiceflow_dialog(&locked_session, interaction_time, launch_state).await;
-            }
             match update.interaction_type(){
                 InteractionType::Button(message, button_path) => {
                     if let Some(block) = locked_session.previous_message().await.deref() {

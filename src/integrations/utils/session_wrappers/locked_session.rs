@@ -1,9 +1,9 @@
-use std::ops::{Deref, DerefMut};
+use std::ops::Deref;
 use std::sync::Arc;
 use tokio::sync::MutexGuard;
 use crate::integrations::utils::SessionWrapper;
 use crate::integrations::utils::traits::Session;
-use crate::voiceflow::{VoiceflousionError, VoiceflowBlock, VoiceflowMessage};
+use crate::voiceflow::{VoiceflousionError, VoiceflowMessage};
 
 pub struct LockedSession<'g, S: Session>{
     session: &'g Arc<SessionWrapper<S>>,

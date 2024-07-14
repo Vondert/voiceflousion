@@ -1,16 +1,17 @@
 use std::ops::Deref;
 use std::sync::Arc;
 use tokio::sync::{Mutex, MutexGuard, RwLock, RwLockReadGuard, RwLockWriteGuard};
-use crate::integrations::utils::traits::Session;
-use crate::voiceflow::{VoiceflousionError, VoiceflowBlock};
+use crate::integrations::utils::bot_last_message::BotLastMessage;
+use crate::integrations::utils::traits::{Responder, Session};
+use crate::voiceflow::VoiceflousionError;
 
-pub struct SessionWrapper<S: Session>{
+pub struct SessionWrapper<S: Session, R: Responder>{
     session: S,
-    previous_message: Arc<RwLock<Option<VoiceflowBlock>>>,
+    previous_message: Arc<RwLock<Option<BotLastMessage<R>>>>,
     lock: Arc<Mutex<bool>>,
 }
 
-impl<S: Session> Deref for SessionWrapper<S> {
+impl<S: Session, R: Responder> Deref for SessionWrapper<S, R> {
     type Target = S;
 
     fn deref(&self) -> &Self::Target {
@@ -18,7 +19,7 @@ impl<S: Session> Deref for SessionWrapper<S> {
     }
 }
 
-impl<S: Session> SessionWrapper<S>{
+impl<S: Session, R: Responder> SessionWrapper<S, R>{
     pub fn new(session: S) -> Self{
         Self{
             session,
@@ -30,7 +31,7 @@ impl<S: Session> SessionWrapper<S>{
         let binding = &self.lock;
         binding.try_lock().map_err(|_| VoiceflousionError::SessionLockError)
     }
-    pub async fn previous_message(&self) -> RwLockReadGuard<'_, Option<VoiceflowBlock>> {
+    pub async fn previous_message(&self) -> RwLockReadGuard<'_, Option<BotLastMessage<R>>> {
         let binding = &self.previous_message;
         let message = binding.read().await;
         message
@@ -40,7 +41,7 @@ impl<S: Session> SessionWrapper<S>{
         let last_interaction = binding.read().await;
         *last_interaction
     }
-    pub(super) async fn write_previous_message(&self) -> RwLockWriteGuard<'_, Option<VoiceflowBlock>>{
+    pub(super) async fn write_previous_message(&self) -> RwLockWriteGuard<'_, Option<BotLastMessage<R>>>{
         let binding = &self.previous_message;
         let previous = binding.write().await;
         previous

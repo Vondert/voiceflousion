@@ -1,7 +1,7 @@
 use serde_json::Value;
 use crate::voiceflow::dialog_blocks::traits::FromValue;
 use crate::voiceflow::VoiceflousionError;
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct VoiceflowImage{
     url: String,
     height: Option<u64>,

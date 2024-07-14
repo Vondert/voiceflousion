@@ -2,8 +2,8 @@ use std::ops::Deref;
 use std::sync::Arc;
 use async_trait::async_trait;
 use reqwest::Response;
-use crate::integrations::utils::traits::{ClientBase, Client, Update, Session};
-use crate::integrations::telegram::{TelegramSender, TelegramSession, TelegramUpdate};
+use crate::integrations::utils::traits::{ClientBase, Client, Update, Session, Sender};
+use crate::integrations::telegram::{TelegramResponder, TelegramSender, TelegramSession, TelegramUpdate};
 use crate::integrations::utils::{InteractionType, LockedSession, SessionMap};
 use crate::voiceflow::{State, VoiceflousionError, VoiceflowBlock, VoiceflowClient};
 use crate::voiceflow::dialog_blocks::VoiceflowCarousel;
@@ -11,7 +11,7 @@ use crate::voiceflow::dialog_blocks::VoiceflowCarousel;
 pub struct TelegramClient{
     bot_id: String,
     voiceflow_client: Arc<VoiceflowClient>,
-    sessions: SessionMap<TelegramSession>,
+    sessions: SessionMap<TelegramSession, TelegramResponder>,
     sender: TelegramSender
 }
 impl TelegramClient{
@@ -24,7 +24,7 @@ impl TelegramClient{
             sender: TelegramSender::new(max_sessions_per_moment, bot_token)
         }
     }
-    pub async fn switch_carousel_card(&self, locked_session: &LockedSession<'_, TelegramSession>,  carousel: &VoiceflowCarousel,  message_id: &String, index: usize, interaction_time: i64) -> Result<Response, VoiceflousionError> {
+    pub async fn switch_carousel_card(&self, locked_session: &LockedSession<'_, TelegramSession, TelegramResponder>,  carousel: &VoiceflowCarousel,  message_id: &String, index: usize, interaction_time: i64) -> Result<TelegramResponder, VoiceflousionError> {
         locked_session.set_last_interaction(interaction_time).await;
         self.sender.update_carousel(carousel, index, locked_session.get_chat_id(), message_id).await
     }
@@ -32,9 +32,8 @@ impl TelegramClient{
 impl ClientBase for TelegramClient {
     type ClientSession = TelegramSession;
     type ClientUpdate = TelegramUpdate;
-    //type ClientMessage = TelegramMessage;
     type ClientSender = TelegramSender;
-    fn sessions(&self) -> &SessionMap<Self::ClientSession> {
+    fn sessions(&self) -> &SessionMap<Self::ClientSession, <Self::ClientSender as Sender>::SenderResponder> {
         &self.sessions
     }
     fn voiceflow_client(&self) -> &Arc<VoiceflowClient> {
@@ -47,16 +46,16 @@ impl ClientBase for TelegramClient {
 }
 #[async_trait]
 impl Client for TelegramClient{
-    async fn interact_with_client(&self, update: Self::ClientUpdate, launch_state: Option<State>, update_state: Option<State>) -> Result<Vec<Response>, VoiceflousionError>{
+    async fn interact_with_client(&self, update: Self::ClientUpdate, launch_state: Option<State>, update_state: Option<State>) -> Result<Vec<<Self::ClientSender as Sender>::SenderResponder>, VoiceflousionError>{
         let interaction_time =  update.interaction_time();
         if let Some(telegram_session) = self.sessions().get_session(update.chat_id()).await {
             let locked_session = LockedSession::try_from_session(&telegram_session)?;
             match update.interaction_type(){
                 InteractionType::Button(message, button_path) => {
-                    if let Some(block) = locked_session.previous_message().await.deref() {
-                        if let VoiceflowBlock::Carousel(carousel) = block {
+                    if let Some(message) = locked_session.previous_message().await.deref() {
+                        if let VoiceflowBlock::Carousel(carousel) = message.block() {
                             if let Some(index) = update.carousel_card_index() {
-                                return Ok(vec![self.switch_carousel_card(&locked_session, carousel, &"".to_string(), index, interaction_time).await?])
+                                return Ok(vec![self.switch_carousel_card(&locked_session, carousel, message.id(), index, interaction_time).await?])
                             }
                         }
                     }

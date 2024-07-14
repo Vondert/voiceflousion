@@ -4,7 +4,7 @@ use crate::voiceflow::dialog_blocks::enums::VoiceflowButtonsOption;
 use crate::voiceflow::dialog_blocks::traits::FromValue;
 use crate::voiceflow::dialog_blocks::VoiceflowButton;
 use crate::voiceflow::VoiceflousionError;
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct VoiceflowButtons{
     option: VoiceflowButtonsOption,
     buttons: Vec<VoiceflowButton>

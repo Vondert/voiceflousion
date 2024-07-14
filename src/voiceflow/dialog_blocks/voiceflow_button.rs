@@ -3,7 +3,7 @@ use crate::voiceflow::dialog_blocks::enums::VoiceflowButtonActionType;
 use crate::voiceflow::dialog_blocks::traits::FromValue;
 use crate::voiceflow::VoiceflousionError;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct VoiceflowButton{
     action_type: VoiceflowButtonActionType,
     path: String,

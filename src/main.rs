@@ -1,4 +1,4 @@
-use std::env;
+use std::{env, io};
 use std::sync::Arc;
 use chrono::Utc;
 use dotenv::dotenv;
@@ -26,6 +26,13 @@ async fn main() {
 
     let now = Utc::now().timestamp();
     let update =  TelegramUpdate::new(bot_id.clone(), chat_id.clone(), now, InteractionType::new(String::new(), None), None);
+    let result = telegram_client.interact_with_client(update, None, None).await;
+    match result {
+        Ok(message) => println!("Task: {:?}", message),
+        Err(e) => println!("Task: Error {:?}", e),
+    }
+    let now = Utc::now().timestamp();
+    let update =  TelegramUpdate::new(bot_id.clone(), chat_id.clone(), now, InteractionType::new(String::new(), Some("c_1".to_string())), Some(1));
     let result = telegram_client.interact_with_client(update, None, None).await;
     match result {
         Ok(message) => println!("Task: {:?}", message),

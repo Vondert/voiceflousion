@@ -1,13 +1,14 @@
 use async_trait::async_trait;
-use reqwest::Response;
 use serde_json::{json, Value};
+use crate::integrations::telegram::TelegramResponder;
 use crate::integrations::utils::SenderHttpClient;
-use crate::integrations::utils::traits::Sender;
-use crate::voiceflow::VoiceflousionError;
+use crate::integrations::utils::traits::{Responder, Sender};
+use crate::voiceflow::{VoiceflousionError, VoiceflowBlock};
 use crate::voiceflow::dialog_blocks::{VoiceflowButtons, VoiceflowCard, VoiceflowCarousel, VoiceflowImage, VoiceflowText};
 use crate::voiceflow::dialog_blocks::enums::{VoiceflowButtonActionType, VoiceflowButtonsOption};
 
 static TELEGRAM_API_URL: &str = "https://api.telegram.org/bot";
+
 pub struct TelegramSender{
     sender_http_client: SenderHttpClient,
     api_key: String
@@ -19,7 +20,7 @@ impl TelegramSender{
             api_key
         }
     }
-    pub async fn update_carousel(&self, carousel: &VoiceflowCarousel, index: usize, chat_id: &String, message_id: &String) -> Result<Response, VoiceflousionError>{
+    pub async fn update_carousel(&self, carousel: &VoiceflowCarousel, index: usize, chat_id: &String, message_id: &String) -> Result<TelegramResponder, VoiceflousionError>{
         let api_url = format!("{}{}/editMessageMedia", TELEGRAM_API_URL, &self.api_key);
         let card = carousel.get(index).ok_or_else(|| VoiceflousionError::RequestError("Card out of bounds".to_string()))?;
         let mut inline_keyboard: Vec<Vec<Value>> = if let Some(buttons) = card.buttons(){
@@ -55,7 +56,7 @@ impl TelegramSender{
             .await.map_err(|e| VoiceflousionError::RequestError(e.to_string()))?;
 
         if response.status().is_success() {
-            Ok(response)
+           TelegramResponder::from_response(response, VoiceflowBlock::Carousel(carousel.clone())).await
         } else {
             let error_text = response.text().await.unwrap_or_default();
             Err(VoiceflousionError::RequestError(error_text))
@@ -64,6 +65,8 @@ impl TelegramSender{
 }
 #[async_trait]
 impl Sender for TelegramSender{
+    type SenderResponder = TelegramResponder;
+
     fn sender_http_client(&self) -> &SenderHttpClient {
         &self.sender_http_client
     }
@@ -72,7 +75,7 @@ impl Sender for TelegramSender{
         &self.api_key
     }
 
-    async fn send_text(&self, text: &VoiceflowText, chat_id: &String, sender_http_client: &SenderHttpClient, api_key: &String) -> Result<Response, VoiceflousionError> {
+    async fn send_text(&self, text: VoiceflowText, chat_id: &String, sender_http_client: &SenderHttpClient, api_key: &String) -> Result<Self::SenderResponder, VoiceflousionError> {
         let api_url = format!("{}{}/sendMessage", TELEGRAM_API_URL, api_key);
         let body = json!({
             "chat_id": chat_id,
@@ -83,14 +86,14 @@ impl Sender for TelegramSender{
             .await.map_err(|error| VoiceflousionError::RequestError(error.to_string()))?;
 
         if response.status().is_success() {
-            Ok(response)
+            Self::SenderResponder::from_response(response, VoiceflowBlock::Text(text)).await
         } else {
             let error_text = response.text().await.unwrap_or_default();
             Err(VoiceflousionError::RequestError(error_text))
         }
     }
 
-    async fn send_image(&self, image: &VoiceflowImage, chat_id: &String, sender_http_client: &SenderHttpClient, api_key: &String) -> Result<Response, VoiceflousionError>{
+    async fn send_image(&self, image: VoiceflowImage, chat_id: &String, sender_http_client: &SenderHttpClient, api_key: &String) -> Result<Self::SenderResponder, VoiceflousionError>{
         let api_url = format!("{}{}/sendPhoto", TELEGRAM_API_URL, api_key);
         let body = json!({
             "chat_id": chat_id,
@@ -101,20 +104,20 @@ impl Sender for TelegramSender{
             .await.map_err(|error| VoiceflousionError::RequestError(error.to_string()))?;
 
         if response.status().is_success() {
-            Ok(response)
+            Self::SenderResponder::from_response(response, VoiceflowBlock::Image(image)).await
         } else {
             let error_text = response.text().await.unwrap_or_default();
             Err(VoiceflousionError::RequestError(error_text))
         }
     }
 
-    async fn send_buttons(&self, buttons: &VoiceflowButtons, chat_id: &String, sender_http_client: &SenderHttpClient, api_key: &String) -> Result<Response, VoiceflousionError> {
+    async fn send_buttons(&self, buttons: VoiceflowButtons, chat_id: &String, sender_http_client: &SenderHttpClient, api_key: &String) -> Result<Self::SenderResponder, VoiceflousionError> {
         let api_url = match &buttons.option() {
             VoiceflowButtonsOption::Image(_) => format!("{}{}/sendPhoto", TELEGRAM_API_URL, api_key),
             _ => format!("{}{}/sendMessage", TELEGRAM_API_URL, api_key),
         };
 
-        let inline_keyboard: Vec<Vec<Value>> = buttons_to_keyboard(buttons);
+        let inline_keyboard: Vec<Vec<Value>> = buttons_to_keyboard(&buttons);
 
 
         let body = match &buttons.option() {
@@ -145,14 +148,14 @@ impl Sender for TelegramSender{
             .await.map_err(|error| VoiceflousionError::RequestError(error.to_string()))?;
 
         if response.status().is_success() {
-            Ok(response)
+            Self::SenderResponder::from_response(response, VoiceflowBlock::Buttons(buttons)).await
         } else {
             let error_text = response.text().await.unwrap_or_default();
             Err(VoiceflousionError::RequestError(error_text))
         }
     }
 
-    async fn send_card(&self, card: &VoiceflowCard, chat_id: &String, sender_http_client: &SenderHttpClient, api_key: &String) -> Result<Response, VoiceflousionError> {
+    async fn send_card(&self, card: VoiceflowCard, chat_id: &String, sender_http_client: &SenderHttpClient, api_key: &String) -> Result<Self::SenderResponder, VoiceflousionError> {
         let inline_keyboard: Vec<Vec<Value>> = if let Some(buttons) = card.buttons(){
             buttons_to_keyboard(buttons)
         }
@@ -192,15 +195,58 @@ impl Sender for TelegramSender{
             .await.map_err(|error| VoiceflousionError::RequestError(error.to_string()))?;
 
         if response.status().is_success() {
-            Ok(response)
+            Self::SenderResponder::from_response(response, VoiceflowBlock::Card(card)).await
         } else {
             let error_text = response.text().await.unwrap_or_default();
             Err(VoiceflousionError::RequestError(error_text))
         }
     }
-    async fn send_carousel(&self, carousel: &VoiceflowCarousel, chat_id: &String, sender_http_client: &SenderHttpClient, api_key: &String) -> Result<Response, VoiceflousionError> {
+    async fn send_carousel(&self, carousel: VoiceflowCarousel, chat_id: &String, sender_http_client: &SenderHttpClient, api_key: &String) -> Result<Self::SenderResponder, VoiceflousionError> {
         let card = carousel.get(0).ok_or_else(|| VoiceflousionError::RequestError("Card out of bounds".to_string()))?;
-        self.send_card(card, chat_id, sender_http_client, api_key).await
+        let inline_keyboard: Vec<Vec<Value>> = if let Some(buttons) = card.buttons(){
+            buttons_to_keyboard(buttons)
+        }
+        else{
+            vec![]
+        };
+        let mut api_url = String::new();
+        let mut body: Value = json!({});
+
+        let title = card.title().clone().unwrap_or(String::new());
+        let description = card.description().clone().unwrap_or(String::new());
+        match card.image_url() {
+            Some(url) => {
+                api_url = format!("{}{}/sendPhoto", TELEGRAM_API_URL, api_key);
+                body = json!({
+                    "chat_id": chat_id,
+                    "photo": url,
+                    "caption": format!("{}\n\n{}", title, description),
+                    "reply_markup": {
+                        "inline_keyboard": inline_keyboard,
+                    }
+                });
+            },
+            None => {
+                api_url = format!("{}{}/sendMessage", TELEGRAM_API_URL, api_key);
+                body = json!({
+                    "chat_id": chat_id,
+                    "text": format!("{}\n\n{}", title, description),
+                    "reply_markup": {
+                        "inline_keyboard": inline_keyboard,
+                    }
+                })
+            },
+        };
+
+        let response = sender_http_client.post(&api_url).json(&body).send()
+            .await.map_err(|error| VoiceflousionError::RequestError(error.to_string()))?;
+
+        if response.status().is_success() {
+            Self::SenderResponder::from_response(response, VoiceflowBlock::Carousel(carousel)).await
+        } else {
+            let error_text = response.text().await.unwrap_or_default();
+            Err(VoiceflousionError::RequestError(error_text))
+        }
     }
 }
 fn buttons_to_keyboard(buttons: &VoiceflowButtons) -> Vec<Vec<Value>>{

@@ -57,7 +57,7 @@ impl TelegramSender{
             .await.map_err(|e| VoiceflousionError::RequestError(e.to_string()))?;
 
         if response.status().is_success() {
-           TelegramResponder::from_response(response, VoiceflowBlock::Carousel(carousel.clone())).await
+           TelegramResponder::from_response(response, VoiceflowBlock::Card(card.clone())).await
         } else {
             let error_text = response.text().await.unwrap_or_default();
             Err(VoiceflousionError::RequestError(error_text))

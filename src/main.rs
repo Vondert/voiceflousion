@@ -21,7 +21,7 @@ async fn main() {
     let telegram_bot_token = env::var("TELEGRAM_BOT_TOKEN").unwrap_or_else(|_| "".to_string());
     let voiceflow_client = Arc::new(VoiceflowClient::new(vf_api_key, bot_id.clone(), version_id, 10));
 
-    let chat_id = format!("510947895");
+    let chat_id = "510947895".to_string();
     let telegram_client = Arc::new(TelegramClient::new(telegram_bot_token, voiceflow_client.clone(), None, None, 10));
 
     let now = Utc::now().timestamp();
@@ -38,6 +38,55 @@ async fn main() {
         Ok(message) => println!("Task: {:?}", message),
         Err(e) => println!("Task: Error {:?}", e),
     }
+    // let now = Utc::now().timestamp();
+    // let update =  TelegramUpdate::new(bot_id.clone(), chat_id.clone(), now, InteractionType::new(String::new(), Some("c_0".to_string())), Some(0));
+    // let result = telegram_client.interact_with_client(update, None, None).await;
+    // match result {
+    //     Ok(message) => println!("Task: {:?}", message),
+    //     Err(e) => println!("Task: Error {:?}", e),
+    // }
+    // let now = Utc::now().timestamp();
+    // let update =  TelegramUpdate::new(bot_id.clone(), chat_id.clone(), now, InteractionType::new(String::new(), Some("c_1".to_string())), Some(1));
+    // let result = telegram_client.interact_with_client(update, None, None).await;
+    // match result {
+    //     Ok(message) => println!("Task: {:?}", message),
+    //     Err(e) => println!("Task: Error {:?}", e),
+    // }
+    // let now = Utc::now().timestamp();
+    // let update =  TelegramUpdate::new(bot_id.clone(), chat_id.clone(), now, InteractionType::new(String::new(), Some("c_2".to_string())), Some(2));
+    // let result = telegram_client.interact_with_client(update, None, None).await;
+    // match result {
+    //     Ok(message) => println!("Task: {:?}", message),
+    //     Err(e) => println!("Task: Error {:?}", e),
+    // }
+    // let now = Utc::now().timestamp();
+    // let update =  TelegramUpdate::new(bot_id.clone(), chat_id.clone(), now, InteractionType::new(String::new(), Some("c_1".to_string())), Some(1));
+    // let result = telegram_client.interact_with_client(update, None, None).await;
+    // match result {
+    //     Ok(message) => println!("Task: {:?}", message),
+    //     Err(e) => println!("Task: Error {:?}", e),
+    // }
+    // let now = Utc::now().timestamp();
+    // let update =  TelegramUpdate::new(bot_id.clone(), chat_id.clone(), now, InteractionType::new(String::new(), Some("c_2".to_string())), Some(2));
+    // let result = telegram_client.interact_with_client(update, None, None).await;
+    // match result {
+    //     Ok(message) => println!("Task: {:?}", message),
+    //     Err(e) => println!("Task: Error {:?}", e),
+    // }
+    // let now = Utc::now().timestamp();
+    // let update =  TelegramUpdate::new(bot_id.clone(), chat_id.clone(), now, InteractionType::new(String::new(), Some("c_1".to_string())), Some(1));
+    // let result = telegram_client.interact_with_client(update, None, None).await;
+    // match result {
+    //     Ok(message) => println!("Task: {:?}", message),
+    //     Err(e) => println!("Task: Error {:?}", e),
+    // }
+    // let now = Utc::now().timestamp();
+    // let update =  TelegramUpdate::new(bot_id.clone(), chat_id.clone(), now, InteractionType::new(String::new(), Some("c_0".to_string())), Some(0));
+    // let result = telegram_client.interact_with_client(update, None, None).await;
+    // match result {
+    //     Ok(message) => println!("Task: {:?}", message),
+    //     Err(e) => println!("Task: Error {:?}", e),
+    // }
     // let now = Utc::now().timestamp();
     // let update =  TelegramUpdate::new(bot_id.clone(), chat_id.clone(), now, InteractionType::new(String::from("buy"), None));
     // let result = telegram_client.interact_with_client(update, None, None).await;

@@ -8,7 +8,7 @@ pub trait Responder: Sized + Send + Sync {
     fn message_id(&self) -> &String;
     fn message_content(&self) -> &VoiceflowBlock;
     async fn from_response(response: Response, content: VoiceflowBlock) -> Result<Self, VoiceflousionError>;
-    fn to_sent_message(&self) -> SentMessage{
+    fn create_sent_message(&self) -> SentMessage{
         SentMessage::new(self.message_content().clone(), self.message_id().clone())
     }
 }

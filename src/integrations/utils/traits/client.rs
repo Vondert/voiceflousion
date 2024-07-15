@@ -38,7 +38,7 @@ pub trait Client: ClientBase {
 
 fn get_last_sent_message<R: Responder>(response: &[R]) -> Option<SentMessage>{
     return if let Some(responder) = response.last(){
-        Some(responder.to_sent_message())
+        Some(responder.create_sent_message())
     }
     else{
         None

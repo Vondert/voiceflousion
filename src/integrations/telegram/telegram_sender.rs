@@ -30,12 +30,13 @@ impl TelegramSender{
             vec![]
         };
         let mut switch_buttons: Vec<Value> = Vec::new();
-        if index < carousel.len() - 1{
-            switch_buttons.push(json!({ "text": "-->", "callback_data": format!("c_{}", index + 1) }));
-        }
         if index > 0 {
             switch_buttons.push( json!({ "text": "<--", "callback_data": format!("c_{}", index - 1) }));
         }
+        if index < carousel.len() - 1{
+            switch_buttons.push(json!({ "text": "-->", "callback_data": format!("c_{}", index + 1) }));
+        }
+
         inline_keyboard.push(switch_buttons);
 
         let title = card.title().clone().unwrap_or(String::new());
@@ -201,38 +202,38 @@ impl Sender for TelegramSender{
         }
     }
     async fn send_carousel(&self, carousel: VoiceflowCarousel, chat_id: &String, sender_http_client: &SenderHttpClient, api_key: &String) -> Result<Self::SenderResponder, VoiceflousionError> {
+        if !carousel.is_full(){
+            return Err(VoiceflousionError::RequestError("Carousel has cards without images".to_string()));
+        }
+        let api_url = format!("{}{}/sendPhoto", TELEGRAM_API_URL, api_key);
         let card = carousel.get(0).ok_or_else(|| VoiceflousionError::RequestError("Card out of bounds".to_string()))?;
         let title = card.title().clone().unwrap_or(String::new());
         let description = card.description().clone().unwrap_or(String::new());
-        let inline_keyboard: Vec<Vec<Value>> = if let Some(buttons) = card.buttons(){
+
+        let mut inline_keyboard: Vec<Vec<Value>> = if let Some(buttons) = card.buttons(){
             buttons_to_keyboard(buttons)
         }
         else{
             vec![]
         };
+        let mut switch_buttons: Vec<Value> = Vec::new();
+        if carousel.len() > 1{
+            switch_buttons.push(json!({ "text": "-->", "callback_data": format!("c_{}", 1) }));
+        }
+        inline_keyboard.push(switch_buttons);
 
-        let mut api_url = format!("{}{}/sendMessage", TELEGRAM_API_URL, api_key);
-        let mut body = json!({
-                    "chat_id": chat_id,
-                    "text": format!("{}\n\n{}", title, description),
-                    "reply_markup": {
-                        "inline_keyboard": inline_keyboard,
-                    }
-                });
-
-        match card.image_url() {
+        let body = match card.image_url() {
             Some(url) => {
-                api_url = format!("{}{}/sendPhoto", TELEGRAM_API_URL, api_key);
-                body = json!({
+                json!({
                     "chat_id": chat_id,
                     "photo": url,
                     "caption": format!("{}\n\n{}", title, description),
                     "reply_markup": {
                         "inline_keyboard": inline_keyboard,
                     }
-                });
+                })
             },
-            None => {}
+            None => json!({})
         };
 
         let response = sender_http_client.post(&api_url).json(&body).send()

@@ -5,14 +5,19 @@ use crate::voiceflow::dialog_blocks::VoiceflowCard;
 use crate::voiceflow::VoiceflousionError;
 #[derive(Debug, Clone)]
 pub struct VoiceflowCarousel{
-    cards: Vec<VoiceflowCard>
+    cards: Vec<VoiceflowCard>,
+    is_full: bool
 }
 
 impl VoiceflowCarousel{
-    pub fn new(cards: Vec<VoiceflowCard>) -> Self{
+    pub fn new(cards: Vec<VoiceflowCard>, is_full: bool) -> Self{
         Self{
-            cards
+            cards,
+            is_full
         }
+    }
+    pub fn is_full(&self) -> bool{
+        self.is_full
     }
 }
 impl Deref for VoiceflowCarousel{
@@ -38,6 +43,7 @@ impl FromValue for VoiceflowCarousel{
         if cards.is_empty(){
             return Ok(None)
         }
-        Ok(Some(Self::new(cards)))
+        let is_full = cards.iter().all(|card| card.image_url().is_some());
+        Ok(Some(Self::new(cards, is_full)))
     }
 }

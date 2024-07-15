@@ -1,24 +1,24 @@
 use std::ops::Deref;
 use std::sync::Arc;
 use tokio::sync::MutexGuard;
-use crate::integrations::utils::bot_last_message::BotLastMessage;
+use crate::integrations::utils::sent_message::SentMessage;
 use crate::integrations::utils::SessionWrapper;
-use crate::integrations::utils::traits::{Responder, Session};
-use crate::voiceflow::{VoiceflousionError, VoiceflowMessage};
+use crate::integrations::utils::traits::Session;
+use crate::voiceflow::VoiceflousionError;
 
-pub struct LockedSession<'g, S: Session, R: Responder>{
-    session: &'g Arc<SessionWrapper<S, R>>,
+pub struct LockedSession<'g, S: Session>{
+    session: &'g Arc<SessionWrapper<S>>,
     _guard:  MutexGuard<'g, bool>
 }
-impl<'g, S: Session, R: Responder> Deref for LockedSession<'g, S, R>{
-    type Target = Arc<SessionWrapper<S, R>>;
+impl<'g, S: Session> Deref for LockedSession<'g, S>{
+    type Target = Arc<SessionWrapper<S>>;
 
     fn deref(&self) -> &'g Self::Target {
         self.session
     }
 }
-impl<'g, S: Session, R: Responder> LockedSession<'g, S, R>{
-    pub fn try_from_session(session: &'g Arc<SessionWrapper<S, R>>) -> Result<Self, VoiceflousionError>{
+impl<'g, S: Session> LockedSession<'g, S>{
+    pub fn try_from_session(session: &'g Arc<SessionWrapper<S>>) -> Result<Self, VoiceflousionError>{
         let guard = session.try_lock_sync()?;
         Ok(Self{
             session,
@@ -30,7 +30,7 @@ impl<'g, S: Session, R: Responder> LockedSession<'g, S, R>{
         let last_message = BotLastMessage::new(message.pop(), message_id);
         *write = message.pop();
     }*/
-    pub async fn set_previous_message(&self, message: Option<BotLastMessage<R>>) -> () {
+    pub async fn set_previous_message(&self, message: Option<SentMessage>) -> () {
         let mut write = self.session.write_previous_message().await;
         *write = message;
     }
@@ -38,7 +38,7 @@ impl<'g, S: Session, R: Responder> LockedSession<'g, S, R>{
         let mut write = self.write_last_interaction().await;
         *write = Some(interaction);
     }
-    pub fn session(&self) -> Arc<SessionWrapper<S, R>>{
+    pub fn session(&self) -> Arc<SessionWrapper<S>>{
         self.session.clone()
     }
 }

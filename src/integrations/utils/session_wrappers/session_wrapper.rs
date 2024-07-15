@@ -1,17 +1,17 @@
 use std::ops::Deref;
 use std::sync::Arc;
 use tokio::sync::{Mutex, MutexGuard, RwLock, RwLockReadGuard, RwLockWriteGuard};
-use crate::integrations::utils::bot_last_message::BotLastMessage;
-use crate::integrations::utils::traits::{Responder, Session};
+use crate::integrations::utils::sent_message::SentMessage;
+use crate::integrations::utils::traits::Session;
 use crate::voiceflow::VoiceflousionError;
 
-pub struct SessionWrapper<S: Session, R: Responder>{
+pub struct SessionWrapper<S: Session>{
     session: S,
-    previous_message: Arc<RwLock<Option<BotLastMessage<R>>>>,
+    previous_message: Arc<RwLock<Option<SentMessage>>>,
     lock: Arc<Mutex<bool>>,
 }
 
-impl<S: Session, R: Responder> Deref for SessionWrapper<S, R> {
+impl<S: Session> Deref for SessionWrapper<S> {
     type Target = S;
 
     fn deref(&self) -> &Self::Target {
@@ -19,7 +19,7 @@ impl<S: Session, R: Responder> Deref for SessionWrapper<S, R> {
     }
 }
 
-impl<S: Session, R: Responder> SessionWrapper<S, R>{
+impl<S: Session> SessionWrapper<S>{
     pub fn new(session: S) -> Self{
         Self{
             session,
@@ -31,7 +31,7 @@ impl<S: Session, R: Responder> SessionWrapper<S, R>{
         let binding = &self.lock;
         binding.try_lock().map_err(|_| VoiceflousionError::SessionLockError)
     }
-    pub async fn previous_message(&self) -> RwLockReadGuard<'_, Option<BotLastMessage<R>>> {
+    pub async fn previous_message(&self) -> RwLockReadGuard<'_, Option<SentMessage>> {
         let binding = &self.previous_message;
         let message = binding.read().await;
         message
@@ -41,7 +41,7 @@ impl<S: Session, R: Responder> SessionWrapper<S, R>{
         let last_interaction = binding.read().await;
         *last_interaction
     }
-    pub(super) async fn write_previous_message(&self) -> RwLockWriteGuard<'_, Option<BotLastMessage<R>>>{
+    pub(super) async fn write_previous_message(&self) -> RwLockWriteGuard<'_, Option<SentMessage>>{
         let binding = &self.previous_message;
         let previous = binding.write().await;
         previous

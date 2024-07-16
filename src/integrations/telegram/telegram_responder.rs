@@ -9,7 +9,7 @@ pub struct TelegramResponder {
     bot_id: String,
     chat_id: String,
     message_id: String,
-    date: u64,
+    date: i64,
     message_content: VoiceflowBlock
 }
 
@@ -26,7 +26,7 @@ struct From {
 #[derive(Debug, Deserialize)]
 struct TelegramResult {
     chat: Chat,
-    date: u64,
+    date: i64,
     from: From,
     message_id: u64,
 }
@@ -43,6 +43,10 @@ impl Responder for TelegramResponder {
 
     fn message_content(&self) -> &VoiceflowBlock {
         &self.message_content
+    }
+
+    fn date(&self) -> i64 {
+        self.date
     }
 
     async fn from_response(response: Response, content: VoiceflowBlock) -> Result<Self, VoiceflousionError> {

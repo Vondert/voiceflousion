@@ -7,8 +7,9 @@ use crate::voiceflow::{VoiceflousionError, VoiceflowBlock};
 pub trait Responder: Sized + Send + Sync {
     fn message_id(&self) -> &String;
     fn message_content(&self) -> &VoiceflowBlock;
+    fn date(&self) -> i64;
     async fn from_response(response: Response, content: VoiceflowBlock) -> Result<Self, VoiceflousionError>;
     fn create_sent_message(&self) -> SentMessage{
-        SentMessage::new(self.message_content().clone(), self.message_id().clone())
+        SentMessage::new(self.message_content().clone(), self.message_id().clone(), self.date())
     }
 }

@@ -2,11 +2,13 @@ use std::{env, io};
 use std::sync::Arc;
 use chrono::Utc;
 use dotenv::dotenv;
+use serde_json::Value;
 use tokio::task;
+use warp::Filter;
 use crate::integrations::telegram::{TelegramClient, TelegramUpdate, TelegramSession};
 use crate::integrations::utils::InteractionType;
 use crate::integrations::utils::traits::{Client, Update};
-use crate::voiceflow::VoiceflowClient;
+use crate::voiceflow::{VoiceflousionError, VoiceflowClient};
 
 mod voiceflow;
 mod integrations;
@@ -24,20 +26,30 @@ async fn main() {
     let chat_id = "510947895".to_string();
     let telegram_client = Arc::new(TelegramClient::new(telegram_bot_token, voiceflow_client.clone(), None, None, 10));
 
-    let now = Utc::now().timestamp();
-    let update =  TelegramUpdate::new(bot_id.clone(), chat_id.clone(), now, InteractionType::new(String::new(), None), None);
-    let result = telegram_client.interact_with_client(update, None, None).await;
-    match result {
-        Ok(message) => println!("Task: {:?}", message),
-        Err(e) => println!("Task: Error {:?}", e),
-    }
-    let now = Utc::now().timestamp();
-    let update =  TelegramUpdate::new(bot_id.clone(), chat_id.clone(), now, InteractionType::new(String::new(), Some("c_1".to_string())), Some(1));
-    let result = telegram_client.interact_with_client(update, None, None).await;
-    match result {
-        Ok(message) => println!("Task: {:?}", message),
-        Err(e) => println!("Task: Error {:?}", e),
-    }
+    let webhook = warp::post()
+        .and(warp::path("bot"))
+        .and(warp::body::json())
+        .and(warp::any().map(move || telegram_client.clone()))
+        .and_then(handle_webhook);
+
+    warp::serve(webhook)
+        .run(([127, 0, 0, 1], 8080))
+        .await;
+
+    // let now = Utc::now().timestamp();
+    // let update =  TelegramUpdate::new(bot_id.clone(), chat_id.clone(), now, InteractionType::new(String::new(), None), None);
+    // let result = telegram_client.interact_with_client(update, None, None).await;
+    // match result {
+    //     Ok(message) => println!("Task: {:?}", message),
+    //     Err(e) => println!("Task: Error {:?}", e),
+    // }
+    // let now = Utc::now().timestamp();
+    // let update =  TelegramUpdate::new(bot_id.clone(), chat_id.clone(), now, InteractionType::new(String::new(), Some("c_1".to_string())), Some(1));
+    // let result = telegram_client.interact_with_client(update, None, None).await;
+    // match result {
+    //     Ok(message) => println!("Task: {:?}", message),
+    //     Err(e) => println!("Task: Error {:?}", e),
+    // }
     // let now = Utc::now().timestamp();
     // let update =  TelegramUpdate::new(bot_id.clone(), chat_id.clone(), now, InteractionType::new(String::new(), Some("c_0".to_string())), Some(0));
     // let result = telegram_client.interact_with_client(update, None, None).await;
@@ -213,4 +225,25 @@ async fn main() {
 
     //voiceflow_client.send_message(&session, None, String::from("Buy")).await;
     //voiceflow_client.choose_button(&session, None, String::from("gds")).await;
+}
+async fn handle_webhook(body: Value, client: Arc<TelegramClient>) -> Result<impl warp::Reply, warp::Rejection> {
+    let update = match TelegramUpdate::from_request_body(body.clone()){
+        Ok(update) => update,
+        Err(err) => {
+            println!("Error: {:?}", &err);
+            return     Ok(warp::reply::json(&"Ok".to_string()))
+        }
+    };
+    println!("Telegram update: {:?}", &update);
+
+    match client.interact_with_client(update, None, None).await {
+         Ok(message) => println!("Task: {:?}", message),
+         Err(e) => {
+             println!("Dialog: Error {:?}", e);
+         },
+     };
+
+
+
+    Ok(warp::reply::json(&"Ok".to_string()))
 }

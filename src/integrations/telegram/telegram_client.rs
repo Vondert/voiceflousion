@@ -19,7 +19,7 @@ impl TelegramClient{
         Self{
             bot_id,
             voiceflow_client,
-            sessions: SessionMap::from(telegram_session, session_duration),
+            sessions: SessionMap::from_sessions(telegram_session, session_duration),
             sender: TelegramSender::new(max_sessions_per_moment, bot_token)
         }
     }

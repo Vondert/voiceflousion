@@ -24,10 +24,10 @@ impl<S: Session> SessionMap<S>{
             valid_session_duration
         }
     }
-    pub fn valid_session_duration(&self) -> &Option<i64>{
-        &self.valid_session_duration
-    }
-    pub fn from (sessions_vec: Option<Vec<S>>, valid_session_duration: Option<i64>) -> Self{
+    //pub fn valid_session_duration(&self) -> &Option<i64>{
+    //    &self.valid_session_duration
+    //}
+    pub fn from_sessions(sessions_vec: Option<Vec<S>>, valid_session_duration: Option<i64>) -> Self{
         match sessions_vec{
             Some(vec) =>{
                 let mut hash_map = HashMap::<String, Arc<SessionWrapper<S>>>::new();
@@ -56,6 +56,25 @@ impl<S: Session> SessionMap<S>{
             .clone();
         session
     }
+    pub async fn delete_session(&self, chat_id: &String) -> (){
+        let mut write_lock = self.sessions.write().await;
+        write_lock.remove(chat_id);
+    }
+     pub async fn delete_invalid_session(&self) -> (){
+         let mut sessions_to_remove = vec![];
+         {
+             let read_lock = self.sessions.read().await;
+             for (key, session) in read_lock.iter() {
+                 if !self.is_valid_session(session).await {
+                     sessions_to_remove.push(key.clone());
+                 }
+             }
+         }
+         let mut write_lock = self.sessions.write().await;
+         for key in sessions_to_remove {
+             write_lock.remove(&key);
+         }
+     }
     async fn is_valid_session(&self, session: &Arc<SessionWrapper<S>>) -> bool{
         if let Some(last_interaction) = session.get_last_interaction().await {
             if let Some(duration) = &self.valid_session_duration{

@@ -37,6 +37,9 @@ pub trait Sender: Send + Sync{
                         let result = self.send_carousel(carousel, chat_id, sender_http_client, api_key).await?;
                         responses.push(result)
                     }
+                }
+                _ => {
+                    return Err(VoiceflousionError::RequestError("Unexpected block type for message".to_string()))
                 },
             }
         }

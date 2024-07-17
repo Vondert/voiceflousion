@@ -2,32 +2,47 @@ use async_trait::async_trait;
 use crate::integrations::utils::sent_message::SentMessage;
 use crate::integrations::utils::LockedSession;
 use crate::integrations::utils::traits::{ClientBase, Responder, Sender, Session};
-use crate::voiceflow::{State, VoiceflousionError};
+use crate::voiceflow::{State, VoiceflousionError, VoiceflowBlock, VoiceflowMessage};
 
 #[async_trait]
 pub trait Client: ClientBase {
     async fn launch_voiceflow_dialog(&self, locked_session: &LockedSession<Self::ClientSession>,  interaction_time: i64, state: Option<State>) -> Result<Vec<<Self::ClientSender as Sender>::SenderResponder>, VoiceflousionError>{
         let voiceflow_session = locked_session.voiceflow_session();
-        let voiceflow_message = self.voiceflow_client().launch_dialog(voiceflow_session, state).await?;
+        let mut voiceflow_message = self.voiceflow_client().launch_dialog(voiceflow_session, state).await?;
+        if is_end_message(&mut voiceflow_message){
+            locked_session.set_last_interaction(None).await;
+        }
+        else{
+            locked_session.set_last_interaction(Some(interaction_time)).await;
+        }
         let response = self.sender().send_message(locked_session.get_chat_id(), voiceflow_message).await?;
         let bot_last_message = get_last_sent_message(&response);
-        locked_session.set_last_interaction(interaction_time).await;
         locked_session.set_previous_message(bot_last_message).await;
         Ok(response)
     }
     async fn send_message_to_voiceflow_dialog(&self, locked_session: &LockedSession<Self::ClientSession>, interaction_time: i64, message: &String, state: Option<State>) -> Result<Vec<<Self::ClientSender as Sender>::SenderResponder>, VoiceflousionError> {
-        locked_session.set_last_interaction(interaction_time).await;
         let voiceflow_session = locked_session.voiceflow_session();
-        let voiceflow_message = self.voiceflow_client().send_message(voiceflow_session, state, message).await?;
+        let mut voiceflow_message = self.voiceflow_client().send_message(voiceflow_session, state, message).await?;
+        if is_end_message(&mut voiceflow_message){
+            locked_session.set_last_interaction(None).await;
+        }
+        else{
+            locked_session.set_last_interaction(Some(interaction_time)).await;
+        }
         let response = self.sender().send_message(locked_session.get_chat_id(), voiceflow_message).await?;
         let bot_last_message = get_last_sent_message(&response);
         locked_session.set_previous_message(bot_last_message).await;
         Ok(response)
     }
     async fn choose_button_in_voiceflow_dialog(&self, locked_session: &LockedSession<Self::ClientSession>,  interaction_time: i64, message: &String, button_data: &String, state: Option<State>) -> Result<Vec<<Self::ClientSender as Sender>::SenderResponder>, VoiceflousionError> {
-        locked_session.set_last_interaction(interaction_time).await;
         let voiceflow_session = locked_session.voiceflow_session();
-        let voiceflow_message = self.voiceflow_client().choose_button(voiceflow_session, state, message, button_data).await?;
+        let mut voiceflow_message = self.voiceflow_client().choose_button(voiceflow_session, state, message, button_data).await?;
+        if is_end_message(&mut voiceflow_message){
+            locked_session.set_last_interaction(None).await;
+        }
+        else{
+            locked_session.set_last_interaction(Some(interaction_time)).await;
+        }
         let response = self.sender().send_message(locked_session.get_chat_id(), voiceflow_message).await?;
         let bot_last_message = get_last_sent_message(&response);
         locked_session.set_previous_message(bot_last_message).await;
@@ -43,4 +58,13 @@ fn get_last_sent_message<R: Responder>(response: &[R]) -> Option<SentMessage>{
     else{
         None
     };
+}
+fn is_end_message(message: &mut VoiceflowMessage) -> bool{
+    if let Some(VoiceflowBlock::End) = message.last() {
+        message.pop();
+        true
+    }
+    else{
+        false
+    }
 }

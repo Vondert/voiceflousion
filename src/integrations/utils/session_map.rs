@@ -57,17 +57,17 @@ impl<S: Session> SessionMap<S>{
         session
     }
     async fn is_valid_session(&self, session: &Arc<SessionWrapper<S>>) -> bool{
-        if let Some(duration) = &self.valid_session_duration{
-            let now = Utc::now().timestamp();
-            if let Some(last_interaction) = session.get_last_interaction().await{
+        if let Some(last_interaction) = session.get_last_interaction().await {
+            if let Some(duration) = &self.valid_session_duration{
+                let now = Utc::now().timestamp();
                 !(now - last_interaction > *duration)
             }
             else{
-                false
+                true
             }
         }
         else{
-            true
+            false
         }
     }
 }

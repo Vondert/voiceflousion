@@ -25,20 +25,15 @@ impl<'g, S: Session> LockedSession<'g, S>{
             _guard: guard
         })
     }
-    /*pub async fn set_previous_message(&self, mut message: VoiceflowMessage, message_id: String) -> () {
-        let mut write = self.session.write_previous_message().await;
-        let last_message = BotLastMessage::new(message.pop(), message_id);
-        *write = message.pop();
-    }*/
     pub async fn set_previous_message(&self, message: Option<SentMessage>) -> () {
         let mut write = self.session.write_previous_message().await;
         *write = message;
     }
-    pub async fn set_last_interaction(&self, interaction: i64) -> (){
+    pub async fn set_last_interaction(&self, interaction: Option<i64>) -> (){
         let mut write = self.write_last_interaction().await;
-        *write = Some(interaction);
+        *write = interaction;
     }
-    pub fn session(&self) -> Arc<SessionWrapper<S>>{
-        self.session.clone()
-    }
+    //pub fn session(&self) -> Arc<SessionWrapper<S>>{
+    //    self.session.clone()
+    //}
 }

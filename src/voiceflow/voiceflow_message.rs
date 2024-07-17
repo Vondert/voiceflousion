@@ -82,6 +82,9 @@ impl VoiceflowMessageBuilder {
                             message.content.push(VoiceflowBlock::Carousel(carousel));
                         }
                     },
+                    VoiceflowResponseBlockType::End => {
+                        message.content.push(VoiceflowBlock::End);
+                    }
                     _ => {},
                 }
             } else {
@@ -122,6 +125,9 @@ impl VoiceflowMessageBuilder {
                                     message.content.push(VoiceflowBlock::Carousel(carousel));
                                 }
                             },
+                            VoiceflowResponseBlockType::End => {
+                                message.content.push(VoiceflowBlock::End);
+                            }
                             _ => {},
                         }
                     },

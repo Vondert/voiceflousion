@@ -8,7 +8,7 @@ use crate::voiceflow::{State, VoiceflousionError, VoiceflowBlock, VoiceflowClien
 use crate::voiceflow::dialog_blocks::VoiceflowCarousel;
 
 pub struct TelegramClient{
-    pub bot_id: String,
+    bot_id: String,
     voiceflow_client: Arc<VoiceflowClient>,
     sessions: SessionMap<TelegramSession>,
     sender: TelegramSender
@@ -24,7 +24,7 @@ impl TelegramClient{
         }
     }
     pub async fn switch_carousel_card(&self, locked_session: &LockedSession<'_, TelegramSession>,  carousel: &VoiceflowCarousel,  message_id: &String, index: usize, interaction_time: i64) -> Result<TelegramResponder, VoiceflousionError> {
-        locked_session.set_last_interaction(interaction_time).await;
+        locked_session.set_last_interaction(Some(interaction_time)).await;
         self.sender.update_carousel(carousel, index, locked_session.get_chat_id(), message_id).await
     }
 }
@@ -50,9 +50,7 @@ impl Client for TelegramClient{
         if let Some(telegram_session) = self.sessions().get_session(update.chat_id()).await {
             let locked_session = LockedSession::try_from_session(&telegram_session)?;
             if let Some(message) = locked_session.previous_message().await.deref(){
-                if message.date() > interaction_time{
-                    return Err(VoiceflousionError::RequestError("Deprecated message".to_string()));
-                }
+                update.is_deprecated(message.date())?
             }
             match update.interaction_type(){
                 InteractionType::Button(message, button_path) => {

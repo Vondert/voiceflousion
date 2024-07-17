@@ -30,7 +30,8 @@ impl VoiceflowResponse{
                     | VoiceflowResponseBlockType::Choice
                     | VoiceflowResponseBlockType::CardV2
                     | VoiceflowResponseBlockType::Visual
-                    | VoiceflowResponseBlockType::Carousel => {
+                    | VoiceflowResponseBlockType::Carousel
+                    | VoiceflowResponseBlockType::End => {
                         let block = VoiceflowResponseBlock::new(response_type, json);
                         //println!("\n Block: {:?}", &block);
                         blocks.push(block);

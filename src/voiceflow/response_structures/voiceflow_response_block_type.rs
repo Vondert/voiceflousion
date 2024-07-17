@@ -6,6 +6,7 @@ pub(crate) enum VoiceflowResponseBlockType {
     CardV2,
     Visual,
     Carousel,
+    End,
     None
 }
 impl VoiceflowResponseBlockType {
@@ -17,6 +18,7 @@ impl VoiceflowResponseBlockType {
             "cardV2" => VoiceflowResponseBlockType::CardV2,
             "visual" => VoiceflowResponseBlockType::Visual,
             "carousel" => VoiceflowResponseBlockType::Carousel,
+            "end" => VoiceflowResponseBlockType::End,
             _ => VoiceflowResponseBlockType::None
         }
     }

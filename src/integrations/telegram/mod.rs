@@ -1,7 +1,6 @@
 mod telegram_update;
 mod telegram_client;
 mod telegram_session;
-pub mod message_parts;
 mod telegram_sender;
 mod telegram_responder;
 

@@ -6,5 +6,6 @@ pub enum VoiceflowBlock{
     Image(VoiceflowImage),
     Buttons(VoiceflowButtons),
     Card(VoiceflowCard),
-    Carousel(VoiceflowCarousel)
+    Carousel(VoiceflowCarousel),
+    End
 }

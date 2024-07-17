@@ -2,7 +2,8 @@ use async_trait::async_trait;
 use crate::integrations::utils::sent_message::SentMessage;
 use crate::integrations::utils::LockedSession;
 use crate::integrations::utils::traits::{ClientBase, Responder, Sender, Session};
-use crate::voiceflow::{State, VoiceflousionError, VoiceflowBlock, VoiceflowMessage};
+use crate::voiceflow::{State, VoiceflousionError};
+
 
 #[async_trait]
 pub trait Client: ClientBase {
@@ -10,7 +11,7 @@ pub trait Client: ClientBase {
         locked_session.set_last_interaction(Some(interaction_time)).await;
         let voiceflow_session = locked_session.voiceflow_session();
         let mut voiceflow_message = self.voiceflow_client().launch_dialog(voiceflow_session, state).await?;
-        if is_end_message(&mut voiceflow_message){
+        if voiceflow_message.trim_end_block(){
             locked_session.set_last_interaction(None).await;
         }
         let response = self.sender().send_message(locked_session.get_chat_id(), voiceflow_message).await?;
@@ -22,7 +23,7 @@ pub trait Client: ClientBase {
         locked_session.set_last_interaction(Some(interaction_time)).await;
         let voiceflow_session = locked_session.voiceflow_session();
         let mut voiceflow_message = self.voiceflow_client().send_message(voiceflow_session, state, message).await?;
-        if is_end_message(&mut voiceflow_message){
+        if voiceflow_message.trim_end_block(){
             locked_session.set_last_interaction(None).await;
         }
         let response = self.sender().send_message(locked_session.get_chat_id(), voiceflow_message).await?;
@@ -34,7 +35,7 @@ pub trait Client: ClientBase {
         locked_session.set_last_interaction(Some(interaction_time)).await;
         let voiceflow_session = locked_session.voiceflow_session();
         let mut voiceflow_message = self.voiceflow_client().choose_button(voiceflow_session, state, message, button_data).await?;
-        if is_end_message(&mut voiceflow_message){
+        if voiceflow_message.trim_end_block(){
             locked_session.set_last_interaction(None).await;
         }
         let response = self.sender().send_message(locked_session.get_chat_id(), voiceflow_message).await?;
@@ -52,13 +53,4 @@ pub fn get_last_sent_message<R: Responder>(response: &[R]) -> Option<SentMessage
     else{
         None
     };
-}
-pub fn is_end_message(message: &mut VoiceflowMessage) -> bool{
-    if let Some(VoiceflowBlock::End) = message.last() {
-        message.pop();
-        true
-    }
-    else{
-        false
-    }
 }

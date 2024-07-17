@@ -10,18 +10,25 @@ use crate::voiceflow::dialog_blocks::VoiceflowCarousel;
 pub struct TelegramClient{
     bot_id: String,
     voiceflow_client: Arc<VoiceflowClient>,
-    sessions: SessionMap<TelegramSession>,
+    sessions: Arc<SessionMap<TelegramSession>>,
     sender: TelegramSender
 }
 impl TelegramClient{
-    pub fn new(bot_token: String, voiceflow_client: Arc<VoiceflowClient>, telegram_session: Option<Vec<TelegramSession>>, session_duration: Option<i64>, max_sessions_per_moment: usize) -> Self{
+    pub fn new(bot_token: String, voiceflow_client: Arc<VoiceflowClient>, telegram_session: Option<Vec<TelegramSession>>, session_duration: Option<i64>, sessions_cleanup_interval: Option<u64>, max_connections_per_moment: usize) -> Self{
         let bot_id = bot_token.split(':').next().unwrap().to_string();
-        Self{
+        let client = Self{
             bot_id,
             voiceflow_client,
-            sessions: SessionMap::from_sessions(telegram_session, session_duration),
-            sender: TelegramSender::new(max_sessions_per_moment, bot_token)
-        }
+            sessions: Arc::new(SessionMap::from_sessions(telegram_session, session_duration, sessions_cleanup_interval)),
+            sender: TelegramSender::new(max_connections_per_moment, bot_token)
+        };
+        let sessions = client.sessions.clone();
+        tokio::spawn(async move {
+            sessions.start_cleanup().await;
+        });
+
+        client
+
     }
     pub async fn switch_carousel_card(&self, locked_session: &LockedSession<'_, TelegramSession>,  carousel: &VoiceflowCarousel,  message_id: &String, index: usize, interaction_time: i64) -> Result<TelegramResponder, VoiceflousionError> {
         locked_session.set_last_interaction(Some(interaction_time)).await;
@@ -32,16 +39,16 @@ impl ClientBase for TelegramClient {
     type ClientSession = TelegramSession;
     type ClientUpdate = TelegramUpdate;
     type ClientSender = TelegramSender;
-    fn sessions(&self) -> &SessionMap<Self::ClientSession> {
+    fn sessions(&self) -> &Arc<SessionMap<Self::ClientSession>> {
         &self.sessions
     }
     fn voiceflow_client(&self) -> &Arc<VoiceflowClient> {
         &self.voiceflow_client
     }
-
     fn sender(&self) -> &Self::ClientSender {
         &self.sender
     }
+
 }
 #[async_trait]
 impl Client for TelegramClient{

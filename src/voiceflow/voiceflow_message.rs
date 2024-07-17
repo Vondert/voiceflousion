@@ -15,6 +15,15 @@ impl VoiceflowMessage{
     pub fn add_block(&mut self, block: VoiceflowBlock) -> (){
         self.content.push(block);
     }
+    pub fn trim_end_block(&mut self) -> bool{
+        if let Some(VoiceflowBlock::End) = &self.last() {
+            &self.pop();
+            true
+        }
+        else{
+            false
+        }
+    }
 }
 impl Default for VoiceflowMessage{
     fn default() -> Self {

@@ -7,7 +7,7 @@ use tokio::task;
 use warp::Filter;
 use crate::integrations::telegram::{TelegramClient, TelegramUpdate, TelegramSession};
 use crate::integrations::utils::InteractionType;
-use crate::integrations::utils::traits::{Client, Update};
+use crate::integrations::utils::traits::{Client, ClientBase, Update};
 use crate::voiceflow::{VoiceflousionError, VoiceflowClient};
 
 mod voiceflow;
@@ -24,8 +24,7 @@ async fn main() {
     let voiceflow_client = Arc::new(VoiceflowClient::new(vf_api_key, bot_id.clone(), version_id, 10));
 
     let chat_id = "510947895".to_string();
-    let telegram_client = Arc::new(TelegramClient::new(telegram_bot_token, voiceflow_client.clone(), None, None, 10));
-
+    let telegram_client = Arc::new(TelegramClient::new(telegram_bot_token, voiceflow_client.clone(), None, Some(20), Some(60),10));
     let webhook = warp::post()
         .and(warp::path("bot"))
         .and(warp::body::json())

@@ -8,16 +8,16 @@ use crate::voiceflow::{State, VoiceflousionError, VoiceflowBlock, VoiceflowClien
 use crate::voiceflow::dialog_blocks::VoiceflowCarousel;
 
 pub struct TelegramClient{
-    bot_id: String,
+    client_id: String,
     voiceflow_client: Arc<VoiceflowClient>,
     sessions: Arc<SessionMap<TelegramSession>>,
     sender: TelegramSender
 }
 impl TelegramClient{
     pub fn new(bot_token: String, voiceflow_client: Arc<VoiceflowClient>, telegram_session: Option<Vec<TelegramSession>>, session_duration: Option<i64>, sessions_cleanup_interval: Option<u64>, max_connections_per_moment: usize) -> Self{
-        let bot_id = bot_token.split(':').next().unwrap().to_string();
+        let client_id = bot_token.split(':').next().unwrap().to_string();
         let client = Self{
-            bot_id,
+            client_id,
             voiceflow_client,
             sessions: Arc::new(SessionMap::from_sessions(telegram_session, session_duration, sessions_cleanup_interval)),
             sender: TelegramSender::new(max_connections_per_moment, bot_token)
@@ -39,6 +39,10 @@ impl ClientBase for TelegramClient {
     type ClientSession = TelegramSession;
     type ClientUpdate = TelegramUpdate;
     type ClientSender = TelegramSender;
+
+    fn client_id(&self) -> &String {
+        &self.client_id
+    }
     fn sessions(&self) -> &Arc<SessionMap<Self::ClientSession>> {
         &self.sessions
     }
@@ -48,7 +52,6 @@ impl ClientBase for TelegramClient {
     fn sender(&self) -> &Self::ClientSender {
         &self.sender
     }
-
 }
 #[async_trait]
 impl Client for TelegramClient{

@@ -1,28 +1,28 @@
 use std::collections::HashMap;
-use std::ops::Deref;
 use std::sync::Arc;
 use chrono::Utc;
 use tokio::sync::RwLock;
 use tokio::time::{interval, Duration};
+use tokio_util::sync::CancellationToken;
 use crate::integrations::utils::SessionWrapper;
 use crate::integrations::utils::traits::Session;
 
 pub struct SessionMap<S: Session>{
-    sessions: RwLock<HashMap<String, Arc<SessionWrapper<S>>>>,
+    sessions: Arc<RwLock<HashMap<String, Arc<SessionWrapper<S>>>>>,
     cleanup_interval: Option<u64>,
     valid_session_duration: Option<i64>
 }
-impl<S: Session> Deref for SessionMap<S>{
-    type Target = RwLock<HashMap<String, Arc<SessionWrapper<S>>>>;
+/*impl<S: Session> Deref for SessionMap<S>{
+    type Target = Arc<RwLock<HashMap<String, Arc<SessionWrapper<S>>>>>;
 
     fn deref(&self) -> &Self::Target {
         &self.sessions
     }
-}
-impl<S: Session> SessionMap<S>{
-    pub fn new(valid_session_duration: Option<i64>, cleanup_interval: Option<u64>) -> Self {
-        Self{
-            sessions: RwLock::new(HashMap::<String, Arc<SessionWrapper<S>>>::new()),
+}*/
+impl<S: Session> SessionMap<S> {
+    pub(crate) fn new(valid_session_duration: Option<i64>, cleanup_interval: Option<u64>) -> Self {
+        Self {
+            sessions: Arc::new(RwLock::new(HashMap::<String, Arc<SessionWrapper<S>>>::new())),
             valid_session_duration,
             cleanup_interval
         }
@@ -30,18 +30,13 @@ impl<S: Session> SessionMap<S>{
     //pub fn valid_session_duration(&self) -> &Option<i64>{
     //    &self.valid_session_duration
     //}
-    pub fn from_sessions(sessions_vec: Option<Vec<S>>, valid_session_duration: Option<i64>, cleanup_interval: Option<u64>) -> Self{
-        match sessions_vec{
-            Some(vec) =>{
-                let mut hash_map = HashMap::<String, Arc<SessionWrapper<S>>>::new();
-                let _ = vec.into_iter().map(|session| hash_map.insert(session.get_cloned_chat_id(), Arc::new(SessionWrapper::new(session))));
-                Self{
-                    sessions: RwLock::new(hash_map),
-                    valid_session_duration,
-                    cleanup_interval
-                }
-            },
-            None => Self::new(valid_session_duration, cleanup_interval)
+    pub(crate) fn from_sessions(sessions_vec: Vec<S>, valid_session_duration: Option<i64>, cleanup_interval: Option<u64>) -> Self {
+        let mut hash_map = HashMap::<String, Arc<SessionWrapper<S>>>::new();
+        let _ = sessions_vec.into_iter().map(|session| hash_map.insert(session.get_cloned_chat_id(), Arc::new(SessionWrapper::new(session))));
+        Self {
+            sessions: Arc::new(RwLock::new(hash_map)),
+            valid_session_duration,
+            cleanup_interval
         }
     }
     pub async fn get_session(&self, chat_id: &String) -> Option<Arc<SessionWrapper<S>>> {
@@ -60,21 +55,27 @@ impl<S: Session> SessionMap<S>{
             .clone();
         session
     }
-    pub async fn delete_session(&self, chat_id: &String) -> (){
+    pub async fn delete_session(&self, chat_id: &String) -> () {
         let mut write_lock = self.sessions.write().await;
         write_lock.remove(chat_id);
     }
-    pub async fn start_cleanup(&self) -> (){
-        if let Some(seconds) = self.cleanup_interval{
+    pub async fn start_cleanup(&self, cancel_token: Arc<CancellationToken>) -> () {
+        if let Some(seconds) = self.cleanup_interval {
             let mut interval = interval(Duration::from_secs(seconds));
             interval.tick().await;
             loop {
-                interval.tick().await;
-                self.delete_invalid_session().await;
+                tokio::select! {
+                    _ = interval.tick() => {
+                        self.delete_invalid_sessions().await;
+                    }
+                    _ = cancel_token.cancelled() => {
+                        break;
+                    }
+                }
             }
         }
     }
-    pub async fn delete_invalid_session(&self) -> (){
+    pub async fn delete_invalid_sessions(&self) -> () {
         let mut write_lock = self.sessions.write().await;
         let mut sessions_to_remove = vec![];
         for (key, session) in write_lock.iter() {
@@ -86,17 +87,15 @@ impl<S: Session> SessionMap<S>{
             write_lock.remove(&key);
         }
     }
-    async fn is_valid_session(&self, session: &Arc<SessionWrapper<S>>) -> bool{
+    async fn is_valid_session(&self, session: &Arc<SessionWrapper<S>>) -> bool {
         if let Some(last_interaction) = session.get_last_interaction().await {
-            if let Some(duration) = &self.valid_session_duration{
+            if let Some(duration) = &self.valid_session_duration {
                 let now = Utc::now().timestamp();
                 !(now - last_interaction > *duration)
-            }
-            else{
+            } else {
                 true
             }
-        }
-        else{
+        } else {
             false
         }
     }

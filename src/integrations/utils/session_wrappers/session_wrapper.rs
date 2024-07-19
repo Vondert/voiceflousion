@@ -1,5 +1,6 @@
 use std::ops::Deref;
 use std::sync::Arc;
+use std::sync::atomic::Ordering;
 use tokio::sync::{Mutex, MutexGuard, RwLock, RwLockReadGuard, RwLockWriteGuard};
 use crate::integrations::utils::sent_message::SentMessage;
 use crate::integrations::utils::traits::Session;
@@ -51,19 +52,13 @@ impl<S: Session> SessionWrapper<S>{
         let last_interaction = binding.write().await;
         last_interaction
     }
-    pub async fn activate(&self) ->  (){
-        let binding = self.status();
-        let mut write_status = binding.write().await;
-        *write_status = true;
+    pub fn activate(&self) ->  (){
+        self.session.status().store(true, Ordering::Release)
     }
-    pub async fn deactivate(&self) ->  (){
-        let binding = self.status();
-        let mut write_status = binding.write().await;
-        *write_status = false;
+    pub fn deactivate(&self) ->  (){
+        self.session.status().store(false, Ordering::Release)
     }
-    pub async fn is_active(&self) -> bool{
-        let binding = self.status();
-        let status = binding.read().await;
-        *status
+    pub fn is_active(&self) -> bool{
+        self.session.status().load(Ordering::Acquire)
     }
 }

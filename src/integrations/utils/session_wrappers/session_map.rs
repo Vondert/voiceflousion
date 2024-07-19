@@ -1,9 +1,9 @@
 use std::collections::HashMap;
 use std::sync::Arc;
+use std::sync::atomic::{AtomicBool, Ordering};
 use chrono::Utc;
 use tokio::sync::RwLock;
 use tokio::time::{interval, Duration};
-use tokio_util::sync::CancellationToken;
 use crate::integrations::utils::SessionWrapper;
 use crate::integrations::utils::traits::Session;
 
@@ -20,9 +20,6 @@ impl<S: Session> SessionMap<S> {
             cleanup_interval
         }
     }
-    //pub fn valid_session_duration(&self) -> &Option<i64>{
-    //    &self.valid_session_duration
-    //}
     pub(crate) fn from_sessions(sessions_vec: Vec<S>, valid_session_duration: Option<i64>, cleanup_interval: Option<u64>) -> Self {
         let mut hash_map = HashMap::<String, Arc<SessionWrapper<S>>>::new();
         let _ = sessions_vec.into_iter().map(|session| hash_map.insert(session.get_cloned_chat_id(), Arc::new(SessionWrapper::new(session))));
@@ -64,22 +61,20 @@ impl<S: Session> SessionMap<S> {
             write_lock.remove(&key);
         }
     }
-    pub(crate) async fn start_cleanup(&self, cancel_token: Arc<CancellationToken>) -> () {
+    pub(crate) async fn start_cleanup(&self, cancel_token: Arc<AtomicBool>) -> () {
         if let Some(seconds) = self.cleanup_interval {
             let mut interval = interval(Duration::from_secs(seconds));
             interval.tick().await;
             loop {
-                tokio::select! {
-                    _ = interval.tick() => {
-                        self.delete_invalid_sessions().await;
-                    }
-                    _ = cancel_token.cancelled() => {
-                        break;
-                    }
+                interval.tick().await;
+                if cancel_token.load(Ordering::Acquire) {
+                    break;
                 }
+                self.delete_invalid_sessions().await;
             }
         }
     }
+
     async fn is_valid_session(&self, session: &Arc<SessionWrapper<S>>) -> bool {
         if let Some(last_interaction) = session.get_last_interaction().await {
             if let Some(duration) = &self.valid_session_duration {

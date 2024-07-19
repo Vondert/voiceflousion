@@ -1,12 +1,12 @@
 use std::ops::Deref;
 use std::sync::Arc;
-use tokio_util::sync::CancellationToken;
+use std::sync::atomic::{AtomicBool, Ordering};
 use crate::integrations::utils::session_wrappers::SessionMap;
 use crate::integrations::utils::traits::Session;
 
 pub struct SessionsManager<S: Session>{
     session_map: Arc<SessionMap<S>>,
-    cancel_token: Option<Arc<CancellationToken>>,
+    cancel_token: Option<Arc<AtomicBool>>,
 }
 impl<S: Session> Deref for SessionsManager<S>{
     type Target = Arc<SessionMap<S>>;
@@ -32,7 +32,7 @@ impl<S: Session + 'static> SessionsManager<S>{
                 }
             ),
             cancel_token: if is_cleaning {
-                Some(Arc::new(CancellationToken::new()))
+                Some(Arc::new(AtomicBool::new(false)))
             }
             else{
                 None
@@ -53,7 +53,7 @@ impl<S: Session + 'static> SessionsManager<S>{
 impl<S: Session> Drop for SessionsManager<S> {
     fn drop(&mut self) {
         if let Some(token) = &mut self.cancel_token{
-            token.cancel();
+            token.store(true, Ordering::Release);
         }
     }
 }

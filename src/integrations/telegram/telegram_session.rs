@@ -1,4 +1,5 @@
 use std::sync::Arc;
+use std::sync::atomic::AtomicBool;
 use tokio::sync::RwLock;
 use crate::integrations::utils::traits::{Session};
 use crate::voiceflow::{VoiceflowSession};
@@ -6,7 +7,7 @@ use crate::voiceflow::{VoiceflowSession};
 pub struct TelegramSession{
     chat_id: String,
     voiceflow_session: VoiceflowSession,
-    status: Arc<RwLock<bool>>,
+    status: Arc<AtomicBool>,
     last_interaction: Arc<RwLock<Option<i64>>>,
 }
 impl TelegramSession{
@@ -14,7 +15,7 @@ impl TelegramSession{
         Self{
             chat_id,
             voiceflow_session,
-            status: Arc::new(RwLock::new(true)),
+            status: Arc::new(AtomicBool::new(true)),
             last_interaction: Arc::new(RwLock::new(last_interaction))
         }
     }
@@ -33,7 +34,7 @@ impl Session for TelegramSession{
         &self.last_interaction
     }
 
-    fn status(&self) -> &Arc<RwLock<bool>> {
+    fn status(&self) -> &Arc<AtomicBool> {
         &self.status
     }
 

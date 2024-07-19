@@ -1,5 +1,5 @@
 use serde_json::Value;
-use crate::integrations::utils::InteractionType;
+use crate::integrations::utils::subtypes::InteractionType;
 use crate::integrations::utils::traits::Update;
 use crate::voiceflow::VoiceflousionError;
 

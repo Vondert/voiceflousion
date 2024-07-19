@@ -1,6 +1,5 @@
-use chrono::Utc;
 use serde_json::Value;
-use crate::integrations::utils::interaction_type::InteractionType;
+use crate::integrations::utils::subtypes::InteractionType;
 use crate::voiceflow::VoiceflousionError;
 
 pub trait Update: Sized + Send + Sync{

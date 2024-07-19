@@ -2,7 +2,7 @@ use std::ops::Deref;
 use std::sync::Arc;
 use std::sync::atomic::Ordering;
 use tokio::sync::{Mutex, MutexGuard, RwLock, RwLockReadGuard, RwLockWriteGuard};
-use crate::integrations::utils::sent_message::SentMessage;
+use crate::integrations::utils::subtypes::SentMessage;
 use crate::integrations::utils::traits::Session;
 use crate::voiceflow::VoiceflousionError;
 
@@ -37,20 +37,13 @@ impl<S: Session> SessionWrapper<S>{
         let message = binding.read().await;
         message
     }
-    pub async fn get_last_interaction(&self) -> Option<i64> {
-        let binding = self.last_interaction();
-        let last_interaction = binding.read().await;
-        *last_interaction
-    }
     pub(super) async fn write_previous_message(&self) -> RwLockWriteGuard<'_, Option<SentMessage>>{
         let binding = &self.previous_message;
         let previous = binding.write().await;
         previous
     }
-    pub(super) async fn write_last_interaction(&self) ->  RwLockWriteGuard<'_, Option<i64>>{
-        let binding = self.last_interaction();
-        let last_interaction = binding.write().await;
-        last_interaction
+    pub fn get_last_interaction(&self) -> Option<i64> {
+        self.last_interaction().load(Ordering::SeqCst)
     }
     pub fn activate(&self) ->  (){
         self.session.status().store(true, Ordering::Release)

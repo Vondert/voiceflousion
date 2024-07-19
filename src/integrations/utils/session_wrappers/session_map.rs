@@ -4,7 +4,7 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use chrono::Utc;
 use tokio::sync::RwLock;
 use tokio::time::{interval, Duration};
-use crate::integrations::utils::SessionWrapper;
+use crate::integrations::utils::session_wrappers::SessionWrapper;
 use crate::integrations::utils::traits::Session;
 
 pub struct SessionMap<S: Session>{
@@ -74,9 +74,8 @@ impl<S: Session> SessionMap<S> {
             }
         }
     }
-
     async fn is_valid_session(&self, session: &Arc<SessionWrapper<S>>) -> bool {
-        if let Some(last_interaction) = session.get_last_interaction().await {
+        if let Some(last_interaction) = session.get_last_interaction() {
             if let Some(duration) = &self.valid_session_duration {
                 let now = Utc::now().timestamp();
                 !(now - last_interaction > *duration)

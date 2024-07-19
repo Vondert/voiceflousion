@@ -6,7 +6,7 @@ use serde_json::Value;
 use tokio::task;
 use warp::Filter;
 use crate::integrations::telegram::{TelegramClient, TelegramUpdate, TelegramSession};
-use crate::integrations::utils::{ClientBuilder, InteractionType};
+use crate::integrations::utils::ClientBuilder;
 use crate::integrations::utils::traits::{Client, ClientBase, Update};
 use crate::voiceflow::{VoiceflousionError, VoiceflowClient};
 
@@ -25,11 +25,17 @@ async fn main() {
     let voiceflow_client = Arc::new(VoiceflowClient::new(vf_api_key, bot_id.clone(), version_id, 10));
     let chat_id = "510947895".to_string();
 
-    let client_builder = ClientBuilder::<TelegramClient>::new(telegram_bot_id, telegram_bot_token, voiceflow_client.clone(), 10)
+    let client_builder = ClientBuilder::<TelegramClient>::new(telegram_bot_id.clone(), telegram_bot_token.clone(), voiceflow_client.clone(), 10)
         .add_session_duration(20)
         .add_cleaning_interval(60)
         .allow_sessions_cleaning();
-
+    // {
+    //     let client_builder1 = ClientBuilder::<TelegramClient>::new(telegram_bot_id, telegram_bot_token, voiceflow_client.clone(), 10)
+    //         .add_session_duration(20)
+    //         .add_cleaning_interval(60)
+    //         .allow_sessions_cleaning();
+    //     let telegram_client = Arc::new(TelegramClient::new(client_builder1));
+    // }
     let telegram_client = Arc::new(TelegramClient::new(client_builder));
 
     let webhook = warp::post()

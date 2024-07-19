@@ -1,6 +1,6 @@
 use async_trait::async_trait;
-use crate::integrations::utils::sent_message::SentMessage;
-use crate::integrations::utils::LockedSession;
+use crate::integrations::utils::session_wrappers::LockedSession;
+use crate::integrations::utils::subtypes::SentMessage;
 use crate::integrations::utils::traits::{ClientBase, Responder, Sender, Session};
 use crate::voiceflow::{State, VoiceflousionError};
 
@@ -8,11 +8,11 @@ use crate::voiceflow::{State, VoiceflousionError};
 #[async_trait]
 pub trait Client: ClientBase {
     async fn launch_voiceflow_dialog(&self, locked_session: &LockedSession<Self::ClientSession>,  interaction_time: i64, state: Option<State>) -> Result<Vec<<Self::ClientSender as Sender>::SenderResponder>, VoiceflousionError>{
-        locked_session.set_last_interaction(Some(interaction_time)).await;
+        locked_session.set_last_interaction(Some(interaction_time));
         let voiceflow_session = locked_session.voiceflow_session();
         let mut voiceflow_message = self.voiceflow_client().launch_dialog(voiceflow_session, state).await?;
         if voiceflow_message.trim_end_block(){
-            locked_session.set_last_interaction(None).await;
+            locked_session.set_last_interaction(None);
         }
         let response = self.sender().send_message(locked_session.get_chat_id(), voiceflow_message).await?;
         let bot_last_message = get_last_sent_message(&response);
@@ -20,11 +20,11 @@ pub trait Client: ClientBase {
         Ok(response)
     }
     async fn send_message_to_voiceflow_dialog(&self, locked_session: &LockedSession<Self::ClientSession>, interaction_time: i64, message: &String, state: Option<State>) -> Result<Vec<<Self::ClientSender as Sender>::SenderResponder>, VoiceflousionError> {
-        locked_session.set_last_interaction(Some(interaction_time)).await;
+        locked_session.set_last_interaction(Some(interaction_time));
         let voiceflow_session = locked_session.voiceflow_session();
         let mut voiceflow_message = self.voiceflow_client().send_message(voiceflow_session, state, message).await?;
         if voiceflow_message.trim_end_block(){
-            locked_session.set_last_interaction(None).await;
+            locked_session.set_last_interaction(None);
         }
         let response = self.sender().send_message(locked_session.get_chat_id(), voiceflow_message).await?;
         let bot_last_message = get_last_sent_message(&response);
@@ -32,11 +32,11 @@ pub trait Client: ClientBase {
         Ok(response)
     }
     async fn choose_button_in_voiceflow_dialog(&self, locked_session: &LockedSession<Self::ClientSession>,  interaction_time: i64, message: &String, button_data: &String, state: Option<State>) -> Result<Vec<<Self::ClientSender as Sender>::SenderResponder>, VoiceflousionError> {
-        locked_session.set_last_interaction(Some(interaction_time)).await;
+        locked_session.set_last_interaction(Some(interaction_time));
         let voiceflow_session = locked_session.voiceflow_session();
         let mut voiceflow_message = self.voiceflow_client().choose_button(voiceflow_session, state, message, button_data).await?;
         if voiceflow_message.trim_end_block(){
-            locked_session.set_last_interaction(None).await;
+            locked_session.set_last_interaction(None);
         }
         let response = self.sender().send_message(locked_session.get_chat_id(), voiceflow_message).await?;
         let bot_last_message = get_last_sent_message(&response);

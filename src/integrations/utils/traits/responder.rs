@@ -1,6 +1,6 @@
 use async_trait::async_trait;
 use reqwest::Response;
-use crate::integrations::utils::sent_message::SentMessage;
+use crate::integrations::utils::subtypes::SentMessage;
 use crate::voiceflow::{VoiceflousionError, VoiceflowBlock};
 
 #[async_trait]

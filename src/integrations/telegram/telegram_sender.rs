@@ -1,7 +1,7 @@
 use async_trait::async_trait;
 use serde_json::{json, Value};
 use crate::integrations::telegram::TelegramResponder;
-use crate::integrations::utils::SenderHttpClient;
+use crate::integrations::utils::subtypes::SenderHttpClient;
 use crate::integrations::utils::traits::{Responder, Sender};
 use crate::voiceflow::{VoiceflousionError, VoiceflowBlock};
 use crate::voiceflow::dialog_blocks::{VoiceflowButtons, VoiceflowCard, VoiceflowCarousel, VoiceflowImage, VoiceflowText};

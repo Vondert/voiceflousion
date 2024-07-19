@@ -3,7 +3,9 @@ use std::sync::Arc;
 use async_trait::async_trait;
 use crate::integrations::utils::traits::{ClientBase, Client, Update, Session, Sender};
 use crate::integrations::telegram::{TelegramResponder, TelegramSender, TelegramSession, TelegramUpdate};
-use crate::integrations::utils::{ClientBuilder, InteractionType, LockedSession, SessionsManager};
+use crate::integrations::utils::{ClientBuilder, SessionsManager};
+use crate::integrations::utils::session_wrappers::LockedSession;
+use crate::integrations::utils::subtypes::InteractionType;
 use crate::voiceflow::{State, VoiceflousionError, VoiceflowBlock, VoiceflowClient};
 use crate::voiceflow::dialog_blocks::VoiceflowCarousel;
 
@@ -32,7 +34,7 @@ impl TelegramClient{
         }
     }
     pub async fn switch_carousel_card(&self, locked_session: &LockedSession<'_, TelegramSession>,  carousel: &VoiceflowCarousel,  message_id: &String, index: usize, interaction_time: i64) -> Result<TelegramResponder, VoiceflousionError> {
-        locked_session.set_last_interaction(Some(interaction_time)).await;
+        locked_session.set_last_interaction(Some(interaction_time));
         self.sender.update_carousel(carousel, index, locked_session.get_chat_id(), message_id).await
     }
 }

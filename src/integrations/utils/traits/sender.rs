@@ -1,5 +1,5 @@
 use async_trait::async_trait;
-use crate::integrations::utils::SenderHttpClient;
+use crate::integrations::utils::subtypes::SenderHttpClient;
 use crate::integrations::utils::traits::Responder;
 use crate::voiceflow::{VoiceflousionError, VoiceflowBlock, VoiceflowMessage};
 use crate::voiceflow::dialog_blocks::{VoiceflowButtons, VoiceflowCard, VoiceflowCarousel, VoiceflowImage, VoiceflowText};

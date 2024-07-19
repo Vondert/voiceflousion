@@ -1,8 +1,9 @@
 use std::ops::Deref;
 use std::sync::Arc;
+use std::sync::atomic::Ordering;
 use tokio::sync::MutexGuard;
-use crate::integrations::utils::sent_message::SentMessage;
-use crate::integrations::utils::SessionWrapper;
+use crate::integrations::utils::session_wrappers::SessionWrapper;
+use crate::integrations::utils::subtypes::SentMessage;
 use crate::integrations::utils::traits::Session;
 use crate::voiceflow::VoiceflousionError;
 
@@ -29,11 +30,7 @@ impl<'g, S: Session> LockedSession<'g, S>{
         let mut write = self.session.write_previous_message().await;
         *write = message;
     }
-    pub async fn set_last_interaction(&self, interaction: Option<i64>) -> (){
-        let mut write = self.write_last_interaction().await;
-        *write = interaction;
+    pub fn set_last_interaction(&self, last_interaction: Option<i64>) -> (){
+        self.session.last_interaction().store(last_interaction, Ordering::SeqCst)
     }
-    //pub fn session(&self) -> Arc<SessionWrapper<S>>{
-    //    self.session.clone()
-    //}
 }

@@ -3,7 +3,7 @@ use std::sync::Arc;
 use async_trait::async_trait;
 use crate::integrations::utils::traits::{ClientBase, Client, Update, Session, Sender};
 use crate::integrations::telegram::{TelegramResponder, TelegramSender, TelegramSession, TelegramUpdate};
-use crate::integrations::utils::{InteractionType, LockedSession, SessionsManager};
+use crate::integrations::utils::{ClientBuilder, InteractionType, LockedSession, SessionsManager};
 use crate::voiceflow::{State, VoiceflousionError, VoiceflowBlock, VoiceflowClient};
 use crate::voiceflow::dialog_blocks::VoiceflowCarousel;
 
@@ -14,13 +14,21 @@ pub struct TelegramClient{
     sender: TelegramSender
 }
 impl TelegramClient{
-    pub fn new(bot_token: String, voiceflow_client: Arc<VoiceflowClient>, telegram_session: Option<Vec<TelegramSession>>, session_duration: Option<i64>, sessions_cleanup_interval: Option<u64>, max_connections_per_moment: usize, is_ceaning: bool) -> Self{
-        let client_id = bot_token.split(':').next().unwrap().to_string();
+    pub fn new(builder: ClientBuilder<Self>) -> Self{
+        let client_id = builder.client_id().clone();
+        let api_key = builder.api_key().clone();
+        let voiceflow_client = builder.voiceflow_client().clone();
+        let max_connections_per_moment = builder.max_connections_per_moment();
+        let is_cleaning = builder.is_cleaning();
+        let session_duration = builder.session_duration();
+        let sessions_cleanup_interval = builder.sessions_cleanup_interval();
+        let sessions= builder.sessions();
+
         Self{
             client_id,
             voiceflow_client,
-            sessions: SessionsManager::new(telegram_session, session_duration, sessions_cleanup_interval, is_ceaning),
-            sender: TelegramSender::new(max_connections_per_moment, bot_token)
+            sessions: SessionsManager::new(sessions, session_duration, sessions_cleanup_interval, is_cleaning),
+            sender: TelegramSender::new(max_connections_per_moment, api_key)
         }
     }
     pub async fn switch_carousel_card(&self, locked_session: &LockedSession<'_, TelegramSession>,  carousel: &VoiceflowCarousel,  message_id: &String, index: usize, interaction_time: i64) -> Result<TelegramResponder, VoiceflousionError> {

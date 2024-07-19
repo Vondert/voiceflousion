@@ -12,13 +12,6 @@ pub struct SessionMap<S: Session>{
     cleanup_interval: Option<u64>,
     valid_session_duration: Option<i64>
 }
-/*impl<S: Session> Deref for SessionMap<S>{
-    type Target = Arc<RwLock<HashMap<String, Arc<SessionWrapper<S>>>>>;
-
-    fn deref(&self) -> &Self::Target {
-        &self.sessions
-    }
-}*/
 impl<S: Session> SessionMap<S> {
     pub(crate) fn new(valid_session_duration: Option<i64>, cleanup_interval: Option<u64>) -> Self {
         Self {
@@ -59,7 +52,19 @@ impl<S: Session> SessionMap<S> {
         let mut write_lock = self.sessions.write().await;
         write_lock.remove(chat_id);
     }
-    pub async fn start_cleanup(&self, cancel_token: Arc<CancellationToken>) -> () {
+    pub async fn delete_invalid_sessions(&self) -> () {
+        let mut write_lock = self.sessions.write().await;
+        let mut sessions_to_remove = vec![];
+        for (key, session) in write_lock.iter() {
+            if !self.is_valid_session(session).await {
+                sessions_to_remove.push(key.clone());
+            }
+        }
+        for key in sessions_to_remove {
+            write_lock.remove(&key);
+        }
+    }
+    pub(crate) async fn start_cleanup(&self, cancel_token: Arc<CancellationToken>) -> () {
         if let Some(seconds) = self.cleanup_interval {
             let mut interval = interval(Duration::from_secs(seconds));
             interval.tick().await;
@@ -73,18 +78,6 @@ impl<S: Session> SessionMap<S> {
                     }
                 }
             }
-        }
-    }
-    pub async fn delete_invalid_sessions(&self) -> () {
-        let mut write_lock = self.sessions.write().await;
-        let mut sessions_to_remove = vec![];
-        for (key, session) in write_lock.iter() {
-            if !self.is_valid_session(session).await {
-                sessions_to_remove.push(key.clone());
-            }
-        }
-        for key in sessions_to_remove {
-            write_lock.remove(&key);
         }
     }
     async fn is_valid_session(&self, session: &Arc<SessionWrapper<S>>) -> bool {

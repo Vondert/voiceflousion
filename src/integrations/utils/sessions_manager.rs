@@ -18,26 +18,27 @@ impl<S: Session> Deref for SessionsManager<S>{
 impl<S: Session + 'static> SessionsManager<S>{
     pub fn new(sessions_option: Option<Vec<S>>, valid_session_duration: Option<i64>, cleanup_interval: Option<u64>, is_cleaning: bool) -> Self{
         let manager = Self{
-                session_map: Arc::new(
-                    match sessions_option{
-                        None =>  SessionMap::new(
-                            valid_session_duration,
-                            cleanup_interval
-                        ),
-                        Some(sessions) => SessionMap::from_sessions(
-                            sessions,
-                            valid_session_duration,
-                            cleanup_interval
-                        )
-                    }
-                ),
-                cancel_token: if is_cleaning {
-                        Some(Arc::new(CancellationToken::new()))
-                    }
-                    else{
-                        None
-                    }
-                };
+            session_map: Arc::new(
+                match sessions_option{
+                    None =>  SessionMap::new(
+                        valid_session_duration,
+                        cleanup_interval
+                    ),
+                    Some(sessions) => SessionMap::from_sessions(
+                        sessions,
+                        valid_session_duration,
+                        cleanup_interval
+                    )
+                }
+            ),
+            cancel_token: if is_cleaning {
+                Some(Arc::new(CancellationToken::new()))
+            }
+            else{
+                None
+            }
+        };
+
         let sessions_map = manager.session_map.clone();
         if let Some(token) = manager.cancel_token.clone(){
             let cancel_token = token.clone();

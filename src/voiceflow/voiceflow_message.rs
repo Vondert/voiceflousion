@@ -17,7 +17,7 @@ impl VoiceflowMessage{
     }
     pub fn trim_end_block(&mut self) -> bool{
         if let Some(VoiceflowBlock::End) = &self.last() {
-            &self.pop();
+            let _ = &self.pop();
             true
         }
         else{

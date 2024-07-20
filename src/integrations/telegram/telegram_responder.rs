@@ -50,7 +50,7 @@ impl Responder for TelegramResponder {
     }
 
     async fn from_response(response: Response, content: VoiceflowBlock) -> Result<Self, VoiceflousionError> {
-        let body = response.json::<ResponseBody>().await.map_err(|e| VoiceflousionError::RequestError(e.to_string()))?;
+        let body = response.json::<ResponseBody>().await.map_err(|e| VoiceflousionError::ClientResponseReadingError("TelegramResponder".to_string(), e.to_string()))?;
 
         let result = body.result;
 

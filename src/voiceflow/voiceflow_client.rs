@@ -61,7 +61,7 @@ impl VoiceflowClient{
             .body(body.to_json()).send().await;
         match response{
             Ok(valid_response) => Ok(VoiceflowResponse::new(valid_response)),
-            Err(e) => Err(VoiceflousionError::RequestError(e.to_string()))
+            Err(e) => Err(VoiceflousionError::VoiceflowRequestError(self.project_id.clone(), self.version_id.clone(), e.to_string()))
         }
     }
 }

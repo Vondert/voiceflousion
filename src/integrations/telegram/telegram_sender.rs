@@ -22,7 +22,8 @@ impl TelegramSender{
     }
     pub async fn update_carousel(&self, carousel: &VoiceflowCarousel, index: usize, chat_id: &String, message_id: &String) -> Result<TelegramResponder, VoiceflousionError>{
         let api_url = format!("{}{}/editMessageMedia", TELEGRAM_API_URL, &self.api_key);
-        let card = carousel.get(index).ok_or_else(|| VoiceflousionError::RequestError("Card out of bounds".to_string()))?;
+        let card = carousel.get(index)
+            .ok_or_else(|| VoiceflousionError::ClientRequestInvalidBodyError("TelegramSender update_carousel".to_string(), format!("Provided card index {} is out of bounds of {} length", index, carousel.len())))?;
         let mut inline_keyboard: Vec<Vec<Value>> = if let Some(buttons) = card.buttons(){
             buttons_to_keyboard(buttons)
         }
@@ -54,13 +55,13 @@ impl TelegramSender{
             }
         });
         let response = self.sender_http_client.post(&api_url).json(&body).send()
-            .await.map_err(|e| VoiceflousionError::RequestError(e.to_string()))?;
+            .await.map_err(|e| VoiceflousionError::ClientRequestError("TelegramSender update_carousel".to_string(), e.to_string()))?;
 
         if response.status().is_success() {
            TelegramResponder::from_response(response, VoiceflowBlock::Card(card.clone())).await
         } else {
             let error_text = response.text().await.unwrap_or_default();
-            Err(VoiceflousionError::RequestError(error_text))
+            Err(VoiceflousionError::ClientRequestError("TelegramSender update_carousel".to_string(), error_text))
         }
     }
 }
@@ -84,13 +85,13 @@ impl Sender for TelegramSender{
         });
 
         let response = sender_http_client.post(&api_url).json(&body).send()
-            .await.map_err(|error| VoiceflousionError::RequestError(error.to_string()))?;
+            .await.map_err(|e| VoiceflousionError::ClientRequestError("TelegramSender send_text".to_string(), e.to_string()))?;
 
         if response.status().is_success() {
             Self::SenderResponder::from_response(response, VoiceflowBlock::Text(text)).await
         } else {
             let error_text = response.text().await.unwrap_or_default();
-            Err(VoiceflousionError::RequestError(error_text))
+            Err(VoiceflousionError::ClientRequestError("TelegramSender send_text".to_string(), error_text))
         }
     }
 
@@ -102,13 +103,13 @@ impl Sender for TelegramSender{
         });
 
         let response = sender_http_client.post(&api_url).json(&body).send()
-            .await.map_err(|error| VoiceflousionError::RequestError(error.to_string()))?;
+            .await.map_err(|e| VoiceflousionError::ClientRequestError("TelegramSender send_image".to_string(), e.to_string()))?;
 
         if response.status().is_success() {
             Self::SenderResponder::from_response(response, VoiceflowBlock::Image(image)).await
         } else {
             let error_text = response.text().await.unwrap_or_default();
-            Err(VoiceflousionError::RequestError(error_text))
+            Err(VoiceflousionError::ClientRequestError("TelegramSender send_image".to_string(), error_text))
         }
     }
 
@@ -146,13 +147,13 @@ impl Sender for TelegramSender{
         };
 
         let response = sender_http_client.post(&api_url).json(&body).send()
-            .await.map_err(|error| VoiceflousionError::RequestError(error.to_string()))?;
+            .await.map_err(|e| VoiceflousionError::ClientRequestError("TelegramSender send_buttons".to_string(), e.to_string()))?;
 
         if response.status().is_success() {
             Self::SenderResponder::from_response(response, VoiceflowBlock::Buttons(buttons)).await
         } else {
             let error_text = response.text().await.unwrap_or_default();
-            Err(VoiceflousionError::RequestError(error_text))
+            Err(VoiceflousionError::ClientRequestError("TelegramSender send_buttons".to_string(), error_text))
         }
     }
 
@@ -192,21 +193,23 @@ impl Sender for TelegramSender{
         };
 
         let response = sender_http_client.post(&api_url).json(&body).send()
-            .await.map_err(|error| VoiceflousionError::RequestError(error.to_string()))?;
+            .await.map_err(|e| VoiceflousionError::ClientRequestError("TelegramSender send_card".to_string(), e.to_string()))?;
 
         if response.status().is_success() {
             Self::SenderResponder::from_response(response, VoiceflowBlock::Card(card)).await
         } else {
             let error_text = response.text().await.unwrap_or_default();
-            Err(VoiceflousionError::RequestError(error_text))
+            Err(VoiceflousionError::ClientRequestError("TelegramSender send_card".to_string(), error_text))
         }
     }
     async fn send_carousel(&self, carousel: VoiceflowCarousel, chat_id: &String, sender_http_client: &SenderHttpClient, api_key: &String) -> Result<Self::SenderResponder, VoiceflousionError> {
         if !carousel.is_full(){
-            return Err(VoiceflousionError::RequestError("Carousel has cards without images".to_string()));
+            return Err(VoiceflousionError::ClientRequestInvalidBodyError("TelegramSender send_carousel".to_string(), "Provided carousel is empty!".to_string()));
         }
         let api_url = format!("{}{}/sendPhoto", TELEGRAM_API_URL, api_key);
-        let card = carousel.get(0).ok_or_else(|| VoiceflousionError::RequestError("Card out of bounds".to_string()))?;
+        let card = carousel.get(0)
+            .ok_or_else(|| VoiceflousionError::ClientRequestInvalidBodyError("TelegramSender send_carousel".to_string(), format!("Provided card index {} is out of bounds of {} length", 0, carousel.len())))?;
+
         let title = card.title().clone().unwrap_or(String::new());
         let description = card.description().clone().unwrap_or(String::new());
 
@@ -237,13 +240,13 @@ impl Sender for TelegramSender{
         };
 
         let response = sender_http_client.post(&api_url).json(&body).send()
-            .await.map_err(|error| VoiceflousionError::RequestError(error.to_string()))?;
+            .await.map_err(|e| VoiceflousionError::ClientRequestError("TelegramSender send_carousel".to_string(), e.to_string()))?;
 
         if response.status().is_success() {
             Self::SenderResponder::from_response(response, VoiceflowBlock::Carousel(carousel)).await
         } else {
             let error_text = response.text().await.unwrap_or_default();
-            Err(VoiceflousionError::RequestError(error_text))
+            Err(VoiceflousionError::ClientRequestError("TelegramSender send_carousel".to_string(), error_text))
         }
     }
 }

@@ -18,7 +18,7 @@ impl VoiceflowResponse{
 }
 impl VoiceflowResponse{
     pub(crate) async fn to_blocks(self) -> Result<Vec<VoiceflowResponseBlock>, VoiceflousionError> {
-        let text = self.response.text().await.map_err(|error| VoiceflousionError::ResponseReadingError(error.to_string()))?;
+        let text = self.response.text().await.map_err(|error| VoiceflousionError::VoiceflowResponseReadingError(error.to_string()))?;
         let events = parse_sse(text.lines());
 
         let mut blocks = Vec::new();

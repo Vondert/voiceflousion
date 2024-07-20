@@ -31,11 +31,11 @@ impl FromValue for VoiceflowImage{
     fn from_value(value: &Value) -> Result<Option<Self>, Self::Error> {
         let payload = value.get("trace")
             .and_then(|trace| trace.get("payload"))
-            .ok_or_else(|| VoiceflousionError::BlockConvertationError(("Image".to_string(), value.clone())))?;
+            .ok_or_else(|| VoiceflousionError::VoiceflowBlockConvertationError(("VoiceflowImage image payload".to_string(), value.clone())))?;
 
         let url = payload.get("image")
             .and_then(|image| image.as_str())
-            .ok_or_else(|| VoiceflousionError::BlockConvertationError(("Image".to_string(), value.clone())))?
+            .ok_or_else(|| VoiceflousionError::VoiceflowBlockConvertationError(("VoiceflowImage image url".to_string(), value.clone())))?
             .to_string();
 
         let height = payload.get("dimensions")

@@ -33,10 +33,10 @@ impl FromValue for VoiceflowCarousel{
     fn from_value(value: &Value) -> Result<Option<Self>, Self::Error> {
         let payload = value.get("trace")
             .and_then(|trace| trace.get("payload"))
-            .ok_or_else(|| VoiceflousionError::BlockConvertationError(("Carousel payload".to_string(), value.clone())))?;
+            .ok_or_else(|| VoiceflousionError::VoiceflowBlockConvertationError(("VoiceflowCarousel carousel payload".to_string(), value.clone())))?;
 
         let cards_value = payload.get("cards").and_then(|cards| cards.as_array())
-            .ok_or_else(|| VoiceflousionError::BlockConvertationError(("Carousel Cards".to_string(), value.clone())))?;
+            .ok_or_else(|| VoiceflousionError::VoiceflowBlockConvertationError(("VoiceflowCarousel cards value".to_string(), value.clone())))?;
 
         let cards_option: Result<Vec<Option<VoiceflowCard>>, Self::Error> = cards_value.into_iter().map(|card| VoiceflowCard::from_value(card)).collect();
         let cards: Vec<VoiceflowCard> = cards_option?.into_iter().filter_map(|card| card).collect();

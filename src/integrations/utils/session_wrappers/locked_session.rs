@@ -20,7 +20,7 @@ impl<'g> Deref for LockedSession<'g>{
 impl<'g> LockedSession<'g>{
     pub fn try_from_session(session: &'g Arc<Session>) -> Result<Self, VoiceflousionError>{
         let binding = &session.lock;
-        let guard = binding.try_lock().map_err(|_| VoiceflousionError::SessionLockError)?;
+        let guard = binding.try_lock().map_err(|_| VoiceflousionError::SessionLockError(session.get_cloned_chat_id()))?;
 
         Ok(Self{
             session,

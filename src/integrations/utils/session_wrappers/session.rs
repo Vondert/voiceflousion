@@ -13,7 +13,6 @@ pub struct Session {
     pub(super) lock: Arc<Mutex<bool>>,
 }
 
-
 impl Session {
     pub fn new(chat_id: String, last_interaction: Option<i64>, status: bool) -> Self{
         let voiceflow_session = VoiceflowSession::from_chat_id(&chat_id);

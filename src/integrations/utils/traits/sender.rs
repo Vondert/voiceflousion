@@ -39,7 +39,7 @@ pub trait Sender: Send + Sync{
                     }
                 }
                 _ => {
-                    return Err(VoiceflousionError::RequestError("Unexpected block type for message".to_string()))
+                    return Err(VoiceflousionError::ClientRequestInvalidBodyError("Sender send_message".to_string(), "Unsendable block type in the VoiceflowMessage".to_string()))
                 },
             }
         }

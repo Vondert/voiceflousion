@@ -10,7 +10,7 @@ pub trait Update: Sized + Send + Sync{
     fn from_request_body(body: Value) -> Result<Self, VoiceflousionError>;
     fn is_deprecated(&self, last_response_time: i64) -> Result<(), VoiceflousionError>{
         if last_response_time > self.interaction_time(){
-            return Err(VoiceflousionError::RequestError("Deprecated message".to_string()));
+            return Err(VoiceflousionError::DeprecatedError(self.chat_id().clone(), self.update_id().clone()));
         }
         Ok(())
     }

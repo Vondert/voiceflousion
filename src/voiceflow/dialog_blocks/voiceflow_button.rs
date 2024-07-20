@@ -33,22 +33,22 @@ impl FromValue for VoiceflowButton{
     fn from_value(value: &Value) -> Result<Option<Self>, Self::Error> {
         let name = value.get("name")
             .and_then(|name| name.as_str())
-            .ok_or_else(|| VoiceflousionError::BlockConvertationError(("Button".to_string(), value.clone())))?
+            .ok_or_else(|| VoiceflousionError::VoiceflowBlockConvertationError(("VoiceflowButton button name".to_string(), value.clone())))?
             .to_string();
 
         let request = value.get("request")
-            .ok_or_else(|| VoiceflousionError::BlockConvertationError(("Button".to_string(), value.clone())))?;
+            .ok_or_else(|| VoiceflousionError::VoiceflowBlockConvertationError(("VoiceflowButton button request".to_string(), value.clone())))?;
 
         let path = request.get("type")
             .and_then(|path|  path.as_str())
-            .ok_or_else(|| VoiceflousionError::BlockConvertationError(("Button".to_string(), value.clone())))?
+            .ok_or_else(|| VoiceflousionError::VoiceflowBlockConvertationError(("VoiceflowButton button path".to_string(), value.clone())))?
             .to_string();
 
 
         let actions = request.get("payload")
             .and_then(|payload| payload.get("actions"))
             .and_then(|actions| actions.as_array())
-            .ok_or_else(|| VoiceflousionError::BlockConvertationError(("Button".to_string(), value.clone())))?;
+            .ok_or_else(|| VoiceflousionError::VoiceflowBlockConvertationError(("VoiceflowButton button actions".to_string(), value.clone())))?;
 
         let action_type = if let Some(action) = actions.iter().find(|action| {
                 action.get("type")
@@ -60,7 +60,7 @@ impl FromValue for VoiceflowButton{
                     .get("payload")
                     .and_then(|payload| payload.get("url"))
                     .and_then(|url| url.as_str())
-                    .ok_or_else(|| VoiceflousionError::BlockConvertationError(("Button".to_string(), value.clone())))?
+                    .ok_or_else(|| VoiceflousionError::VoiceflowBlockConvertationError(("VoiceflowButton button url".to_string(), value.clone())))?
                     .to_string();
                 VoiceflowButtonActionType::OpenUrl(url)
             } else {

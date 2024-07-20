@@ -39,7 +39,7 @@ impl FromValue for VoiceflowButtons{
             .and_then(|payload| payload.get("buttons")){
             None => value.get("buttons").and_then(|buttons| buttons.as_array()),
             Some(buttons) => buttons.as_array()
-        }.ok_or_else(|| VoiceflousionError::BlockConvertationError(("Buttons".to_string(), value.clone())))?;
+        }.ok_or_else(|| VoiceflousionError::VoiceflowBlockConvertationError(("VoiceflowButtons buttons value".to_string(), value.clone())))?;
 
 
         let buttons_option: Result<Vec<Option<VoiceflowButton>>, Self::Error> = buttons_value.into_iter()

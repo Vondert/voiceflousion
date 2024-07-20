@@ -58,18 +58,18 @@ impl Update for TelegramUpdate{
         else {
             body.get("callback_query").and_then(|q| q.get("message"))
         })
-        .ok_or_else(|| VoiceflousionError::RequestError("Missing message data".into()))?;
+        .ok_or_else(|| VoiceflousionError::ClientUpdateConvertationError("TelegramUpdate message".to_string(), body.clone()))?;
 
         let chat_id = update_data.get("chat")
             .and_then(|chat| chat.get("id"))
             .and_then(|id| id.as_i64())
             .map(|id| id.to_string())
-            .ok_or_else(|| VoiceflousionError::RequestError("Missing chat id".into()))?;
+            .ok_or_else(|| VoiceflousionError::ClientUpdateConvertationError("TelegramUpdate chat id".to_string(), update_data.clone()))?;
 
         let message_id = update_data.get("message_id")
             .and_then(|id| id.as_i64())
             .map(|id| id.to_string())
-            .ok_or_else(|| VoiceflousionError::RequestError("Missing message id".into()))?;
+            .ok_or_else(|| VoiceflousionError::ClientUpdateConvertationError("TelegramUpdate message id".to_string(), update_data.clone()))?;
 
         let text = if is_message {
             update_data.get("text").and_then(|t| t.as_str()).unwrap_or_default()
@@ -79,19 +79,19 @@ impl Update for TelegramUpdate{
 
         let interaction_time = update_data.get("date")
             .and_then(|date| date.as_i64())
-            .ok_or_else(|| VoiceflousionError::RequestError("Missing date".into()))?;
+            .ok_or_else(|| VoiceflousionError::ClientUpdateConvertationError("TelegramUpdate interaction timestamp".to_string(), update_data.clone()))?;
 
         let update_id = body.get("update_id")
             .and_then(|id| id.as_i64())
             .map(|id| id.to_string())
-            .ok_or_else(|| VoiceflousionError::RequestError("Missing update id".into()))?;
+            .ok_or_else(|| VoiceflousionError::ClientUpdateConvertationError("TelegramUpdate update id".to_string(), body.clone()))?;
 
         let callback_data = if !is_message {
             Some(body.get("callback_query")
                 .and_then(|q| q.get("data"))
                 .and_then(|data| data.as_str())
                 .map(|s| s.to_string())
-                .ok_or_else(|| VoiceflousionError::RequestError("Missing update id".into()))?)
+                .ok_or_else(|| VoiceflousionError::ClientUpdateConvertationError("TelegramUpdate callback data".to_string(), body.clone()))?)
         }
         else{
             None

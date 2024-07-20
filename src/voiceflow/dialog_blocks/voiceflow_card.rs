@@ -37,12 +37,12 @@ impl FromValue for VoiceflowCard{
     type Error = VoiceflousionError;
     fn from_value(value: &Value) -> Result<Option<Self>, Self::Error> {
         let payload = value.get("trace").and_then(|trace| trace.get("payload")).unwrap_or_else(|| value);
-        let buttons: Option<VoiceflowButtons> = VoiceflowButtons::from_value(value).map_err(|_| VoiceflousionError::BlockConvertationError(("Card buttons".to_string(), value.clone())))?;
+        let buttons: Option<VoiceflowButtons> = VoiceflowButtons::from_value(value)?;
 
         let description = payload.get("description")
             .and_then(|description| description.get("text"))
             .and_then(|text| text.as_str())
-            .ok_or_else(|| VoiceflousionError::BlockConvertationError(("Card description".to_string(), value.clone())))?
+            .ok_or_else(|| VoiceflousionError::VoiceflowBlockConvertationError(("VoiceflowCard card description".to_string(), value.clone())))?
             .to_string();
         let description = if description.is_empty(){
             None
@@ -53,7 +53,7 @@ impl FromValue for VoiceflowCard{
 
         let image_url = payload.get("imageUrl")
             .and_then(|url| url.as_str())
-            .ok_or_else(|| VoiceflousionError::BlockConvertationError(("Card image url".to_string(), value.clone())))?
+            .ok_or_else(|| VoiceflousionError::VoiceflowBlockConvertationError(("VoiceflowCard card image url".to_string(), value.clone())))?
             .to_string();
         let image_url = if image_url.is_empty(){
             None
@@ -64,7 +64,7 @@ impl FromValue for VoiceflowCard{
 
         let title = payload.get("title")
             .and_then(|title| title.as_str())
-            .ok_or_else(|| VoiceflousionError::BlockConvertationError(("Card title".to_string(), value.clone())))?
+            .ok_or_else(|| VoiceflousionError::VoiceflowBlockConvertationError(("VoiceflowCard card title".to_string(), value.clone())))?
             .to_string();
         let title = if  title.is_empty(){
             None

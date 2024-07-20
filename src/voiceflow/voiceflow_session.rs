@@ -16,7 +16,7 @@ impl VoiceflowSession {
           user_id
         }
     }
-    pub fn from_chat_id(chat_id: &str) -> Self {
+    pub(crate) fn from_chat_id(chat_id: &str) -> Self {
         fn hash(input: &str, suffix: &str) -> String {
             let mut hasher = Sha256::new();
             hasher.update(input);

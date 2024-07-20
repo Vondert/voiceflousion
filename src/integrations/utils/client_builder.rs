@@ -1,19 +1,19 @@
 use std::sync::Arc;
-use crate::integrations::utils::traits::Client;
+use crate::integrations::utils::session_wrappers::Session;
 use crate::voiceflow::VoiceflowClient;
 
-pub struct ClientBuilder<C: Client>{
+pub struct ClientBuilder{
     client_id: String,
     api_key: String,
     voiceflow_client: Arc<VoiceflowClient>,
-    sessions: Option<Vec<C::ClientSession>>,
+    sessions: Option<Vec<Session>>,
     max_connections_per_moment: usize,
     is_cleaning: bool,
     session_duration: Option<i64>,
     sessions_cleanup_interval: Option<u64>
 }
 
-impl<C: Client> ClientBuilder<C>{
+impl ClientBuilder{
     pub fn new(client_id: String, api_key: String, voiceflow_client: Arc<VoiceflowClient>, max_connections_per_moment: usize) -> Self{
         Self{
             client_id,
@@ -26,7 +26,7 @@ impl<C: Client> ClientBuilder<C>{
             sessions_cleanup_interval: None,
         }
     }
-    pub fn add_sessions(mut self, sessions: Vec<C::ClientSession>) -> Self{
+    pub fn add_sessions(mut self, sessions: Vec<Session>) -> Self{
         self.sessions = Some(sessions);
         self
     }
@@ -55,7 +55,7 @@ impl<C: Client> ClientBuilder<C>{
         &self.voiceflow_client
     }
 
-    pub fn sessions(self) -> Option<Vec<C::ClientSession>> {
+    pub fn sessions(self) -> Option<Vec<Session>> {
         self.sessions
     }
 

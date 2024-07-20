@@ -6,10 +6,10 @@ use crate::voiceflow::VoiceflousionError;
 #[derive(Debug)]
 pub struct TelegramUpdate{
     chat_id: String,
-    message_id: String,
     interaction_time: i64,
     interaction_type: InteractionType,
     update_id: String,
+    message_id: String,
     carousel_card_index: Option<usize>,
 }
 
@@ -29,15 +29,17 @@ impl TelegramUpdate{
     pub fn carousel_card_index(&self) -> Option<usize>{
         self.carousel_card_index
     }
+    pub fn message_id(&self) -> &String {
+        &self.message_id
+    }
 }
 impl Update for TelegramUpdate{
 
     fn chat_id(&self) -> &String {
         &self.chat_id
     }
-
-    fn message_id(&self) -> &String {
-        &self.message_id
+    fn update_id(&self) -> &String {
+        &self.update_id
     }
 
     fn interaction_time(&self) -> i64 {

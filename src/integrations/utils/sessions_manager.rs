@@ -1,22 +1,21 @@
 use std::ops::Deref;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
-use crate::integrations::utils::session_wrappers::SessionMap;
-use crate::integrations::utils::traits::Session;
+use crate::integrations::utils::session_wrappers::{Session, SessionMap};
 
-pub struct SessionsManager<S: Session>{
-    session_map: Arc<SessionMap<S>>,
+pub struct SessionsManager{
+    session_map: Arc<SessionMap>,
     cancel_token: Option<Arc<AtomicBool>>,
 }
-impl<S: Session> Deref for SessionsManager<S>{
-    type Target = Arc<SessionMap<S>>;
+impl Deref for SessionsManager{
+    type Target = Arc<SessionMap>;
 
     fn deref(&self) -> &Self::Target {
         &self.session_map
     }
 }
-impl<S: Session + 'static> SessionsManager<S>{
-    pub fn new(sessions_option: Option<Vec<S>>, valid_session_duration: Option<i64>, cleanup_interval: Option<u64>, is_cleaning: bool) -> Self{
+impl SessionsManager{
+    pub fn new(sessions_option: Option<Vec<Session>>, valid_session_duration: Option<i64>, cleanup_interval: Option<u64>, is_cleaning: bool) -> Self{
         let manager = Self{
             session_map: Arc::new(
                 match sessions_option{
@@ -50,7 +49,7 @@ impl<S: Session + 'static> SessionsManager<S>{
         manager
     }
 }
-impl<S: Session> Drop for SessionsManager<S> {
+impl Drop for SessionsManager {
     fn drop(&mut self) {
         if let Some(token) = &mut self.cancel_token{
             token.store(true, Ordering::Release);

@@ -9,13 +9,30 @@ use crate::integrations::utils::subtypes::InteractionType;
 use crate::voiceflow::{State, VoiceflousionError, VoiceflowBlock, VoiceflowClient};
 use crate::voiceflow::dialog_blocks::VoiceflowCarousel;
 
-pub struct TelegramClient{
+/// Represents a client for Telegram integration with Voiceflow.
+///
+/// `TelegramClient` manages the sessions and interactions with the Voiceflow API and Telegram.
+pub struct TelegramClient {
+    /// The client ID for the Telegram client.
     client_id: String,
+    /// The Voiceflow client for API interactions.
     voiceflow_client: Arc<VoiceflowClient>,
+    /// The session manager for handling sessions.
     sessions: Arc<SessionsManager>,
-    sender: TelegramSender
+    /// The sender for sending messages via Telegram.
+    sender: TelegramSender,
 }
 impl TelegramClient{
+
+    /// Creates a new Telegram client.
+    ///
+    /// # Parameters
+    ///
+    /// * `builder` - The client builder containing necessary configurations.
+    ///
+    /// # Returns
+    ///
+    /// A new instance of `TelegramClient`.
     pub fn new(builder: ClientBuilder) -> Self{
         let client_id = builder.client_id().clone();
         let api_key = builder.api_key().clone();
@@ -33,6 +50,21 @@ impl TelegramClient{
             sender: TelegramSender::new(max_connections_per_moment, api_key)
         }
     }
+
+    /// Switches the carousel card at Client's message.
+    ///
+    /// # Parameters
+    ///
+    /// * `locked_session` - The locked session for the interaction.
+    /// * `carousel` - The Voiceflow carousel block.
+    /// * `message_id` - The ID of the message.
+    /// * `index` - The index of the carousel card.
+    /// * `interaction_time` - The interaction time.
+    ///
+    /// # Returns
+    ///
+    /// A `Result` containing a `TelegramResponder` or a `VoiceflousionError` if the request fails.
+
     pub async fn switch_carousel_card(&self, locked_session: &LockedSession<'_>,  carousel: &VoiceflowCarousel,  message_id: &String, index: usize, interaction_time: i64) -> Result<TelegramResponder, VoiceflousionError> {
         locked_session.set_last_interaction(Some(interaction_time));
         self.sender.update_carousel(carousel, index, locked_session.get_chat_id(), message_id).await
@@ -57,6 +89,26 @@ impl ClientBase for TelegramClient {
 }
 #[async_trait]
 impl Client for TelegramClient{
+    /// Interacts with the client based on the provided update.
+    ///
+    /// This method handles interactions with the Telegram client, updating the dialog state and
+    /// sending appropriate responses based on the type of interaction (e.g., button press, text message).
+    ///
+    /// # Parameters
+    ///
+    /// * `update` - The update from the Telegram client.
+    /// * `launch_state` - The optional state for launching the dialog.
+    /// * `update_state` - The optional state for updating the dialog.
+    ///
+    /// # Returns
+    ///
+    /// A `Result` containing a vector of `SenderResponder` or a `VoiceflousionError` if the request fails.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// let response = client.interact_with_client(update, launch_state, update_state).await?;
+    /// ```
     async fn interact_with_client(&self, update: Self::ClientUpdate, launch_state: Option<State>, update_state: Option<State>) -> Result<Vec<<Self::ClientSender as Sender>::SenderResponder>, VoiceflousionError>{
         let interaction_time =  update.interaction_time();
         if let Some(telegram_session) = self.sessions().get_session(update.chat_id()).await {

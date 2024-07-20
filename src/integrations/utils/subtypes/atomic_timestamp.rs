@@ -1,32 +1,77 @@
 use std::sync::atomic::{AtomicI64, Ordering};
 
-pub(crate) struct AtomicTimestamp{
-    timestamp: AtomicI64
+/// Represents an atomic timestamp for managing interaction times.
+pub(crate) struct AtomicTimestamp {
+    /// The atomic integer representing the timestamp.
+    timestamp: AtomicI64,
 }
-impl AtomicTimestamp{
-    pub(crate) fn new(timestamp: Option<i64>) -> Self{
-        let timestamp: i64 = if let Some(time) = timestamp{
+
+impl AtomicTimestamp {
+    /// Creates a new atomic timestamp.
+    ///
+    /// # Parameters
+    ///
+    /// * `timestamp` - The optional initial timestamp.
+    ///
+    /// # Returns
+    ///
+    /// A new instance of `AtomicTimestamp`.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// let atomic_timestamp = AtomicTimestamp::new(Some(1627554661));
+    /// ```
+    pub(crate) fn new(timestamp: Option<i64>) -> Self {
+        let timestamp: i64 = if let Some(time) = timestamp {
             time
-        }
-        else{
+        } else {
             -1
         };
-        Self{
-            timestamp: AtomicI64::new(timestamp)
+        Self {
+            timestamp: AtomicI64::new(timestamp),
         }
     }
-    pub(crate) fn load(&self, ordering: Ordering) -> Option<i64>{
+
+    /// Loads the current timestamp.
+    ///
+    /// # Parameters
+    ///
+    /// * `ordering` - The memory ordering for the load operation.
+    ///
+    /// # Returns
+    ///
+    /// An `Option<i64>` containing the current timestamp.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// let current_timestamp = atomic_timestamp.load(Ordering::SeqCst);
+    /// ```
+    pub(crate) fn load(&self, ordering: Ordering) -> Option<i64> {
         let timestamp = self.timestamp.load(ordering);
-        if timestamp == -1{
-            return None
+        if timestamp == -1 {
+            return None;
         }
         Some(timestamp)
     }
-    pub(crate) fn store(&self, timestamp: Option<i64>, ordering: Ordering) -> (){
-        let timestamp = if let Some(interaction) = timestamp{
+
+    /// Stores a new timestamp.
+    ///
+    /// # Parameters
+    ///
+    /// * `timestamp` - The new timestamp to store.
+    /// * `ordering` - The memory ordering for the store operation.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// atomic_timestamp.store(Some(1627554661), Ordering::SeqCst);
+    /// ```
+    pub(crate) fn store(&self, timestamp: Option<i64>, ordering: Ordering) {
+        let timestamp = if let Some(interaction) = timestamp {
             interaction
-        }
-        else{
+        } else {
             -1
         };
         self.timestamp.store(timestamp, ordering)

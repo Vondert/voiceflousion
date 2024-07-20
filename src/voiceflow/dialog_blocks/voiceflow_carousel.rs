@@ -105,7 +105,7 @@ impl FromValue for VoiceflowCarousel{
         let cards_value = payload.get("cards").and_then(|cards| cards.as_array())
             .ok_or_else(|| VoiceflousionError::VoiceflowBlockConvertationError(("VoiceflowCarousel cards value".to_string(), value.clone())))?;
 
-        let cards_option: Result<Vec<Option<VoiceflowCard>>, Self::Error> = cards_value.into_iter().map(|card| VoiceflowCard::from_value(card)).collect();
+        let cards_option: Result<Vec<Option<VoiceflowCard>>, VoiceflousionError> = cards_value.into_iter().map(|card| VoiceflowCard::from_value(card)).collect();
         let cards: Vec<VoiceflowCard> = cards_option?.into_iter().filter_map(|card| card).collect();
         if cards.is_empty(){
             return Ok(None)

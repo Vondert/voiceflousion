@@ -5,18 +5,45 @@ use crate::voiceflow::response_structures::voiceflow_response_block::VoiceflowRe
 use crate::voiceflow::response_structures::voiceflow_response_block_type::VoiceflowResponseBlockType;
 use crate::voiceflow::VoiceflousionError;
 
+/// Represents a response from the Voiceflow API.
+///
+/// `VoiceflowResponse` wraps the HTTP response and provides methods to process it.
 #[derive(Debug)]
-pub(crate) struct VoiceflowResponse{
-    response: Response
+pub(crate) struct VoiceflowResponse {
+    /// The HTTP response received from the Voiceflow API.
+    response: Response,
 }
 impl VoiceflowResponse{
-    pub(crate) fn new (response: Response) -> Self{
-        Self{
-            response
-        }
+    /// Creates a new `VoiceflowResponse`.
+    ///
+    /// # Parameters
+    ///
+    /// * `response` - The HTTP response received from the Voiceflow API.
+    ///
+    /// # Returns
+    ///
+    /// A new instance of `VoiceflowResponse`.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// let response = VoiceflowResponse::new(response);
+    /// ```
+    pub(crate) fn new(response: Response) -> Self {
+        Self { response }
     }
-}
-impl VoiceflowResponse{
+
+    /// Converts the response text into a vector of `VoiceflowResponseBlock` instances.
+    ///
+    /// # Returns
+    ///
+    /// A `Result` containing a vector of `VoiceflowResponseBlock` instances or a `VoiceflousionError` if the conversion fails.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// let blocks = response.to_blocks().await?;
+    /// ```
     pub(crate) async fn to_blocks(self) -> Result<Vec<VoiceflowResponseBlock>, VoiceflousionError> {
         let text = self.response.text().await.map_err(|error| VoiceflousionError::VoiceflowResponseReadingError(error.to_string()))?;
         let events = parse_sse(text.lines());
@@ -44,6 +71,21 @@ impl VoiceflowResponse{
     }
 }
 
+/// Parses Server-Sent Events (SSE) from lines of text.
+///
+/// # Parameters
+///
+/// * `lines` - An iterator over lines of text.
+///
+/// # Returns
+///
+/// A vector of strings, each representing a single SSE event.
+///
+/// # Example
+///
+/// ```
+/// let events = parse_sse(text.lines());
+/// ```
 fn parse_sse(lines: Lines) -> Vec<String> {
     let mut events = Vec::new();
     let mut current_data = String::new();
@@ -71,6 +113,21 @@ fn parse_sse(lines: Lines) -> Vec<String> {
     events
 }
 
+/// Determines the type of Voiceflow response block from JSON data.
+///
+/// # Parameters
+///
+/// * `json` - The JSON data representing a Voiceflow response block.
+///
+/// # Returns
+///
+/// The `VoiceflowResponseBlockType` corresponding to the JSON data.
+///
+/// # Example
+///
+/// ```
+/// let block_type = get_response_type(&json);
+/// ```
 fn get_response_type (json: &Value) -> VoiceflowResponseBlockType {
     if let Some(payload_type) = json.get("trace")
         .and_then(|trace| trace.get("type"))

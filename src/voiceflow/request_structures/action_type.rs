@@ -1,14 +1,39 @@
 use std::fmt::Display;
 use serde::{Serialize, Serializer};
 
+/// Represents the type of action to be performed in the Voiceflow API.
 #[derive(Debug)]
 pub(crate) enum ActionType {
+    /// Launch action.
     Launch,
+
+    /// Text action.
     Text,
+
+    /// Intent action.
     Intent,
-    Path(String)
+
+    /// Path action with an associated path string.
+    Path(String),
 }
 impl Serialize for ActionType {
+    /// Serializes the `ActionType` to a string for use in JSON.
+    ///
+    /// # Parameters
+    ///
+    /// * `serializer` - The serializer to use.
+    ///
+    /// # Returns
+    ///
+    /// A `Result` containing the serialized string or an error.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// let action_type = ActionType::Launch;
+    /// let json_string = serde_json::to_string(&action_type).unwrap();
+    /// assert_eq!(json_string, "\"launch\"");
+    /// ```
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
@@ -22,6 +47,22 @@ impl Serialize for ActionType {
     }
 }
 impl Display for ActionType{
+    /// Formats the `ActionType` for display.
+    ///
+    /// # Parameters
+    ///
+    /// * `f` - The formatter to use.
+    ///
+    /// # Returns
+    ///
+    /// A `Result` indicating success or failure.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// let action_type = ActionType::Launch;
+    /// println!("{}", action_type); // prints "launch"
+    /// ```
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let str = match &self {
             ActionType::Launch => "launch".to_string(),

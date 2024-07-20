@@ -2,40 +2,147 @@ use serde_json::Value;
 use crate::voiceflow::dialog_blocks::traits::FromValue;
 use crate::voiceflow::dialog_blocks::VoiceflowButtons;
 use crate::voiceflow::VoiceflousionError;
+
+/// Represents a card in a Voiceflow dialog.
+///
+/// `VoiceflowCard` contains optional fields for an image URL, title, description, and buttons.
 #[derive(Debug, Clone)]
-pub struct VoiceflowCard{
+pub struct VoiceflowCard {
+    /// The optional URL of the image.
     image_url: Option<String>,
+
+    /// The optional title of the card.
     title: Option<String>,
+
+    /// The optional description of the card.
     description: Option<String>,
-    buttons: Option<VoiceflowButtons>
+
+    /// The optional buttons associated with the card.
+    buttons: Option<VoiceflowButtons>,
 }
-impl VoiceflowCard{
-    pub fn new(image_url: Option<String>, title: Option<String>, description: Option<String>, buttons: Option<VoiceflowButtons>) -> Self{
-        Self{
+
+impl VoiceflowCard {
+    /// Creates a new `VoiceflowCard` instance.
+    ///
+    /// # Parameters
+    ///
+    /// * `image_url` - The optional URL of the image.
+    /// * `title` - The optional title of the card.
+    /// * `description` - The optional description of the card.
+    /// * `buttons` - The optional buttons associated with the card.
+    ///
+    /// # Returns
+    ///
+    /// A new instance of `VoiceflowCard`.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// let card = VoiceflowCard::new(Some("https://example.com/image.jpg".to_string()), Some("Title".to_string()), Some("Description".to_string()), None);
+    /// ```
+    pub fn new(image_url: Option<String>, title: Option<String>, description: Option<String>, buttons: Option<VoiceflowButtons>) -> Self {
+        Self {
             image_url,
             title,
             description,
-            buttons
+            buttons,
         }
     }
-    pub fn image_url(&self) -> &Option<String>{
+
+    /// Returns a reference to the image URL.
+    ///
+    /// # Returns
+    ///
+    /// A reference to the `Option` containing the URL string.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// let url = card.image_url();
+    /// ```
+    pub fn image_url(&self) -> &Option<String> {
         &self.image_url
     }
-    pub fn title(&self) -> &Option<String>{
+
+    /// Returns a reference to the title of the card.
+    ///
+    /// # Returns
+    ///
+    /// A reference to the `Option` containing the title string.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// let title = card.title();
+    /// ```
+    pub fn title(&self) -> &Option<String> {
         &self.title
     }
-    pub fn description(&self) -> &Option<String>{
+
+    /// Returns a reference to the description of the card.
+    ///
+    /// # Returns
+    ///
+    /// A reference to the `Option` containing the description string.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// let description = card.description();
+    /// ```
+    pub fn description(&self) -> &Option<String> {
         &self.description
     }
+
+    /// Returns a reference to the buttons associated with the card.
+    ///
+    /// # Returns
+    ///
+    /// A reference to the `Option` containing the `VoiceflowButtons`.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// let buttons = card.buttons();
+    /// ```
     pub fn buttons(&self) -> &Option<VoiceflowButtons> {
         &self.buttons
     }
 }
 
 
+
 impl FromValue for VoiceflowCard{
-    type Error = VoiceflousionError;
-    fn from_value(value: &Value) -> Result<Option<Self>, Self::Error> {
+    /// Attempts to convert a JSON `Value` into a `VoiceflowCard` instance.
+    ///
+    /// # Parameters
+    ///
+    /// * `value` - A reference to the JSON `Value` to convert from.
+    ///
+    /// # Returns
+    ///
+    /// A `Result` containing an `Option` with the `VoiceflowCard` instance if the conversion
+    /// succeeds, or a `VoiceflousionError` if the conversion fails. If the conversion
+    /// succeeds but there is no meaningful value, `None` can be returned.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// let json_value = serde_json::json!({
+    ///     "trace": {
+    ///         "payload": {
+    ///             "imageUrl": "https://example.com/image.jpg",
+    ///             "title": "Title",
+    ///             "description": {
+    ///                 "text": "Description"
+    ///             },
+    ///             "buttons": [{"name": "Click me"}]
+    ///         }
+    ///     }
+    /// });
+    /// let card = VoiceflowCard::from_value(&json_value)?;
+    /// ```
+    fn from_value(value: &Value) -> Result<Option<Self>, VoiceflousionError> {
         let payload = value.get("trace").and_then(|trace| trace.get("payload")).unwrap_or_else(|| value);
         let buttons: Option<VoiceflowButtons> = VoiceflowButtons::from_value(value)?;
 

@@ -7,14 +7,43 @@ use crate::voiceflow::response_structures::{VoiceflowResponseBlock, VoiceflowRes
 use crate::voiceflow::{VoiceflowBlock, VoiceflousionError};
 use crate::voiceflow::dialog_blocks::traits::FromValue;
 
+/// Represents a message from a Voiceflow response.
+///
+/// `VoiceflowMessage` contains a list of `VoiceflowBlock` instances that make up the content of the message.
 #[derive(Debug)]
-pub struct VoiceflowMessage{
-    content: Vec<VoiceflowBlock>
+pub struct VoiceflowMessage {
+    /// The content of the message as a list of `VoiceflowBlock` instances.
+    content: Vec<VoiceflowBlock>,
 }
 impl VoiceflowMessage{
+    /// Adds a block to the message content.
+    ///
+    /// # Parameters
+    ///
+    /// * `block` - The `VoiceflowBlock` to add to the content.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// let mut message = VoiceflowMessage::default();
+    /// let block = VoiceflowBlock::Text(VoiceflowText::new("Hello".to_string()));
+    /// message.add_block(block);
+    /// ```
     pub fn add_block(&mut self, block: VoiceflowBlock) -> (){
         self.content.push(block);
     }
+
+    /// Trims the End block from the message content if it exists.
+    ///
+    /// # Returns
+    ///
+    /// A boolean indicating whether the end block was trimmed.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// let trimmed = message.trim_end_block();
+    /// ```
     pub fn trim_end_block(&mut self) -> bool{
         if let Some(VoiceflowBlock::End) = &self.last() {
             let _ = &self.pop();
@@ -52,11 +81,42 @@ impl IntoIterator for VoiceflowMessage {
         self.content.into_iter()
     }
 }
+/// A builder for creating a `VoiceflowMessage`.
+///
+/// `VoiceflowMessageBuilder` allows for the incremental construction of a `VoiceflowMessage`
+/// by adding blocks and handling the various block types.
 pub(super) struct VoiceflowMessageBuilder;
 impl VoiceflowMessageBuilder {
+    /// Creates a new `VoiceflowMessageBuilder`.
+    ///
+    /// # Returns
+    ///
+    /// A new instance of `VoiceflowMessageBuilder`.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// let builder = VoiceflowMessageBuilder::new();
+    /// ```
     pub fn new() -> Self {
         Self
     }
+
+    /// Builds a `VoiceflowMessage` from a vector of `VoiceflowResponseBlock` instances.
+    ///
+    /// # Parameters
+    ///
+    /// * `blocks` - A vector of `VoiceflowResponseBlock` instances.
+    ///
+    /// # Returns
+    ///
+    /// A `Result` containing a `VoiceflowMessage` or a `VoiceflousionError` if the conversion fails.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// let message = builder.build_message(blocks)?;
+    /// ```
     pub fn build_message(self, blocks: Vec<VoiceflowResponseBlock>) -> Result<VoiceflowMessage, VoiceflousionError> {
         let mut message = VoiceflowMessage {
             content: Vec::with_capacity(blocks.len()),

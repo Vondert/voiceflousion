@@ -13,8 +13,6 @@ use crate::integrations::utils::session_wrappers::Session;
 pub struct SessionMap {
     /// The map of sessions.
     sessions: Arc<RwLock<HashMap<String, Arc<Session>>>>,
-    /// The interval for cleanup in seconds.
-    cleanup_interval: Option<u64>,
     /// The duration a session is considered valid in seconds.
     valid_session_duration: Option<i64>,
 }
@@ -25,7 +23,6 @@ impl SessionMap {
     /// # Parameters
     ///
     /// * `valid_session_duration` - The duration a session is considered valid in seconds.
-    /// * `cleanup_interval` - The interval for cleanup in seconds.
     ///
     /// # Returns
     ///
@@ -36,11 +33,10 @@ impl SessionMap {
     /// ```
     /// let session_map = SessionMap::new(Some(3600), Some(600));
     /// ```
-    pub(crate) fn new(valid_session_duration: Option<i64>, cleanup_interval: Option<u64>) -> Self {
+    pub(crate) fn new(valid_session_duration: Option<i64>) -> Self {
         Self {
             sessions: Arc::new(RwLock::new(HashMap::<String, Arc<Session>>::new())),
-            valid_session_duration,
-            cleanup_interval,
+            valid_session_duration
         }
     }
 
@@ -50,7 +46,6 @@ impl SessionMap {
     ///
     /// * `sessions_vec` - A vector of sessions to initialize the map with.
     /// * `valid_session_duration` - The duration a session is considered valid in seconds.
-    /// * `cleanup_interval` - The interval for cleanup in seconds.
     ///
     /// # Returns
     ///
@@ -59,17 +54,31 @@ impl SessionMap {
     /// # Example
     ///
     /// ```
-    /// let sessions_vec = vec![Session::new("chat_id".to_string(), Some(1627554661), true)];
-    /// let session_map = SessionMap::from_sessions(sessions_vec, Some(3600), Some(600));
+    /// let sessions_vec = vec![];
+    /// let session_map = SessionMap::from_sessions(sessions_vec, Some(3600));
     /// ```
-    pub(crate) fn from_sessions(sessions_vec: Vec<Session>, valid_session_duration: Option<i64>, cleanup_interval: Option<u64>) -> Self {
+    pub(crate) fn from_sessions(sessions_vec: Vec<Session>, valid_session_duration: Option<i64>) -> Self {
         let mut hash_map = HashMap::<String, Arc<Session>>::new();
         let _ = sessions_vec.into_iter().map(|session| hash_map.insert(session.get_cloned_chat_id(), Arc::new(session)));
         Self {
             sessions: Arc::new(RwLock::new(hash_map)),
-            valid_session_duration,
-            cleanup_interval,
+            valid_session_duration
         }
+    }
+
+    /// Returns the duration a session is considered valid.
+    ///
+    /// # Returns
+    ///
+    /// An `Option<i64>` representing the session duration in seconds.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// let duration = session_map.valid_session_duration();
+    /// ```
+    pub fn valid_session_duration(&self) -> Option<i64>{
+        self.valid_session_duration
     }
 
     /// Retrieves a session by chat ID.
@@ -95,6 +104,23 @@ impl SessionMap {
             }
         }
         None
+    }
+
+    /// Retrieves all sessions.
+    ///
+    /// # Returns
+    ///
+    /// A vector of `Arc<Session>` containing all sessions.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// let sessions = session_map.get_all_sessions().await;
+    /// ```
+    pub async fn get_all_sessions(&self) -> Vec<Arc<Session>> {
+        let read_lock = self.sessions.read().await;
+        let sessions = read_lock.values().cloned().collect();
+        sessions
     }
 
     /// Adds a new session by chat ID or returns the existing session.
@@ -160,25 +186,24 @@ impl SessionMap {
     ///
     /// # Parameters
     ///
+    /// * `cleanup_interval` - The interval for cleanup in seconds.
     /// * `cancel_token` - An atomic boolean to cancel the cleanup process.
     ///
     /// # Example
     ///
     /// ```
     /// let cancel_token = Arc::new(AtomicBool::new(false));
-    /// session_map.start_cleanup(cancel_token).await;
+    /// session_map.start_cleanup(600, cancel_token).await;
     /// ```
-    pub(crate) async fn start_cleanup(&self, cancel_token: Arc<AtomicBool>) {
-        if let Some(seconds) = self.cleanup_interval {
-            let mut interval = interval(Duration::from_secs(seconds));
+    pub(crate) async fn start_cleanup(&self, cleanup_interval: u64, cancel_token: Arc<AtomicBool>) {
+        let mut interval = interval(Duration::from_secs(cleanup_interval));
+        interval.tick().await;
+        loop {
             interval.tick().await;
-            loop {
-                interval.tick().await;
-                if cancel_token.load(Ordering::Acquire) {
-                    break;
-                }
-                self.delete_invalid_sessions().await;
+            if cancel_token.load(Ordering::Acquire) {
+                break;
             }
+            self.delete_invalid_sessions().await;
         }
     }
 

@@ -10,8 +10,10 @@ use crate::integrations::utils::session_wrappers::{Session, SessionMap};
 pub struct SessionsManager {
     /// The map of sessions.
     session_map: Arc<SessionMap>,
-    /// The optional cancel token for stopping the cleanup process.
-    cancel_token: Option<Arc<AtomicBool>>,
+    /// The cancel token for stopping the cleanup process.
+    cancel_token: Arc<AtomicBool>,
+    /// The interval for cleanup in seconds.
+    cleanup_interval: Option<u64>,
 }
 
 impl Deref for SessionsManager {
@@ -35,7 +37,6 @@ impl SessionsManager {
     /// * `sessions_option` - An optional vector of sessions to initialize the session map with.
     /// * `valid_session_duration` - The duration a session is considered valid in seconds.
     /// * `cleanup_interval` - The interval for cleanup in seconds.
-    /// * `is_cleaning` - A boolean indicating whether cleanup should be performed.
     ///
     /// # Returns
     ///
@@ -44,47 +45,43 @@ impl SessionsManager {
     /// # Example
     ///
     /// ```
-    /// let sessions_manager = SessionsManager::new(Some(sessions), Some(3600), Some(600), true);
+    /// let sessions_manager = SessionsManager::new(Some(sessions), Some(3600), Some(600));
     /// ```
-    pub fn new(sessions_option: Option<Vec<Session>>, valid_session_duration: Option<i64>, cleanup_interval: Option<u64>, is_cleaning: bool) -> Self {
+    pub fn new(sessions_option: Option<Vec<Session>>, valid_session_duration: Option<i64>, cleanup_interval: Option<u64>) -> Self {
         let manager = Self {
             session_map: Arc::new(
                 match sessions_option {
                     None => SessionMap::new(
                         valid_session_duration,
-                        cleanup_interval,
                     ),
                     Some(sessions) => SessionMap::from_sessions(
                         sessions,
                         valid_session_duration,
-                        cleanup_interval,
                     ),
                 }
             ),
-            cancel_token: if is_cleaning {
-                Some(Arc::new(AtomicBool::new(false)))
-            } else {
-                None
-            },
+            cancel_token: Arc::new(AtomicBool::new(false)),
+            cleanup_interval
         };
 
         let sessions_map = manager.session_map.clone();
-        if let Some(token) = manager.cancel_token.clone() {
-            let cancel_token = token.clone();
+        if let Some(interval) = manager.cleanup_interval.clone() {
+            let cancel_token = manager.cancel_token.clone();
             tokio::spawn(async move {
-                sessions_map.start_cleanup(cancel_token).await;
+                sessions_map.start_cleanup(interval, cancel_token).await;
             });
         }
 
         manager
     }
+    pub fn cleanup_interval(&self) -> Option<u64>{
+        self.cleanup_interval
+    }
 }
 
 impl Drop for SessionsManager {
-    /// Drops the `SessionsManager` and stops the cleanup process if it is running.
+    /// Drops the `SessionsManager` and stops the cleanup process.
     fn drop(&mut self) {
-        if let Some(token) = &mut self.cancel_token {
-            token.store(true, Ordering::Release);
-        }
+        &mut self.cancel_token.store(true, Ordering::Release);
     }
 }

@@ -12,6 +12,7 @@ use crate::voiceflow::{VoiceflousionError, VoiceflowClient};
 
 mod voiceflow;
 mod integrations;
+mod utils;
 
 #[tokio::main]
 async fn main() {
@@ -27,8 +28,7 @@ async fn main() {
 
     let client_builder = ClientBuilder::new(telegram_bot_id.clone(), telegram_bot_token.clone(), voiceflow_client.clone(), 10)
         .add_session_duration(120)
-        .add_cleaning_interval(60)
-        .allow_sessions_cleaning();
+        .allow_sessions_cleaning(60);
     // {
     //     let client_builder1 = ClientBuilder::<TelegramClient>::new(telegram_bot_id, telegram_bot_token, voiceflow_client.clone(), 10)
     //         .add_session_duration(20)

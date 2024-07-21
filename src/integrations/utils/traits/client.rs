@@ -1,4 +1,5 @@
 use async_trait::async_trait;
+use crate::integrations::utils::ClientBuilder;
 use crate::integrations::utils::session_wrappers::LockedSession;
 use crate::integrations::utils::subtypes::SentMessage;
 use crate::integrations::utils::traits::{ClientBase, Responder, Sender};

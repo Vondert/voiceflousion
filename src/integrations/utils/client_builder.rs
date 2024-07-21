@@ -17,8 +17,6 @@ pub struct ClientBuilder {
     sessions: Option<Vec<Session>>,
     /// The maximum number of connections per moment.
     max_connections_per_moment: usize,
-    /// Indicates whether session cleaning is enabled.
-    is_cleaning: bool,
     /// The optional duration for session validity.
     session_duration: Option<i64>,
     /// The optional interval for session cleanup.
@@ -51,7 +49,6 @@ impl ClientBuilder {
             voiceflow_client,
             sessions: None,
             max_connections_per_moment,
-            is_cleaning: false,
             session_duration: None,
             sessions_cleanup_interval: None,
         }
@@ -77,7 +74,11 @@ impl ClientBuilder {
         self
     }
 
-    /// Enables session cleaning.
+    /// Allows session cleaning and sets the cleanup interval.
+    ///
+    /// # Parameters
+    ///
+    /// * `interval` - The interval for session cleanup in seconds.
     ///
     /// # Returns
     ///
@@ -86,10 +87,10 @@ impl ClientBuilder {
     /// # Example
     ///
     /// ```
-    /// let builder = builder.allow_sessions_cleaning();
+    /// let builder = builder.allow_sessions_cleaning(600);
     /// ```
-    pub fn allow_sessions_cleaning(mut self) -> Self {
-        self.is_cleaning = true;
+    pub fn allow_sessions_cleaning(mut self, interval: u64) -> Self {
+        self.sessions_cleanup_interval = Some(interval);
         self
     }
 
@@ -110,26 +111,6 @@ impl ClientBuilder {
     /// ```
     pub fn add_session_duration(mut self, duration: i64) -> Self {
         self.session_duration = Some(duration);
-        self
-    }
-
-    /// Sets the interval for session cleanup.
-    ///
-    /// # Parameters
-    ///
-    /// * `interval` - The interval for session cleanup in seconds.
-    ///
-    /// # Returns
-    ///
-    /// The updated `ClientBuilder` instance.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// let builder = builder.add_cleaning_interval(600);
-    /// ```
-    pub fn add_cleaning_interval(mut self, interval: u64) -> Self {
-        self.sessions_cleanup_interval = Some(interval);
         self
     }
 
@@ -206,21 +187,6 @@ impl ClientBuilder {
     /// ```
     pub fn max_connections_per_moment(&self) -> usize {
         self.max_connections_per_moment
-    }
-
-    /// Checks if session cleaning is enabled.
-    ///
-    /// # Returns
-    ///
-    /// A boolean indicating whether session cleaning is enabled.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// let is_cleaning = builder.is_cleaning();
-    /// ```
-    pub fn is_cleaning(&self) -> bool {
-        self.is_cleaning
     }
 
     /// Returns the session duration.

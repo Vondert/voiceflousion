@@ -38,7 +38,6 @@ impl TelegramClient{
         let api_key = builder.api_key().clone();
         let voiceflow_client = builder.voiceflow_client().clone();
         let max_connections_per_moment = builder.max_connections_per_moment();
-        let is_cleaning = builder.is_cleaning();
         let session_duration = builder.session_duration();
         let sessions_cleanup_interval = builder.sessions_cleanup_interval();
         let sessions= builder.sessions();
@@ -46,7 +45,7 @@ impl TelegramClient{
         Self{
             client_id,
             voiceflow_client,
-            sessions: Arc::new(SessionsManager::new(sessions, session_duration, sessions_cleanup_interval, is_cleaning)),
+            sessions: Arc::new(SessionsManager::new(sessions, session_duration, sessions_cleanup_interval)),
             sender: TelegramSender::new(max_connections_per_moment, api_key)
         }
     }
@@ -74,15 +73,62 @@ impl ClientBase for TelegramClient {
     type ClientUpdate = TelegramUpdate;
     type ClientSender = TelegramSender;
 
+    /// Returns a reference to the client ID.
+    ///
+    /// # Returns
+    ///
+    /// A reference to the client ID string.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// let client_id = client.client_id();
+    /// ```
     fn client_id(&self) -> &String {
         &self.client_id
     }
+
+    /// Returns a reference to the session manager.
+    ///
+    /// # Returns
+    ///
+    /// A reference to the session manager wrapped in an `Arc`.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// let sessions = client.sessions();
+    /// ```
     fn sessions(&self) -> &Arc<SessionsManager> {
         &self.sessions
     }
+
+    /// Returns a reference to the Voiceflow client.
+    ///
+    /// # Returns
+    ///
+    /// A reference to the Voiceflow client wrapped in an `Arc`.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// let vf_client = client.voiceflow_client();
+    /// ```
     fn voiceflow_client(&self) -> &Arc<VoiceflowClient> {
         &self.voiceflow_client
     }
+
+    /// Returns a reference to the message sender.
+    ///
+    /// # Returns
+    ///
+    /// A reference to the message sender.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// let sender = client.sender();
+    /// ```
     fn sender(&self) -> &Self::ClientSender {
         &self.sender
     }

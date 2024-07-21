@@ -1,29 +1,29 @@
-use std::time::Duration;
-use reqwest::{Client, header::{AUTHORIZATION, CONTENT_TYPE, ACCEPT}};
+use reqwest::header::{AUTHORIZATION, CONTENT_TYPE, ACCEPT};
+use crate::utils::HttpClient;
 use crate::voiceflow::request_structures::{ActionBuilder, ActionType, VoiceflowRequestBody, VoiceflowRequestBodyBuilder};
 use crate::voiceflow::response_structures::VoiceflowResponse;
 use crate::voiceflow::{State, VoiceflousionError, VoiceflowMessage, VoiceflowSession};
 use crate::voiceflow::voiceflow_message::VoiceflowMessageBuilder;
 
-/// Voiceflow API runtime interaction url
+/// Voiceflow API runtime interaction URL.
 static VOICEFLOW_API_URL: &str = "https://general-runtime.voiceflow.com/v2beta1/interact";
 
 /// Represents a client for the Voiceflow API.
 ///
 /// `VoiceflowClient` is used to interact with the Voiceflow API using the provided API key,
 /// version ID, and project ID.
-#[derive(Debug)]
-pub struct VoiceflowClient{
+pub struct VoiceflowClient {
     /// The API key for accessing Voiceflow.
     voiceflow_api_key: String,
     /// The version ID for the Voiceflow project.
     version_id: String,
     /// The project ID for the Voiceflow project.
     project_id: String,
-    /// The HTTP client for making requests.
-    client: Client
+    /// The HTTP client for sending requests.
+    client: HttpClient,
 }
-impl VoiceflowClient{
+
+impl VoiceflowClient {
     /// Creates a new Voiceflow client.
     ///
     /// # Parameters
@@ -42,16 +42,73 @@ impl VoiceflowClient{
     /// ```
     /// let vf_client = VoiceflowClient::new("api_key".to_string(), "project_id".to_string(), "version_id".to_string(), 10);
     /// ```
-    pub fn new(voiceflow_api_key: String, project_id: String, version_id: String, max_sessions_per_moment: usize) -> Self{
-        Self{
+    pub fn new(voiceflow_api_key: String, project_id: String, version_id: String, max_sessions_per_moment: usize) -> Self {
+        Self {
             voiceflow_api_key,
             version_id,
             project_id,
-            client: Client::builder()
-                .pool_max_idle_per_host(max_sessions_per_moment)
-                .pool_idle_timeout(Duration::from_secs(60))
-                .build().unwrap()
+            client: HttpClient::new(max_sessions_per_moment),
         }
+    }
+
+    /// Returns the version ID.
+    ///
+    /// # Returns
+    ///
+    /// A reference to the version ID string.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// let version_id = vf_client.version_id();
+    /// ```
+    pub fn version_id(&self) -> &String {
+        &self.version_id
+    }
+
+    /// Returns the project ID.
+    ///
+    /// # Returns
+    ///
+    /// A reference to the project ID string.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// let project_id = vf_client.project_id();
+    /// ```
+    pub fn project_id(&self) -> &String {
+        &self.project_id
+    }
+
+    /// Returns the API key.
+    ///
+    /// # Returns
+    ///
+    /// A reference to the API key string.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// let api_key = vf_client.voiceflow_api_key();
+    /// ```
+    pub fn voiceflow_api_key(&self) -> &String {
+        &self.voiceflow_api_key
+    }
+
+    /// Returns the maximum number of idle connections per host.
+    ///
+    /// # Returns
+    ///
+    /// A `usize` representing the maximum number of idle connections per host.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// let max_sessions = vf_client.max_sessions_per_moment();
+    /// ```
+    pub fn max_sessions_per_moment(&self) -> usize {
+        self.client.max_connections_per_moment()
     }
 
     /// Launches a dialog with the Voiceflow Bot chosen session.

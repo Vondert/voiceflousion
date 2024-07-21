@@ -1,7 +1,7 @@
 use serde_json::Value;
-use crate::integrations::utils::subtypes::InteractionType;
-use crate::integrations::utils::traits::Update;
-use crate::voiceflow::VoiceflousionError;
+use crate::core::subtypes::InteractionType;
+use crate::core::traits::Update;
+use crate::core::voiceflow::VoiceflousionError;
 
 /// Represents an update received from Telegram.
 ///
@@ -64,6 +64,7 @@ impl TelegramUpdate {
     /// # Example
     ///
     /// ```
+    /// let update = TelegramUpdate::new("chat_id".to_string(), "message_id".to_string(), 1627554661, interaction_type, "update_id".to_string(), Some(0));
     /// let index = update.carousel_card_index();
     /// ```
     pub fn carousel_card_index(&self) -> Option<usize> {
@@ -79,6 +80,7 @@ impl TelegramUpdate {
     /// # Example
     ///
     /// ```
+    /// let update = TelegramUpdate::new("chat_id".to_string(), "message_id".to_string(), 1627554661, interaction_type, "update_id".to_string(), Some(0));
     /// let message_id = update.message_id();
     /// ```
     pub fn message_id(&self) -> &String {
@@ -96,6 +98,7 @@ impl Update for TelegramUpdate {
     /// # Example
     ///
     /// ```
+    /// let update = TelegramUpdate::new("chat_id".to_string(), "message_id".to_string(), 1627554661, interaction_type, "update_id".to_string(), Some(0));
     /// let chat_id = update.chat_id();
     /// ```
     fn chat_id(&self) -> &String {
@@ -111,6 +114,7 @@ impl Update for TelegramUpdate {
     /// # Example
     ///
     /// ```
+    /// let update = TelegramUpdate::new("chat_id".to_string(), "message_id".to_string(), 1627554661, interaction_type, "update_id".to_string(), Some(0));
     /// let update_id = update.update_id();
     /// ```
     fn update_id(&self) -> &String {
@@ -126,6 +130,7 @@ impl Update for TelegramUpdate {
     /// # Example
     ///
     /// ```
+    /// let update = TelegramUpdate::new("chat_id".to_string(), "message_id".to_string(), 1627554661, interaction_type, "update_id".to_string(), Some(0));
     /// let interaction_time = update.interaction_time();
     /// ```
     fn interaction_time(&self) -> i64 {
@@ -141,6 +146,7 @@ impl Update for TelegramUpdate {
     /// # Example
     ///
     /// ```
+    /// let update = TelegramUpdate::new("chat_id".to_string(), "message_id".to_string(), 1627554661, interaction_type, "update_id".to_string(), Some(0));
     /// let interaction_type = update.interaction_type();
     /// ```
     fn interaction_type(&self) -> &InteractionType {
@@ -160,6 +166,15 @@ impl Update for TelegramUpdate {
     /// # Example
     ///
     /// ```
+    /// use serde_json::json;
+    ///
+    /// let body = json!({
+    ///     "chat_id": "chat_id_value",
+    ///     "update_id": "update_id_value",
+    ///     "interaction_time": 1624478392,
+    ///     "interaction_type": "message",
+    /// });
+    ///
     /// let update = TelegramUpdate::from_request_body(body)?;
     /// ```
     fn from_request_body(body: Value) -> Result<Self, VoiceflousionError> {

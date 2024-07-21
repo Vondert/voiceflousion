@@ -37,6 +37,8 @@ impl TelegramClient{
     /// # Example
     ///
     /// ```
+    /// let voiceflow_client = Arc::new(VoiceflowClient::new(vf_api_key, bot_id.clone(), version_id, 10, Some(120));
+    /// let builder = ClientBuilder::new("client_id".to_string(), "api_key".to_string(), Arc::new(voiceflow_client), 10);
     /// let client = TelegramClient::new(builder);
     /// ```
     pub fn new(builder: ClientBuilder) -> Self{
@@ -45,6 +47,7 @@ impl TelegramClient{
         let voiceflow_client = builder.voiceflow_client().clone();
         let max_connections_per_moment = builder.max_connections_per_moment();
         let session_duration = builder.session_duration();
+        let connection_duration = builder.connection_duration();
         let sessions_cleanup_interval = builder.sessions_cleanup_interval();
         let sessions= builder.sessions();
 
@@ -52,7 +55,7 @@ impl TelegramClient{
             client_id,
             voiceflow_client,
             sessions: Arc::new(SessionsManager::new(sessions, session_duration, sessions_cleanup_interval)),
-            sender: TelegramSender::new(max_connections_per_moment, api_key)
+            sender: TelegramSender::new(max_connections_per_moment, api_key, connection_duration)
         }
     }
 

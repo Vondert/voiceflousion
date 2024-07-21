@@ -20,7 +20,7 @@ async fn main() {
     let vf_api_key: String = env::var("VF_API_KEY").unwrap_or_else(|_| "".to_string());
     let telegram_bot_token = env::var("TELEGRAM_BOT_TOKEN").unwrap_or_else(|_| "".to_string());
     let telegram_bot_id = telegram_bot_token.split(':').next().unwrap().to_string();
-    let voiceflow_client = Arc::new(VoiceflowClient::new(vf_api_key, bot_id.clone(), version_id, 10));
+    let voiceflow_client = Arc::new(VoiceflowClient::new(vf_api_key, bot_id.clone(), version_id, 10, None));
     let chat_id = "510947895".to_string();
 
     let client_builder = ClientBuilder::new(telegram_bot_id.clone(), telegram_bot_token.clone(), voiceflow_client.clone(), 10)

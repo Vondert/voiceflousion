@@ -32,6 +32,7 @@ impl VoiceflowClient {
     /// * `project_id` - The project ID for the Voiceflow project.
     /// * `version_id` - The version ID for the Voiceflow project.
     /// * `max_sessions_per_moment` - The maximum number of idle connections per host.
+    /// * `connection_duration` - The optional duration for which connections can remain idle (in seconds).
     ///
     /// # Returns
     ///
@@ -40,14 +41,15 @@ impl VoiceflowClient {
     /// # Example
     ///
     /// ```
-    /// let vf_client = VoiceflowClient::new("api_key".to_string(), "project_id".to_string(), "version_id".to_string(), 10);
+    /// let vf_client = VoiceflowClient::new("api_key".to_string(), "project_id".to_string(), "version_id".to_string(), 10, Some(120));
+    /// let default_duration_client = VoiceflowClient::new("api_key".to_string(), "project_id".to_string(), "version_id".to_string(), 10, None);
     /// ```
-    pub fn new(voiceflow_api_key: String, project_id: String, version_id: String, max_sessions_per_moment: usize) -> Self {
+    pub fn new(voiceflow_api_key: String, project_id: String, version_id: String, max_sessions_per_moment: usize, connection_duration: Option<u64>) -> Self {
         Self {
             voiceflow_api_key,
             version_id,
             project_id,
-            client: HttpClient::new(max_sessions_per_moment),
+            client: HttpClient::new(max_sessions_per_moment, connection_duration),
         }
     }
 

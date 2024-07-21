@@ -11,6 +11,8 @@ pub struct HttpClient {
     client: Client,
     /// The maximum number of idle connections per host.
     max_connections_per_moment: usize,
+    /// Duration of the HTTP connection in seconds
+    connection_duration: u64
 }
 
 impl Deref for HttpClient {
@@ -27,28 +29,37 @@ impl Deref for HttpClient {
 }
 
 impl HttpClient {
-    /// Creates a new `SenderHttpClient`.
+    /// Creates a new `HttpClient`.
     ///
     /// # Parameters
     ///
-    /// * `max_connections_per_moment` - The maximum number of idle connections per host.
+    /// * `max_sessions_per_moment` - The maximum number of idle connections per host.
+    /// * `connection_duration` - The optional duration for which connections can remain idle (in seconds).
     ///
     /// # Returns
     ///
-    /// A new instance of `SenderHttpClient`.
+    /// A new instance of `HttpClient`.
     ///
     /// # Example
     ///
     /// ```
-    /// let http_client = SenderHttpClient::new(10);
+    /// let http_client = HttpClient::new(10, Some(60));
+    /// let default_duration_client = HttpClient::new(10, None);
     /// ```
-    pub fn new(max_sessions_per_moment: usize) -> Self {
+    pub fn new(max_sessions_per_moment: usize, connection_duration: Option<u64>) -> Self {
+        let connection_duration = if let Some(duration) = connection_duration{
+            duration
+        }
+        else{
+            120
+        };
         Self {
             client: Client::builder()
                 .pool_max_idle_per_host(max_sessions_per_moment)
-                .pool_idle_timeout(Duration::from_secs(60))
+                .pool_idle_timeout(Duration::from_secs(connection_duration))
                 .build().unwrap(),
             max_connections_per_moment: max_sessions_per_moment,
+            connection_duration
         }
     }
 
@@ -65,5 +76,20 @@ impl HttpClient {
     /// ```
     pub fn max_connections_per_moment(&self) -> usize {
         self.max_connections_per_moment
+    }
+
+    /// Returns the connection duration.
+    ///
+    /// # Returns
+    ///
+    /// A `u64` representing the connection duration in seconds.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// let connection_duration = http_client.connection_duration();
+    /// ```
+    pub fn connection_duration(&self) -> u64{
+        self.connection_duration
     }
 }

@@ -147,8 +147,9 @@ pub trait ClientBase: Sync + Send {
         let api_key = self.sender().api_key().clone();
         let voiceflow_client = self.voiceflow_client().clone();
         let max_connections_per_moment = self.sender().http_client().max_connections_per_moment();
+        let connection_duration = self.sender().http_client().connection_duration();
 
-        let mut builder = ClientBuilder::new(client_id, api_key, voiceflow_client, max_connections_per_moment);
+        let mut builder = ClientBuilder::new(client_id, api_key, voiceflow_client, max_connections_per_moment).add_connection_duration(connection_duration);
         builder = if let Some(interval) =  self.sessions().cleanup_interval(){
             builder.allow_sessions_cleaning(interval)
         }

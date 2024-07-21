@@ -17,6 +17,8 @@ pub struct ClientBuilder {
     sessions: Option<Vec<Session>>,
     /// The maximum number of connections per moment.
     max_connections_per_moment: usize,
+    /// Optional duration of the HTTP connection in seconds
+    connection_duration: Option<u64>,
     /// The optional duration for session validity.
     session_duration: Option<i64>,
     /// The optional interval for session cleanup.
@@ -40,6 +42,7 @@ impl ClientBuilder {
     /// # Example
     ///
     /// ```
+    /// let voiceflow_client = Arc::new(VoiceflowClient::new(vf_api_key, bot_id.clone(), version_id, 10, Some(120));
     /// let builder = ClientBuilder::new("client_id".to_string(), "api_key".to_string(), Arc::new(voiceflow_client), 10);
     /// ```
     pub fn new(client_id: String, api_key: String, voiceflow_client: Arc<VoiceflowClient>, max_connections_per_moment: usize) -> Self {
@@ -49,6 +52,7 @@ impl ClientBuilder {
             voiceflow_client,
             sessions: None,
             max_connections_per_moment,
+            connection_duration: None,
             session_duration: None,
             sessions_cleanup_interval: None,
         }
@@ -114,6 +118,26 @@ impl ClientBuilder {
         self
     }
 
+
+    /// Adds the connection duration to the client builder.
+    ///
+    /// # Parameters
+    ///
+    /// * `duration` - The duration for HTTP connection validity in seconds.
+    ///
+    /// # Returns
+    ///
+    /// The updated `ClientBuilder` instance.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// let builder = builder.add_connection_duration(120);
+    /// ```
+    pub fn add_connection_duration(mut self, duration: u64) -> Self{
+        self.connection_duration = Some(duration);
+        self
+    }
     /// Returns the client ID.
     ///
     /// # Returns
@@ -204,6 +228,18 @@ impl ClientBuilder {
         self.session_duration
     }
 
+    /// Returns the connection duration.
+    ///
+    /// # Returns
+    ///
+    /// An `Option<u64>` representing the connection duration in seconds.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// let connection_duration = builder.connection_duration();
+    /// ```
+    pub fn connection_duration(&self) -> Option<u64> {self.connection_duration}
     /// Returns the session cleanup interval.
     ///
     /// # Returns

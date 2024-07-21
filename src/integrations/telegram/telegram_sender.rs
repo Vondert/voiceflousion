@@ -28,6 +28,7 @@ impl TelegramSender {
     ///
     /// * `max_sessions_per_moment` - The maximum number of idle connections per host.
     /// * `api_key` - The API key for authenticating with the Telegram API.
+    /// * `connection_duration` - The optional duration for which sessions can remain idle (in seconds).
     ///
     /// # Returns
     ///
@@ -36,11 +37,12 @@ impl TelegramSender {
     /// # Example
     ///
     /// ```
-    /// let sender = TelegramSender::new(10, "api_key".to_string());
+    /// let sender = TelegramSender::new(10, "api_key".to_string(), Some(120));
+    /// let default_duration_sender = TelegramSender::new(10, "api_key".to_string(), None);
     /// ```
-    pub fn new(max_sessions_per_moment: usize, api_key: String) -> Self {
+    pub fn new(max_sessions_per_moment: usize, api_key: String, connection_duration: Option<u64>) -> Self {
         Self {
-            http_client: HttpClient::new(max_sessions_per_moment),
+            http_client: HttpClient::new(max_sessions_per_moment, connection_duration),
             api_key,
         }
     }

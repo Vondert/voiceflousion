@@ -47,8 +47,7 @@ impl<'g> LockedSession<'g> {
     /// let locked_session = LockedSession::try_from_session(&session)?;
     /// ```
     pub fn try_from_session(session: &'g Arc<Session>) -> Result<Self, VoiceflousionError> {
-        let binding = &session.lock;
-        let guard = binding.try_lock().map_err(|_| VoiceflousionError::SessionLockError(session.get_cloned_chat_id()))?;
+        let guard = session.try_lock()?;
 
         Ok(Self {
             session,
@@ -84,6 +83,6 @@ impl<'g> LockedSession<'g> {
     /// locked_session.set_last_interaction(Some(Utc::now().timestamp()));
     /// ```
     pub fn set_last_interaction(&self, last_interaction: Option<i64>) {
-        self.last_interaction.store(last_interaction, Ordering::SeqCst)
+        self.store_last_interaction(last_interaction)
     }
 }

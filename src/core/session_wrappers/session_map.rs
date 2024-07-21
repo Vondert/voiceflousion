@@ -4,7 +4,7 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use chrono::Utc;
 use tokio::sync::RwLock;
 use tokio::time::{interval, Duration};
-use crate::core::session_wrappers::Session;
+use crate::core::session_wrappers::{LockedSession, Session};
 
 /// Represents a map of sessions with cleanup functionality.
 ///
@@ -169,16 +169,21 @@ impl SessionMap {
     /// ```
     /// session_map.delete_invalid_sessions().await;
     /// ```
-    pub async fn delete_invalid_sessions(&self) {
+    async fn delete_invalid_sessions(&self) {
         let mut write_lock = self.sessions.write().await;
-        let mut sessions_to_remove = vec![];
-        for (key, session) in write_lock.iter() {
-            if !self.is_valid_session(session).await {
-                sessions_to_remove.push(key.clone());
+        let keys: Vec<String> = write_lock.keys().cloned().collect();
+        for key in keys {
+            let is_delete = if let Some(session) = write_lock.get(&key) {
+                let is_invalid = !self.is_valid_session(session).await;
+                let can_lock = session.try_lock().is_ok();
+                is_invalid && can_lock
             }
-        }
-        for key in sessions_to_remove {
-            write_lock.remove(&key);
+            else{
+                false
+            };
+            if is_delete{
+                write_lock.remove(&key);
+            }
         }
     }
 

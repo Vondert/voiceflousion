@@ -1,8 +1,8 @@
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
-use tokio::sync::{Mutex, RwLock, RwLockReadGuard, RwLockWriteGuard};
+use tokio::sync::{Mutex, RwLock, RwLockReadGuard, RwLockWriteGuard, MutexGuard};
 use crate::core::subtypes::{AtomicTimestamp, SentMessage};
-use crate::core::voiceflow::VoiceflowSession;
+use crate::core::voiceflow::{VoiceflousionError, VoiceflowSession};
 
 /// Represents a session for handling interactions.
 ///
@@ -13,13 +13,13 @@ pub struct Session {
     /// The status of the session (active/inactive).
     status: Arc<AtomicBool>,
     /// The timestamp of the last interaction.
-    pub(crate) last_interaction: Arc<AtomicTimestamp>,
+    last_interaction: Arc<AtomicTimestamp>,
     /// The previous message sent in the session.
     previous_message: Arc<RwLock<Option<SentMessage>>>,
     /// The Voiceflow session associated with the session.
     voiceflow_session: VoiceflowSession,
     /// The lock for managing session concurrency.
-    pub(crate) lock: Arc<Mutex<bool>>,
+    lock: Arc<Mutex<bool>>,
 }
 
 impl Session {
@@ -81,12 +81,50 @@ impl Session {
     /// let mut previous_message = session.write_previous_message().await;
     /// *previous_message = Some(SentMessage::new(...));
     /// ```
-    pub(crate) async fn write_previous_message(&self) -> RwLockWriteGuard<'_, Option<SentMessage>> {
+    pub(super) async fn write_previous_message(&self) -> RwLockWriteGuard<'_, Option<SentMessage>> {
         let binding = &self.previous_message;
         let previous = binding.write().await;
         previous
     }
 
+    /// Tries to acquire a lock on the session.
+    ///
+    /// # Returns
+    ///
+    /// A `Result` containing a `MutexGuard` if the lock was acquired, or a `VoiceflousionError` if the lock is already held.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// let lock_result = session.try_lock();
+    /// match lock_result {
+    ///     Ok(_guard) => {
+    ///         // Lock acquired, perform operations
+    ///     }
+    ///     Err(err) => {
+    ///         // Handle error
+    ///     }
+    /// }
+    /// ```
+    pub(super) fn try_lock(&self) -> Result<MutexGuard<bool>, VoiceflousionError>{
+        let binding = &self.lock;
+        binding.try_lock().map_err(|_| VoiceflousionError::SessionLockError(self.get_cloned_chat_id()))
+    }
+
+    /// Stores the timestamp of the last interaction.
+    ///
+    /// # Parameters
+    ///
+    /// * `last_interaction` - The optional timestamp of the last interaction.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// session.store_last_interaction(Some(1627554661));
+    /// ```
+    pub(super) fn store_last_interaction(&self, last_interaction: Option<i64>) {
+        self.last_interaction.store(last_interaction, Ordering::SeqCst)
+    }
     /// Returns the timestamp of the last interaction.
     ///
     /// # Returns

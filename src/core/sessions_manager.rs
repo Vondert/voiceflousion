@@ -74,6 +74,18 @@ impl SessionsManager {
 
         manager
     }
+
+    /// Returns the cleanup interval.
+    ///
+    /// # Returns
+    ///
+    /// An `Option<u64>` representing the interval for cleanup in seconds.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// let interval = sessions_manager.cleanup_interval();
+    /// ```
     pub fn cleanup_interval(&self) -> Option<u64>{
         self.cleanup_interval
     }
@@ -82,6 +94,6 @@ impl SessionsManager {
 impl Drop for SessionsManager {
     /// Drops the `SessionsManager` and stops the cleanup process.
     fn drop(&mut self) {
-        &mut self.cancel_token.store(true, Ordering::Release);
+        let _ = &mut self.cancel_token.store(true, Ordering::Release);
     }
 }

@@ -245,7 +245,7 @@ async fn handle_webhook(body: Value, client: Arc<TelegramClient>) -> Result<impl
     };
     println!("Telegram update: {:?}", &update);
 
-    match client.interact_with_client(update, None, None).await {
+    match client.interact_with_client(update, None).await {
          Ok(message) => println!("Task: {:?}", message),
          Err(e) => {
              println!("Dialog: Error {:?}", e);

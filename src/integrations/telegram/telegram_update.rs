@@ -178,7 +178,9 @@ impl Update for TelegramUpdate {
     /// let update = TelegramUpdate::from_request_body(body)?;
     /// ```
     fn from_request_body(body: Value) -> Result<Self, VoiceflousionError> {
+        // Check if the update contains a message or a callback query
         let is_message = body.get("message").is_some();
+        // Extract the message or callback query data
         let update_data = (if is_message {
             body.get("message")
         } else {
@@ -186,33 +188,41 @@ impl Update for TelegramUpdate {
         })
             .ok_or_else(|| VoiceflousionError::ClientUpdateConvertationError("TelegramUpdate message".to_string(), body.clone()))?;
 
+        // Extract the chat ID from the update data
         let chat_id = update_data.get("chat")
             .and_then(|chat| chat.get("id"))
             .and_then(|id| id.as_i64())
             .map(|id| id.to_string())
             .ok_or_else(|| VoiceflousionError::ClientUpdateConvertationError("TelegramUpdate chat id".to_string(), update_data.clone()))?;
 
+        // Extract the message ID from the update data
         let message_id = update_data.get("message_id")
             .and_then(|id| id.as_i64())
             .map(|id| id.to_string())
             .ok_or_else(|| VoiceflousionError::ClientUpdateConvertationError("TelegramUpdate message id".to_string(), update_data.clone()))?;
 
-        let text = if is_message {
+
+        // Extract the text from the message or caption
+        let mut text = if is_message {
             update_data.get("text").and_then(|t| t.as_str()).unwrap_or_default()
         } else {
             update_data.get("caption").and_then(|c| c.as_str()).unwrap_or_default()
         }.to_string();
 
+        // Extract the interaction time from the update data
         let interaction_time = update_data.get("date")
             .and_then(|date| date.as_i64())
             .ok_or_else(|| VoiceflousionError::ClientUpdateConvertationError("TelegramUpdate interaction timestamp".to_string(), update_data.clone()))?;
 
+        // Extract the update ID from the request body
         let update_id = body.get("update_id")
             .and_then(|id| id.as_i64())
             .map(|id| id.to_string())
             .ok_or_else(|| VoiceflousionError::ClientUpdateConvertationError("TelegramUpdate update id".to_string(), body.clone()))?;
 
+        // Extract the callback data if present
         let callback_data = if !is_message {
+            //println!("{:?}", &body);
             Some(body.get("callback_query")
                 .and_then(|q| q.get("data"))
                 .and_then(|data| data.as_str())
@@ -222,11 +232,14 @@ impl Update for TelegramUpdate {
             None
         };
 
+        // Extract the carousel card index from the callback data if present
         let carousel_card_index = callback_data.as_ref()
             .and_then(|data| data.strip_prefix("c_").and_then(|index| index.parse::<usize>().ok()));
 
+        // Create an InteractionType from the text and callback data
         let interaction_type = InteractionType::new(text, callback_data);
 
+        // Return the constructed TelegramUpdate
         Ok(TelegramUpdate {
             chat_id,
             message_id,

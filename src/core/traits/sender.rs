@@ -69,6 +69,9 @@ pub trait Sender: Send + Sync {
 
     /// Sends a `VoiceflowMessage` to a client.
     ///
+    /// **This method has base implementation for sending messages. Modify it only if you
+    /// know what you are doing or have devised a better approach.**
+    ///
     /// This method iterates over the blocks in the `VoiceflowMessage` and sends
     /// each block using the appropriate method (`send_text`, `send_image`, etc.).
     ///
@@ -87,10 +90,13 @@ pub trait Sender: Send + Sync {
     /// let response = sender.send_message(&chat_id, message).await?;
     /// ```
     async fn send_message(&self, chat_id: &String, message: VoiceflowMessage) -> Result<Vec<Self::SenderResponder>, VoiceflousionError> {
+        // Obtain the HTTP client and API key
         let sender_http_client = self.http_client();
         let api_key = self.api_key();
+        // Initialize a vector to store responses
         let mut responses = Vec::with_capacity(message.len());
 
+        // Iterate over each block in the message and send it using the appropriate method
         for block in message.into_iter() {
             match block {
                 VoiceflowBlock::Text(text) => {

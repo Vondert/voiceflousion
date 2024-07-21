@@ -83,7 +83,7 @@ impl TelegramClient{
     ///
     /// let response = client.switch_carousel_card(&locked_session, &carousel, &message_id, index, interaction_time).await?;
     /// ```
-    pub async fn switch_carousel_card(&self, locked_session: &LockedSession<'_>,  carousel: &VoiceflowCarousel,  message_id: &String, index: usize, interaction_time: i64) -> Result<TelegramResponder, VoiceflousionError> {
+    async fn switch_carousel_card(&self, locked_session: &LockedSession<'_>,  carousel: &VoiceflowCarousel,  message_id: &String, index: usize, interaction_time: i64) -> Result<TelegramResponder, VoiceflousionError> {
         locked_session.set_last_interaction(Some(interaction_time));
         self.sender.update_carousel(carousel, index, locked_session.get_chat_id(), message_id).await
     }
@@ -158,16 +158,18 @@ impl ClientBase for TelegramClient {
 }
 #[async_trait]
 impl Client for TelegramClient{
-    /// Interacts with the client based on the provided update.
-    ///
-    /// This method handles interactions with the Telegram client, updating the dialog state and
-    /// sending appropriate responses based on the type of interaction (e.g., button press, text message).
+
+    /// Handles button interaction by checking if the previous message is a carousel and switching cards if necessary.
+    /// Otherwise, processes the button press normally.
     ///
     /// # Parameters
     ///
-    /// * `update` - The update from the Telegram client.
-    /// * `launch_state` - The optional state for launching the dialog.
+    /// * `locked_session` - The locked session for the interaction.
+    /// * `interaction_time` - The interaction time.
+    /// * `message` - The text message associated with the button.
+    /// * `button_path` - The data associated with the button.
     /// * `update_state` - The optional state for updating the dialog.
+    /// * `update` - The update from the Telegram client.
     ///
     /// # Returns
     ///
@@ -176,40 +178,16 @@ impl Client for TelegramClient{
     /// # Example
     ///
     /// ```
-    /// let client = TelegramClient::new(builder);
-    /// let update = TelegramUpdate::from_request_body(body)?;
-    /// let launch_state = None;
-    /// let update_state = None;
-    ///
-    /// let response = client.interact_with_client(update, launch_state, update_state).await?;
+    /// let response = client.handle_button_interaction(&locked_session, interaction_time, &message, &button_path, update_state, &update).await?;
     /// ```
-    async fn interact_with_client(&self, update: Self::ClientUpdate, launch_state: Option<State>, update_state: Option<State>) -> Result<Vec<<Self::ClientSender as Sender>::SenderResponder>, VoiceflousionError>{
-        let interaction_time =  update.interaction_time();
-        if let Some(telegram_session) = self.sessions().get_session(update.chat_id()).await {
-            let locked_session = LockedSession::try_from_session(&telegram_session)?;
-            if let Some(message) = locked_session.previous_message().await.deref(){
-                update.is_deprecated(message.date())?
-            }
-            match update.interaction_type(){
-                InteractionType::Button(message, button_path) => {
-                    if let Some(message) = locked_session.previous_message().await.deref() {
-                        if let VoiceflowBlock::Carousel(carousel) = message.block() {
-                            if let Some(index) = update.carousel_card_index() {
-                                return Ok(vec![self.switch_carousel_card(&locked_session, carousel, message.id(), index, interaction_time).await?])
-                            }
-                        }
-                    }
-                    self.choose_button_in_voiceflow_dialog(&locked_session, interaction_time, message, button_path, update_state).await
-                },
-                InteractionType::Text(message) | InteractionType::Undefined(message) => {
-                    self.send_message_to_voiceflow_dialog(&locked_session, interaction_time, message, update_state).await
+    async fn handle_button_interaction(&self, locked_session: &LockedSession<'_>, interaction_time: i64, message: &String, button_path: &String, update_state: Option<State>, update: &Self::ClientUpdate, ) -> Result<Vec<<Self::ClientSender as Sender>::SenderResponder>, VoiceflousionError> {
+        if let Some(prev_message) = locked_session.previous_message().await.deref() {
+            if let VoiceflowBlock::Carousel(carousel) = prev_message.block() {
+                if let Some(index) = update.carousel_card_index() {
+                    return Ok(vec![self.switch_carousel_card(locked_session, carousel, prev_message.id(), index, interaction_time).await?]);
                 }
             }
         }
-        else{
-            let telegram_session = self.sessions().add_session(update.chat_id().clone()).await;
-            let locked_session = LockedSession::try_from_session(&telegram_session)?;
-            self.launch_voiceflow_dialog(&locked_session, interaction_time, launch_state).await
-        }
+        self.choose_button_in_voiceflow_dialog(locked_session, interaction_time, message, button_path, update_state).await
     }
 }

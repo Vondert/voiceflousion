@@ -125,6 +125,7 @@ impl Session {
     pub(super) fn store_last_interaction(&self, last_interaction: Option<i64>) {
         self.last_interaction.store(last_interaction, Ordering::SeqCst)
     }
+
     /// Returns the timestamp of the last interaction.
     ///
     /// # Returns

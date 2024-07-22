@@ -203,7 +203,7 @@ impl Update for TelegramUpdate {
 
 
         // Extract the text from the message or caption
-        let mut text = if is_message {
+        let text = if is_message {
             update_data.get("text").and_then(|t| t.as_str()).unwrap_or_default()
         } else {
             update_data.get("caption").and_then(|c| c.as_str()).unwrap_or_default()

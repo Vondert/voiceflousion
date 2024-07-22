@@ -4,7 +4,7 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use chrono::Utc;
 use tokio::sync::RwLock;
 use tokio::time::{interval, Duration};
-use crate::core::session_wrappers::{LockedSession, Session};
+use crate::core::session_wrappers::Session;
 
 /// Represents a map of sessions with cleanup functionality.
 ///

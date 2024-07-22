@@ -1,11 +1,10 @@
 use std::ops::Deref;
 use std::vec;
 use async_trait::async_trait;
-use crate::core::ClientBuilder;
 use crate::core::session_wrappers::LockedSession;
 use crate::core::subtypes::{InteractionType, SentMessage};
 use crate::core::traits::{ClientBase, Responder, Sender, Update};
-use crate::core::voiceflow::{State, VoiceflousionError, VoiceflowBlock, VoiceflowMessage};
+use crate::core::voiceflow::{State, VoiceflousionError};
 
 /// A trait that extends `ClientBase` with additional functionalities.
 ///

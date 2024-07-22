@@ -56,6 +56,39 @@ struct ResponseBody {
     result: TelegramResult,
 }
 
+impl TelegramResponder{
+
+    /// Returns a reference to the bot ID.
+    ///
+    /// # Returns
+    ///
+    /// A reference to the bot ID string.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// let bot_id = &responder.bot_id();
+    /// ```
+    pub fn bot_id(&self) -> &String{
+        &self.bot_id
+    }
+
+    /// Returns a reference to the chat ID.
+    ///
+    /// # Returns
+    ///
+    /// A reference to the chat ID string.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// let chat_id = &responder.chat_id();
+    /// ```
+    pub fn chat_id(&self) -> &String{
+        &self.chat_id
+    }
+}
+
 #[async_trait]
 impl Responder for TelegramResponder {
     /// Returns a reference to the message ID.

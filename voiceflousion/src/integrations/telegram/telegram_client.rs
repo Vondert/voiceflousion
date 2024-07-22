@@ -1,11 +1,10 @@
 use std::ops::Deref;
 use std::sync::Arc;
 use async_trait::async_trait;
-use crate::core::traits::{ClientBase, Client, Update, Sender};
+use crate::core::traits::{ClientBase, Client, Sender};
 use crate::integrations::telegram::{TelegramResponder, TelegramSender, TelegramUpdate};
 use crate::core::{ClientBuilder, SessionsManager};
 use crate::core::session_wrappers::LockedSession;
-use crate::core::subtypes::InteractionType;
 use crate::core::voiceflow::{State, VoiceflousionError, VoiceflowBlock, VoiceflowClient};
 use crate::core::voiceflow::dialog_blocks::VoiceflowCarousel;
 

@@ -1,6 +1,5 @@
 use std::ops::Deref;
 use std::sync::Arc;
-use std::sync::atomic::Ordering;
 use tokio::sync::MutexGuard;
 use crate::core::session_wrappers::Session;
 use crate::core::subtypes::SentMessage;

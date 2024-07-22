@@ -1,6 +1,11 @@
 .idea/
-.env
-Cargo.lock
-# Added by cargo
+/future/
 
-/target
+/voiceflousion/target/
+/voiceflousion/Cargo.lock
+
+/example/.env
+/example/target/
+/example/Cargo.lock
+
+/dev/

@@ -10,6 +10,8 @@ Voiceflousion is a framework designed to integrate chatbots from the Voiceflow c
 - **Scalability**: Supports multiple client bots for a single Voiceflow bot, and multiple Voiceflow bots and clients on a single server.
 - **Admin Capabilities**: Features for creating an admin interface, such as retrieving all bot sessions, activating, and deactivating user sessions.
 - **Extensibility**: Easily extendable to support additional platforms like Instagram and WhatsApp.
+- **Multi-User Support**: The client bot supports multiple users simultaneously and offers flexible settings for the maximum number of users, session validity time, and cleanup interval.
+- **Crates.io Release**: Future plans include releasing the framework on crates.io.
 
 ## Installation and Setup
 

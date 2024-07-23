@@ -38,6 +38,9 @@ impl State{
     /// # Example
     ///
     /// ```
+    /// use serde_json::Value;
+    /// use voiceflousion::core::voiceflow::State;
+    ///
     /// let state = State::new(vec![Value::String("example".to_string())]);
     /// ```
     pub fn new(variables: Vec<Value>) -> Self{
@@ -56,8 +59,9 @@ impl Default for State{
     /// # Example
     ///
     /// ```
+    /// use voiceflousion::core::voiceflow::State;
+    ///
     /// let state = State::default();
-    /// assert!(state.variables.is_empty());
     /// ```
     fn default() -> Self {
         Self{

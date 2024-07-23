@@ -27,12 +27,6 @@ impl VoiceflowSession {
     /// # Returns
     ///
     /// A new instance of `VoiceflowSession`.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// let session = VoiceflowSession::new("session123".to_string(), "user456".to_string());
-    /// ```
     fn new(session_id: String, user_id: String) -> Self{
         Self{
           session_id,
@@ -51,12 +45,6 @@ impl VoiceflowSession {
     /// # Returns
     ///
     /// A new instance of `VoiceflowSession`.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// let session = VoiceflowSession::from_chat_id("chat123");
-    /// ```
     pub(crate) fn from_chat_id(chat_id: &str) -> Self {
         fn hash(input: &str, suffix: &str) -> String {
             let mut hasher = Sha256::new();

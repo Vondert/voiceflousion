@@ -20,25 +20,6 @@ pub trait Sender: Send + Sync {
     /// # Returns
     ///
     /// A reference to the `HttpClient`.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// struct MySender {
-    ///     http_client: HttpClient,
-    ///     api_key: String,
-    /// }
-    ///
-    /// impl Sender for MySender {
-    ///     type SenderResponder = MyResponder;
-    ///
-    ///     fn http_client(&self) -> &HttpClient {
-    ///         &self.http_client
-    ///     }
-    ///
-    ///     // Other method implementations...
-    /// }
-    /// ```
     fn http_client(&self) -> &HttpClient;
 
     /// Returns a reference to the API key used for authentication.
@@ -46,25 +27,6 @@ pub trait Sender: Send + Sync {
     /// # Returns
     ///
     /// A reference to the API key string.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// struct MySender {
-    ///     http_client: HttpClient,
-    ///     api_key: String,
-    /// }
-    ///
-    /// impl Sender for MySender {
-    ///     type SenderResponder = MyResponder;
-    ///
-    ///     fn api_key(&self) -> &String {
-    ///         &self.api_key
-    ///     }
-    ///
-    ///     // Other method implementations...
-    /// }
-    /// ```
     fn api_key(&self) -> &String;
 
     /// Sends a `VoiceflowMessage` to a client.
@@ -83,12 +45,6 @@ pub trait Sender: Send + Sync {
     /// # Returns
     ///
     /// A `Result` containing a vector of `SenderResponder` or a `VoiceflousionError` if the request fails.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// let response = sender.send_message(&chat_id, message).await?;
-    /// ```
     async fn send_message(&self, chat_id: &String, message: VoiceflowMessage) -> Result<Vec<Self::SenderResponder>, VoiceflousionError> {
         // Obtain the HTTP client and API key
         let sender_http_client = self.http_client();
@@ -145,26 +101,6 @@ pub trait Sender: Send + Sync {
     /// # Returns
     ///
     /// A `Result` containing a `SenderResponder` or a `VoiceflousionError` if the request fails.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// struct MySender {
-    ///     http_client: HttpClient,
-    ///     api_key: String,
-    /// }
-    ///
-    /// #[async_trait]
-    /// impl Sender for MySender {
-    ///     type SenderResponder = MyResponder;
-    ///
-    ///     async fn send_text(&self, text: VoiceflowText, chat_id: &String, sender_http_client: &HttpClient, api_key: &String) -> Result<Self::SenderResponder, VoiceflousionError> {
-    ///         // Implement the sending logic here.
-    ///     }
-    ///
-    ///     // Other method implementations...
-    /// }
-    /// ```
     async fn send_text(&self, text: VoiceflowText, chat_id: &String, sender_http_client: &HttpClient, api_key: &String) -> Result<Self::SenderResponder, VoiceflousionError>;
 
     /// Sends an image message to a client.
@@ -179,26 +115,6 @@ pub trait Sender: Send + Sync {
     /// # Returns
     ///
     /// A `Result` containing a `SenderResponder` or a `VoiceflousionError` if the request fails.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// struct MySender {
-    ///     http_client: HttpClient,
-    ///     api_key: String,
-    /// }
-    ///
-    /// #[async_trait]
-    /// impl Sender for MySender {
-    ///     type SenderResponder = MyResponder;
-    ///
-    ///     async fn send_image(&self, image: VoiceflowImage, chat_id: &String, sender_http_client: &HttpClient, api_key: &String) -> Result<Self::SenderResponder, VoiceflousionError> {
-    ///         // Implement the sending logic here.
-    ///     }
-    ///
-    ///     // Other method implementations...
-    /// }
-    /// ```
     async fn send_image(&self, image: VoiceflowImage, chat_id: &String, sender_http_client: &HttpClient, api_key: &String) -> Result<Self::SenderResponder, VoiceflousionError>;
 
     /// Sends a button message to a client.
@@ -213,26 +129,6 @@ pub trait Sender: Send + Sync {
     /// # Returns
     ///
     /// A `Result` containing a `SenderResponder` or a `VoiceflousionError` if the request fails.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// struct MySender {
-    ///     http_client: HttpClient,
-    ///     api_key: String,
-    /// }
-    ///
-    /// #[async_trait]
-    /// impl Sender for MySender {
-    ///     type SenderResponder = MyResponder;
-    ///
-    ///     async fn send_buttons(&self, buttons: VoiceflowButtons, chat_id: &String, sender_http_client: &HttpClient, api_key: &String) -> Result<Self::SenderResponder, VoiceflousionError> {
-    ///         // Implement the sending logic here.
-    ///     }
-    ///
-    ///     // Other method implementations...
-    /// }
-    /// ```
     async fn send_buttons(&self, buttons: VoiceflowButtons, chat_id: &String, sender_http_client: &HttpClient, api_key: &String) -> Result<Self::SenderResponder, VoiceflousionError>;
 
     /// Sends a card message to a client.
@@ -247,26 +143,6 @@ pub trait Sender: Send + Sync {
     /// # Returns
     ///
     /// A `Result` containing a `SenderResponder` or a `VoiceflousionError` if the request fails.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// struct MySender {
-    ///     http_client: HttpClient,
-    ///     api_key: String,
-    /// }
-    ///
-    /// #[async_trait]
-    /// impl Sender for MySender {
-    ///     type SenderResponder = MyResponder;
-    ///
-    ///     async fn send_card(&self, card: VoiceflowCard, chat_id: &String, sender_http_client: &HttpClient, api_key: &String) -> Result<Self::SenderResponder, VoiceflousionError> {
-    ///         // Implement the sending logic here.
-    ///     }
-    ///
-    ///     // Other method implementations...
-    /// }
-    /// ```
     async fn send_card(&self, card: VoiceflowCard, chat_id: &String, sender_http_client: &HttpClient, api_key: &String) -> Result<Self::SenderResponder, VoiceflousionError>;
 
     /// Sends a carousel message to a client.
@@ -281,25 +157,5 @@ pub trait Sender: Send + Sync {
     /// # Returns
     ///
     /// A `Result` containing a `SenderResponder` or a `VoiceflousionError` if the request fails.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// struct MySender {
-    ///     http_client: HttpClient,
-    ///     api_key: String,
-    /// }
-    ///
-    /// #[async_trait]
-    /// impl Sender for MySender {
-    ///     type SenderResponder = MyResponder;
-    ///
-    ///     async fn send_carousel(&self, carousel: VoiceflowCarousel, chat_id: &String, sender_http_client: &HttpClient, api_key: &String) -> Result<Self::SenderResponder, VoiceflousionError> {
-    ///         // Implement the sending logic here.
-    ///     }
-    ///
-    ///     // Other method implementations...
-    /// }
-    /// ```
     async fn send_carousel(&self, carousel: VoiceflowCarousel, chat_id: &String, sender_http_client: &HttpClient, api_key: &String) -> Result<Self::SenderResponder, VoiceflousionError>;
 }

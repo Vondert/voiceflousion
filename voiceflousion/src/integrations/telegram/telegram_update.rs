@@ -42,6 +42,11 @@ impl TelegramUpdate {
     /// # Example
     ///
     /// ```
+    /// use voiceflousion::core::subtypes::InteractionType;
+    /// use voiceflousion::core::traits::Update;
+    /// use voiceflousion::integrations::telegram::TelegramUpdate;
+    ///
+    /// let interaction_type = InteractionType::new("message".to_string(), Some("path".to_string()));
     /// let update = TelegramUpdate::new("chat_id".to_string(), "message_id".to_string(), 1627554661, interaction_type, "update_id".to_string(), Some(0));
     /// ```
     pub fn new(chat_id: String, message_id: String, interaction_time: i64, interaction_type: InteractionType, update_id: String, carousel_card_index: Option<usize>) -> Self {
@@ -64,6 +69,11 @@ impl TelegramUpdate {
     /// # Example
     ///
     /// ```
+    /// use voiceflousion::core::subtypes::InteractionType;
+    /// use voiceflousion::core::traits::Update;
+    /// use voiceflousion::integrations::telegram::TelegramUpdate;
+    ///
+    /// let interaction_type = InteractionType::new("message".to_string(), Some("path".to_string()));
     /// let update = TelegramUpdate::new("chat_id".to_string(), "message_id".to_string(), 1627554661, interaction_type, "update_id".to_string(), Some(0));
     /// let index = update.carousel_card_index();
     /// ```
@@ -80,6 +90,11 @@ impl TelegramUpdate {
     /// # Example
     ///
     /// ```
+    /// use voiceflousion::core::subtypes::InteractionType;
+    /// use voiceflousion::core::traits::Update;
+    /// use voiceflousion::integrations::telegram::TelegramUpdate;
+    ///
+    /// let interaction_type = InteractionType::new("message".to_string(), Some("path".to_string()));
     /// let update = TelegramUpdate::new("chat_id".to_string(), "message_id".to_string(), 1627554661, interaction_type, "update_id".to_string(), Some(0));
     /// let message_id = update.message_id();
     /// ```
@@ -98,6 +113,11 @@ impl Update for TelegramUpdate {
     /// # Example
     ///
     /// ```
+    /// use voiceflousion::core::subtypes::InteractionType;
+    /// use voiceflousion::core::traits::Update;
+    /// use voiceflousion::integrations::telegram::TelegramUpdate;
+    ///
+    /// let interaction_type = InteractionType::new("message".to_string(), Some("path".to_string()));
     /// let update = TelegramUpdate::new("chat_id".to_string(), "message_id".to_string(), 1627554661, interaction_type, "update_id".to_string(), Some(0));
     /// let chat_id = update.chat_id();
     /// ```
@@ -114,6 +134,11 @@ impl Update for TelegramUpdate {
     /// # Example
     ///
     /// ```
+    /// use voiceflousion::core::subtypes::InteractionType;
+    /// use voiceflousion::core::traits::Update;
+    /// use voiceflousion::integrations::telegram::TelegramUpdate;
+    ///
+    /// let interaction_type = InteractionType::new("message".to_string(), Some("path".to_string()));
     /// let update = TelegramUpdate::new("chat_id".to_string(), "message_id".to_string(), 1627554661, interaction_type, "update_id".to_string(), Some(0));
     /// let update_id = update.update_id();
     /// ```
@@ -130,6 +155,11 @@ impl Update for TelegramUpdate {
     /// # Example
     ///
     /// ```
+    /// use voiceflousion::core::subtypes::InteractionType;
+    /// use voiceflousion::core::traits::Update;
+    /// use voiceflousion::integrations::telegram::TelegramUpdate;
+    ///
+    /// let interaction_type = InteractionType::new("message".to_string(), Some("path".to_string()));
     /// let update = TelegramUpdate::new("chat_id".to_string(), "message_id".to_string(), 1627554661, interaction_type, "update_id".to_string(), Some(0));
     /// let interaction_time = update.interaction_time();
     /// ```
@@ -146,6 +176,11 @@ impl Update for TelegramUpdate {
     /// # Example
     ///
     /// ```
+    /// use voiceflousion::core::subtypes::InteractionType;
+    /// use voiceflousion::core::traits::Update;
+    /// use voiceflousion::integrations::telegram::TelegramUpdate;
+    ///
+    /// let interaction_type = InteractionType::new("message".to_string(), Some("path".to_string()));
     /// let update = TelegramUpdate::new("chat_id".to_string(), "message_id".to_string(), 1627554661, interaction_type, "update_id".to_string(), Some(0));
     /// let interaction_type = update.interaction_type();
     /// ```
@@ -167,15 +202,12 @@ impl Update for TelegramUpdate {
     ///
     /// ```
     /// use serde_json::json;
+    /// use voiceflousion::core::traits::Update;
+    /// use voiceflousion::integrations::telegram::TelegramUpdate;
     ///
-    /// let body = json!({
-    ///     "chat_id": "chat_id_value",
-    ///     "update_id": "update_id_value",
-    ///     "interaction_time": 1624478392,
-    ///     "interaction_type": "message",
-    /// });
+    /// let body = json!({});
     ///
-    /// let update = TelegramUpdate::from_request_body(body)?;
+    /// let update = TelegramUpdate::from_request_body(body);
     /// ```
     fn from_request_body(body: Value) -> Result<Self, VoiceflousionError> {
         // Check if the update contains a message or a callback query

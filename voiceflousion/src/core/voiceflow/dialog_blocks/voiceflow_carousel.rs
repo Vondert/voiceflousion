@@ -31,6 +31,8 @@ impl VoiceflowCarousel {
     /// # Example
     ///
     /// ```
+    /// use voiceflousion::core::voiceflow::dialog_blocks::{VoiceflowCard, VoiceflowCarousel};
+    ///
     /// let cards = vec![VoiceflowCard::new(Some("https://example.com/image.jpg".to_string()), Some("Title".to_string()), Some("Description".to_string()), None)];
     /// let carousel = VoiceflowCarousel::new(cards, true);
     /// ```
@@ -50,6 +52,10 @@ impl VoiceflowCarousel {
     /// # Example
     ///
     /// ```
+    /// use voiceflousion::core::voiceflow::dialog_blocks::{VoiceflowCard, VoiceflowCarousel};
+    ///
+    /// let cards = vec![VoiceflowCard::new(Some("https://example.com/image.jpg".to_string()), Some("Title".to_string()), Some("Description".to_string()), None)];
+    /// let carousel = VoiceflowCarousel::new(cards, true);
     /// let is_full = carousel.is_full();
     /// ```
     pub fn is_full(&self) -> bool {
@@ -77,26 +83,6 @@ impl FromValue for VoiceflowCarousel{
     /// A `Result` containing an `Option` with the `VoiceflowCarousel` instance if the conversion
     /// succeeds, or a `VoiceflousionError` if the conversion fails. If the conversion
     /// succeeds but there is no meaningful value, `None` can be returned.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// let json_value = serde_json::json!({
-    ///     "trace": {
-    ///         "payload": {
-    ///             "cards": [{
-    ///                 "imageUrl": "https://example.com/image.jpg",
-    ///                 "title": "Title",
-    ///                 "description": {
-    ///                     "text": "Description"
-    ///                 },
-    ///                 "buttons": [{"name": "Click me"}]
-    ///             }]
-    ///         }
-    ///     }
-    /// });
-    /// let carousel = VoiceflowCarousel::from_value(&json_value)?;
-    /// ```
     fn from_value(value: &Value) -> Result<Option<Self>, VoiceflousionError> {
         let payload = value.get("trace")
             .and_then(|trace| trace.get("payload"))

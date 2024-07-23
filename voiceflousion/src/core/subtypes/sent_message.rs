@@ -28,6 +28,11 @@ impl SentMessage {
     /// # Example
     ///
     /// ```
+    /// use voiceflousion::core::subtypes::SentMessage;
+    /// use voiceflousion::core::voiceflow::dialog_blocks::VoiceflowText;
+    /// use voiceflousion::core::voiceflow::VoiceflowBlock;
+    ///
+    /// let block = VoiceflowBlock::Text(VoiceflowText::new("text".to_string()));
     /// let sent_message = SentMessage::new(block, "message_id".to_string(), 1627554661);
     /// ```
     pub fn new(block: VoiceflowBlock, message_id: String, date: i64) -> Self {
@@ -47,6 +52,13 @@ impl SentMessage {
     /// # Example
     ///
     /// ```
+    /// use voiceflousion::core::subtypes::SentMessage;
+    /// use voiceflousion::core::voiceflow::dialog_blocks::VoiceflowText;
+    /// use voiceflousion::core::voiceflow::VoiceflowBlock;
+    ///
+    /// let block = VoiceflowBlock::Text(VoiceflowText::new("text".to_string()));
+    /// let sent_message = SentMessage::new(block, "message_id".to_string(), 1627554661);
+    ///
     /// let id = sent_message.id();
     /// ```
     pub fn id(&self) -> &String {
@@ -62,6 +74,13 @@ impl SentMessage {
     /// # Example
     ///
     /// ```
+    /// use voiceflousion::core::subtypes::SentMessage;
+    /// use voiceflousion::core::voiceflow::dialog_blocks::VoiceflowText;
+    /// use voiceflousion::core::voiceflow::VoiceflowBlock;
+    ///
+    /// let block = VoiceflowBlock::Text(VoiceflowText::new("text".to_string()));
+    /// let sent_message = SentMessage::new(block, "message_id".to_string(), 1627554661);
+    ///
     /// let block = sent_message.block();
     /// ```
     pub fn block(&self) -> &VoiceflowBlock {
@@ -77,6 +96,13 @@ impl SentMessage {
     /// # Example
     ///
     /// ```
+    /// use voiceflousion::core::subtypes::SentMessage;
+    /// use voiceflousion::core::voiceflow::dialog_blocks::VoiceflowText;
+    /// use voiceflousion::core::voiceflow::VoiceflowBlock;
+    ///
+    /// let block = VoiceflowBlock::Text(VoiceflowText::new("text".to_string()));
+    /// let sent_message = SentMessage::new(block, "message_id".to_string(), 1627554661);
+    ///
     /// let date = sent_message.date();
     /// ```
     pub fn date(&self) -> i64 {

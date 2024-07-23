@@ -25,6 +25,9 @@ impl VoiceflowMessage{
     /// # Example
     ///
     /// ```
+    /// use voiceflousion::core::voiceflow::{VoiceflowBlock, VoiceflowMessage};
+    /// use voiceflousion::core::voiceflow::dialog_blocks::VoiceflowText;
+    ///
     /// let mut message = VoiceflowMessage::default();
     /// let block = VoiceflowBlock::Text(VoiceflowText::new("Hello".to_string()));
     /// message.add_block(block);
@@ -42,6 +45,9 @@ impl VoiceflowMessage{
     /// # Example
     ///
     /// ```
+    /// use voiceflousion::core::voiceflow::VoiceflowMessage;
+    ///
+    /// let mut message = VoiceflowMessage::default();
     /// let trimmed = message.trim_end_block();
     /// ```
     pub fn trim_end_block(&mut self) -> bool{
@@ -92,12 +98,6 @@ impl VoiceflowMessageBuilder {
     /// # Returns
     ///
     /// A new instance of `VoiceflowMessageBuilder`.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// let builder = VoiceflowMessageBuilder::new();
-    /// ```
     pub fn new() -> Self {
         Self
     }
@@ -111,12 +111,6 @@ impl VoiceflowMessageBuilder {
     /// # Returns
     ///
     /// A `Result` containing a `VoiceflowMessage` or a `VoiceflousionError` if the conversion fails.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// let message = builder.build_message(blocks)?;
-    /// ```
     pub fn build_message(self, blocks: Vec<VoiceflowResponseBlock>) -> Result<VoiceflowMessage, VoiceflousionError> {
         let mut message = VoiceflowMessage {
             content: Vec::with_capacity(blocks.len()),

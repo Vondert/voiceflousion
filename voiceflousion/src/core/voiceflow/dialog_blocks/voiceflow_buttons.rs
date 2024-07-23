@@ -31,6 +31,9 @@ impl VoiceflowButtons{
     /// # Example
     ///
     /// ```
+    /// use voiceflousion::core::voiceflow::dialog_blocks::enums::VoiceflowButtonActionType;
+    /// use voiceflousion::core::voiceflow::dialog_blocks::{VoiceflowButton, VoiceflowButtons};
+    ///
     /// let buttons = vec![VoiceflowButton::new("Click me".to_string(), "/path".to_string(), VoiceflowButtonActionType::Path)];
     /// let voiceflow_buttons = VoiceflowButtons::new(buttons);
     /// ```
@@ -50,6 +53,12 @@ impl VoiceflowButtons{
     /// # Example
     ///
     /// ```
+    /// use voiceflousion::core::voiceflow::dialog_blocks::enums::VoiceflowButtonActionType;
+    /// use voiceflousion::core::voiceflow::dialog_blocks::{VoiceflowButton, VoiceflowButtons};
+    ///
+    /// let buttons = vec![VoiceflowButton::new("Click me".to_string(), "/path".to_string(), VoiceflowButtonActionType::Path)];
+    /// let voiceflow_buttons = VoiceflowButtons::new(buttons);
+    ///
     /// let option = voiceflow_buttons.option();
     /// ```
     pub fn option(&self) -> &VoiceflowButtonsOption {
@@ -65,6 +74,12 @@ impl VoiceflowButtons{
     /// # Example
     ///
     /// ```
+    /// use voiceflousion::core::voiceflow::dialog_blocks::enums::{VoiceflowButtonActionType, VoiceflowButtonsOption};
+    /// use voiceflousion::core::voiceflow::dialog_blocks::{VoiceflowButton, VoiceflowButtons, VoiceflowText};
+    ///
+    /// let buttons = vec![VoiceflowButton::new("Click me".to_string(), "/path".to_string(), VoiceflowButtonActionType::Path)];
+    /// let mut voiceflow_buttons = VoiceflowButtons::new(buttons);
+    ///
     /// voiceflow_buttons.set_option(VoiceflowButtonsOption::Text(VoiceflowText::new("Option text".to_string())));
     /// ```
     pub fn set_option(&mut self, buttons_option: VoiceflowButtonsOption) {
@@ -91,19 +106,6 @@ impl FromValue for VoiceflowButtons{
     /// A `Result` containing an `Option` with the `VoiceflowButtons` instance if the conversion
     /// succeeds, or a `VoiceflousionError` if the conversion fails. If the conversion
     /// succeeds but there are no buttons, `None` can be returned.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// let json_value = serde_json::json!({
-    ///     "trace": {
-    ///         "payload": {
-    ///             "buttons": [{"name": "Click me"}]
-    ///         }
-    ///     }
-    /// });
-    /// let buttons = VoiceflowButtons::from_value(&json_value)?;
-    /// ```
     fn from_value(value: &Value) -> Result<Option<Self>, VoiceflousionError> {
 
         let buttons_value = match value.get("trace").and_then(|trace| trace.get("payload"))

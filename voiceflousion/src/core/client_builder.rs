@@ -42,8 +42,12 @@ impl ClientBuilder {
     /// # Example
     ///
     /// ```
-    /// let voiceflow_client = Arc::new(VoiceflowClient::new(vf_api_key, bot_id.clone(), version_id, 10, Some(120));
-    /// let builder = ClientBuilder::new("client_id".to_string(), "api_key".to_string(), Arc::new(voiceflow_client), 10);
+    /// use std::sync::Arc;
+    /// use voiceflousion::core::ClientBuilder;
+    /// use voiceflousion::core::voiceflow::VoiceflowClient;
+    ///
+    /// let voiceflow_client = Arc::new(VoiceflowClient::new("vf_api_key".to_string(), "bot_id".to_string(), "version_id".to_string(), 10, Some(120)));
+    /// let builder = ClientBuilder::new("client_id".to_string(), "api_key".to_string(), voiceflow_client, 10);
     /// ```
     pub fn new(client_id: String, api_key: String, voiceflow_client: Arc<VoiceflowClient>, max_connections_per_moment: usize) -> Self {
         Self {
@@ -71,6 +75,15 @@ impl ClientBuilder {
     /// # Example
     ///
     /// ```
+    /// use std::sync::Arc;
+    /// use voiceflousion::core::ClientBuilder;
+    /// use voiceflousion::core::session_wrappers::Session;
+    /// use voiceflousion::core::voiceflow::VoiceflowClient;
+    ///
+    /// let voiceflow_client = Arc::new(VoiceflowClient::new("vf_api_key".to_string(), "bot_id".to_string(), "version_id".to_string(), 10, Some(120)));
+    /// let sessions: Vec<Session> = vec![];
+    ///
+    /// let mut builder = ClientBuilder::new("client_id".to_string(), "api_key".to_string(), voiceflow_client, 10);
     /// let builder = builder.add_sessions(sessions);
     /// ```
     pub fn add_sessions(mut self, sessions: Vec<Session>) -> Self {
@@ -91,6 +104,12 @@ impl ClientBuilder {
     /// # Example
     ///
     /// ```
+    /// use std::sync::Arc;
+    /// use voiceflousion::core::ClientBuilder;
+    /// use voiceflousion::core::voiceflow::VoiceflowClient;
+    ///
+    /// let voiceflow_client = Arc::new(VoiceflowClient::new("vf_api_key".to_string(), "bot_id".to_string(), "version_id".to_string(), 10, Some(120)));
+    /// let mut builder = ClientBuilder::new("client_id".to_string(), "api_key".to_string(), voiceflow_client, 10);
     /// let builder = builder.allow_sessions_cleaning(600);
     /// ```
     pub fn allow_sessions_cleaning(mut self, interval: u64) -> Self {
@@ -111,6 +130,12 @@ impl ClientBuilder {
     /// # Example
     ///
     /// ```
+    /// use std::sync::Arc;
+    /// use voiceflousion::core::ClientBuilder;
+    /// use voiceflousion::core::voiceflow::VoiceflowClient;
+    ///
+    /// let voiceflow_client = Arc::new(VoiceflowClient::new("vf_api_key".to_string(), "bot_id".to_string(), "version_id".to_string(), 10, Some(120)));
+    /// let mut builder = ClientBuilder::new("client_id".to_string(), "api_key".to_string(), voiceflow_client, 10);
     /// let builder = builder.add_session_duration(3600);
     /// ```
     pub fn add_session_duration(mut self, duration: i64) -> Self {
@@ -132,6 +157,12 @@ impl ClientBuilder {
     /// # Example
     ///
     /// ```
+    /// use std::sync::Arc;
+    /// use voiceflousion::core::ClientBuilder;
+    /// use voiceflousion::core::voiceflow::VoiceflowClient;
+    ///
+    /// let voiceflow_client = Arc::new(VoiceflowClient::new("vf_api_key".to_string(), "bot_id".to_string(), "version_id".to_string(), 10, Some(120)));
+    /// let mut builder = ClientBuilder::new("client_id".to_string(), "api_key".to_string(), voiceflow_client, 10);
     /// let builder = builder.add_connection_duration(120);
     /// ```
     pub fn add_connection_duration(mut self, duration: u64) -> Self{
@@ -147,6 +178,12 @@ impl ClientBuilder {
     /// # Example
     ///
     /// ```
+    /// use std::sync::Arc;
+    /// use voiceflousion::core::ClientBuilder;
+    /// use voiceflousion::core::voiceflow::VoiceflowClient;
+    ///
+    /// let voiceflow_client = Arc::new(VoiceflowClient::new("vf_api_key".to_string(), "bot_id".to_string(), "version_id".to_string(), 10, Some(120)));
+    /// let builder = ClientBuilder::new("client_id".to_string(), "api_key".to_string(), voiceflow_client, 10);
     /// let client_id = builder.client_id();
     /// ```
     pub fn client_id(&self) -> &String {
@@ -162,6 +199,12 @@ impl ClientBuilder {
     /// # Example
     ///
     /// ```
+    /// use std::sync::Arc;
+    /// use voiceflousion::core::ClientBuilder;
+    /// use voiceflousion::core::voiceflow::VoiceflowClient;
+    ///
+    /// let voiceflow_client = Arc::new(VoiceflowClient::new("vf_api_key".to_string(), "bot_id".to_string(), "version_id".to_string(), 10, Some(120)));
+    /// let builder = ClientBuilder::new("client_id".to_string(), "api_key".to_string(), voiceflow_client, 10);
     /// let api_key = builder.api_key();
     /// ```
     pub fn api_key(&self) -> &String {
@@ -177,6 +220,12 @@ impl ClientBuilder {
     /// # Example
     ///
     /// ```
+    /// use std::sync::Arc;
+    /// use voiceflousion::core::ClientBuilder;
+    /// use voiceflousion::core::voiceflow::VoiceflowClient;
+    ///
+    /// let voiceflow_client = Arc::new(VoiceflowClient::new("vf_api_key".to_string(), "bot_id".to_string(), "version_id".to_string(), 10, Some(120)));
+    /// let builder = ClientBuilder::new("client_id".to_string(), "api_key".to_string(), voiceflow_client, 10);
     /// let voiceflow_client = builder.voiceflow_client();
     /// ```
     pub fn voiceflow_client(&self) -> &Arc<VoiceflowClient> {
@@ -192,6 +241,12 @@ impl ClientBuilder {
     /// # Example
     ///
     /// ```
+    /// use std::sync::Arc;
+    /// use voiceflousion::core::ClientBuilder;
+    /// use voiceflousion::core::voiceflow::VoiceflowClient;
+    ///
+    /// let voiceflow_client = Arc::new(VoiceflowClient::new("vf_api_key".to_string(), "bot_id".to_string(), "version_id".to_string(), 10, Some(120)));
+    /// let builder = ClientBuilder::new("client_id".to_string(), "api_key".to_string(), voiceflow_client, 10);
     /// let sessions = builder.sessions();
     /// ```
     pub fn sessions(self) -> Option<Vec<Session>> {
@@ -207,6 +262,12 @@ impl ClientBuilder {
     /// # Example
     ///
     /// ```
+    /// use std::sync::Arc;
+    /// use voiceflousion::core::ClientBuilder;
+    /// use voiceflousion::core::voiceflow::VoiceflowClient;
+    ///
+    /// let voiceflow_client = Arc::new(VoiceflowClient::new("vf_api_key".to_string(), "bot_id".to_string(), "version_id".to_string(), 10, Some(120)));
+    /// let builder = ClientBuilder::new("client_id".to_string(), "api_key".to_string(), voiceflow_client, 10);
     /// let max_connections = builder.max_connections_per_moment();
     /// ```
     pub fn max_connections_per_moment(&self) -> usize {
@@ -222,6 +283,12 @@ impl ClientBuilder {
     /// # Example
     ///
     /// ```
+    /// use std::sync::Arc;
+    /// use voiceflousion::core::ClientBuilder;
+    /// use voiceflousion::core::voiceflow::VoiceflowClient;
+    ///
+    /// let voiceflow_client = Arc::new(VoiceflowClient::new("vf_api_key".to_string(), "bot_id".to_string(), "version_id".to_string(), 10, Some(120)));
+    /// let builder = ClientBuilder::new("client_id".to_string(), "api_key".to_string(), voiceflow_client, 10);
     /// let session_duration = builder.session_duration();
     /// ```
     pub fn session_duration(&self) -> Option<i64> {
@@ -237,6 +304,12 @@ impl ClientBuilder {
     /// # Example
     ///
     /// ```
+    /// use std::sync::Arc;
+    /// use voiceflousion::core::ClientBuilder;
+    /// use voiceflousion::core::voiceflow::VoiceflowClient;
+    ///
+    /// let voiceflow_client = Arc::new(VoiceflowClient::new("vf_api_key".to_string(), "bot_id".to_string(), "version_id".to_string(), 10, Some(120)));
+    /// let builder = ClientBuilder::new("client_id".to_string(), "api_key".to_string(), voiceflow_client, 10);
     /// let connection_duration = builder.connection_duration();
     /// ```
     pub fn connection_duration(&self) -> Option<u64> {self.connection_duration}
@@ -249,6 +322,12 @@ impl ClientBuilder {
     /// # Example
     ///
     /// ```
+    /// use std::sync::Arc;
+    /// use voiceflousion::core::ClientBuilder;
+    /// use voiceflousion::core::voiceflow::VoiceflowClient;
+    ///
+    /// let voiceflow_client = Arc::new(VoiceflowClient::new("vf_api_key".to_string(), "bot_id".to_string(), "version_id".to_string(), 10, Some(120)));
+    /// let builder = ClientBuilder::new("client_id".to_string(), "api_key".to_string(), voiceflow_client, 10);
     /// let cleanup_interval = builder.sessions_cleanup_interval();
     /// ```
     pub fn sessions_cleanup_interval(&self) -> Option<u64> {

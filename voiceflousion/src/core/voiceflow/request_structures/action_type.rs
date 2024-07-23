@@ -26,14 +26,6 @@ impl Serialize for ActionType {
     /// # Returns
     ///
     /// A `Result` containing the serialized string or an error.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// let action_type = ActionType::Launch;
-    /// let json_string = serde_json::to_string(&action_type).unwrap();
-    /// assert_eq!(json_string, "\"launch\"");
-    /// ```
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
@@ -56,13 +48,6 @@ impl Display for ActionType{
     /// # Returns
     ///
     /// A `Result` indicating success or failure.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// let action_type = ActionType::Launch;
-    /// println!("{}", action_type); // prints "launch"
-    /// ```
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let str = match &self {
             ActionType::Launch => "launch".to_string(),

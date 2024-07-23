@@ -45,7 +45,15 @@ impl SessionsManager {
     /// # Example
     ///
     /// ```
-    /// let sessions_manager = SessionsManager::new(Some(sessions), Some(3600), Some(600));
+    /// use voiceflousion::core::session_wrappers::Session;
+    /// use voiceflousion::core::SessionsManager;
+    /// use tokio;
+    ///
+    /// #[tokio::main]
+    /// async fn main() -> () {
+    ///     let sessions: Vec<Session> = vec![];
+    ///     let sessions_manager = SessionsManager::new(Some(sessions), Some(3600), Some(600));
+    /// }
     /// ```
     pub fn new(sessions_option: Option<Vec<Session>>, valid_session_duration: Option<i64>, cleanup_interval: Option<u64>) -> Self {
         let manager = Self {
@@ -84,7 +92,17 @@ impl SessionsManager {
     /// # Example
     ///
     /// ```
-    /// let interval = sessions_manager.cleanup_interval();
+    /// use voiceflousion::core::session_wrappers::Session;
+    /// use voiceflousion::core::SessionsManager;
+    /// use tokio;
+    ///
+    /// #[tokio::main]
+    /// async fn main() -> () {
+    ///     let sessions: Vec<Session> = vec![];
+    ///     let sessions_manager = SessionsManager::new(Some(sessions), Some(3600), Some(600));
+    ///
+    ///     let interval = sessions_manager.cleanup_interval();
+    /// }
     /// ```
     pub fn cleanup_interval(&self) -> Option<u64>{
         self.cleanup_interval

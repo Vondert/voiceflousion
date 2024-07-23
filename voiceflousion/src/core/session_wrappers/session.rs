@@ -38,6 +38,8 @@ impl Session {
     /// # Example
     ///
     /// ```
+    /// use voiceflousion::core::session_wrappers::Session;
+    ///
     /// let session = Session::new("chat_id".to_string(), Some(1627554661), true);
     /// ```
     pub fn new(chat_id: String, last_interaction: Option<i64>, status: bool) -> Self {
@@ -61,7 +63,16 @@ impl Session {
     /// # Example
     ///
     /// ```
-    /// let previous_message = session.previous_message().await;
+    /// use voiceflousion::core::session_wrappers::Session;
+    /// use tokio;
+    ///
+    /// #[tokio::main]
+    /// async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    ///     let session = Session::new("chat_id".to_string(), Some(1627554661), true);
+    ///     let previous_message = session.previous_message().await;
+    ///
+    ///     Ok(())
+    /// }
     /// ```
     pub async fn previous_message(&self) -> RwLockReadGuard<'_, Option<SentMessage>> {
         let binding = &self.previous_message;
@@ -74,13 +85,6 @@ impl Session {
     /// # Returns
     ///
     /// An `RwLockWriteGuard` to the previous message.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// let mut previous_message = session.write_previous_message().await;
-    /// *previous_message = Some(SentMessage::new(...));
-    /// ```
     pub(super) async fn write_previous_message(&self) -> RwLockWriteGuard<'_, Option<SentMessage>> {
         let binding = &self.previous_message;
         let previous = binding.write().await;
@@ -92,20 +96,6 @@ impl Session {
     /// # Returns
     ///
     /// A `Result` containing a `MutexGuard` if the lock was acquired, or a `VoiceflousionError` if the lock is already held.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// let lock_result = session.try_lock();
-    /// match lock_result {
-    ///     Ok(_guard) => {
-    ///         // Lock acquired, perform operations
-    ///     }
-    ///     Err(err) => {
-    ///         // Handle error
-    ///     }
-    /// }
-    /// ```
     pub(super) fn try_lock(&self) -> Result<MutexGuard<bool>, VoiceflousionError>{
         let binding = &self.lock;
         binding.try_lock().map_err(|_| VoiceflousionError::SessionLockError(self.get_cloned_chat_id()))
@@ -116,12 +106,6 @@ impl Session {
     /// # Parameters
     ///
     /// * `last_interaction` - The optional timestamp of the last interaction.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// session.store_last_interaction(Some(1627554661));
-    /// ```
     pub(super) fn store_last_interaction(&self, last_interaction: Option<i64>) {
         self.last_interaction.store(last_interaction, Ordering::SeqCst)
     }
@@ -135,6 +119,9 @@ impl Session {
     /// # Example
     ///
     /// ```
+    /// use voiceflousion::core::session_wrappers::Session;
+    ///
+    /// let session = Session::new("chat_id".to_string(), Some(1627554661), true);
     /// let last_interaction = session.get_last_interaction();
     /// ```
     pub fn get_last_interaction(&self) -> Option<i64> {
@@ -146,6 +133,9 @@ impl Session {
     /// # Example
     ///
     /// ```
+    /// use voiceflousion::core::session_wrappers::Session;
+    ///
+    /// let session = Session::new("chat_id".to_string(), Some(1627554661), true);
     /// session.activate();
     /// ```
     pub fn activate(&self) {
@@ -157,6 +147,9 @@ impl Session {
     /// # Example
     ///
     /// ```
+    /// use voiceflousion::core::session_wrappers::Session;
+    ///
+    /// let session = Session::new("chat_id".to_string(), Some(1627554661), true);
     /// session.deactivate();
     /// ```
     pub fn deactivate(&self) {
@@ -172,6 +165,9 @@ impl Session {
     /// # Example
     ///
     /// ```
+    /// use voiceflousion::core::session_wrappers::Session;
+    ///
+    /// let session = Session::new("chat_id".to_string(), Some(1627554661), true);
     /// let is_active = session.is_active();
     /// ```
     pub fn is_active(&self) -> bool {
@@ -187,6 +183,9 @@ impl Session {
     /// # Example
     ///
     /// ```
+    /// use voiceflousion::core::session_wrappers::Session;
+    ///
+    /// let session = Session::new("chat_id".to_string(), Some(1627554661), true);
     /// let chat_id = session.get_chat_id();
     /// ```
     pub fn get_chat_id(&self) -> &String {
@@ -202,6 +201,9 @@ impl Session {
     /// # Example
     ///
     /// ```
+    /// use voiceflousion::core::session_wrappers::Session;
+    ///
+    /// let session = Session::new("chat_id".to_string(), Some(1627554661), true);
     /// let cloned_chat_id = session.get_cloned_chat_id();
     /// ```
     pub fn get_cloned_chat_id(&self) -> String {
@@ -217,6 +219,9 @@ impl Session {
     /// # Example
     ///
     /// ```
+    /// use voiceflousion::core::session_wrappers::Session;
+    ///
+    /// let session = Session::new("chat_id".to_string(), Some(1627554661), true);
     /// let vf_session = session.voiceflow_session();
     /// ```
     pub fn voiceflow_session(&self) -> &VoiceflowSession {

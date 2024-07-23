@@ -16,12 +16,6 @@ impl AtomicTimestamp {
     /// # Returns
     ///
     /// A new instance of `AtomicTimestamp`.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// let atomic_timestamp = AtomicTimestamp::new(Some(1627554661));
-    /// ```
     pub(crate) fn new(timestamp: Option<i64>) -> Self {
         let timestamp: i64 = if let Some(time) = timestamp {
             time
@@ -42,12 +36,6 @@ impl AtomicTimestamp {
     /// # Returns
     ///
     /// An `Option<i64>` containing the current timestamp.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// let current_timestamp = atomic_timestamp.load(Ordering::SeqCst);
-    /// ```
     pub(crate) fn load(&self, ordering: Ordering) -> Option<i64> {
         let timestamp = self.timestamp.load(ordering);
         if timestamp == -1 {
@@ -62,12 +50,6 @@ impl AtomicTimestamp {
     ///
     /// * `timestamp` - The new timestamp to store.
     /// * `ordering` - The memory ordering for the store operation.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// atomic_timestamp.store(Some(1627554661), Ordering::SeqCst);
-    /// ```
     pub(crate) fn store(&self, timestamp: Option<i64>, ordering: Ordering) {
         let timestamp = if let Some(interaction) = timestamp {
             interaction

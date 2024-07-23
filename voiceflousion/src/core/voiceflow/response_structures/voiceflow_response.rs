@@ -24,12 +24,6 @@ impl VoiceflowResponse{
     /// # Returns
     ///
     /// A new instance of `VoiceflowResponse`.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// let response = VoiceflowResponse::new(response);
-    /// ```
     pub(crate) fn new(response: Response) -> Self {
         Self { response }
     }
@@ -39,12 +33,6 @@ impl VoiceflowResponse{
     /// # Returns
     ///
     /// A `Result` containing a vector of `VoiceflowResponseBlock` instances or a `VoiceflousionError` if the conversion fails.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// let blocks = response.to_blocks().await?;
-    /// ```
     async fn to_blocks(self) -> Result<Vec<VoiceflowResponseBlock>, VoiceflousionError> {
         let text = self.response.text().await.map_err(|error| VoiceflousionError::VoiceflowResponseReadingError(error.to_string()))?;
         let events = parse_sse(text.lines());
@@ -79,12 +67,6 @@ impl VoiceflowResponse{
     /// # Returns
     ///
     /// A `Result` containing a `VoiceflowMessage` or a `VoiceflousionError` if the conversion fails.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// let message = response.to_message().await?;
-    /// ```
     pub(crate) async fn to_message(self) -> Result<VoiceflowMessage, VoiceflousionError>{
         let blocks = self.to_blocks().await?;
         let message = VoiceflowMessageBuilder::new().build_message(blocks);
@@ -101,12 +83,6 @@ impl VoiceflowResponse{
 /// # Returns
 ///
 /// A vector of strings, each representing a single SSE event.
-///
-/// # Example
-///
-/// ```
-/// let events = parse_sse(text.lines());
-/// ```
 fn parse_sse(lines: Lines) -> Vec<String> {
     let mut events = Vec::new();
     let mut current_data = String::new();
@@ -143,12 +119,6 @@ fn parse_sse(lines: Lines) -> Vec<String> {
 /// # Returns
 ///
 /// The `VoiceflowResponseBlockType` corresponding to the JSON data.
-///
-/// # Example
-///
-/// ```
-/// let block_type = get_response_type(&json);
-/// ```
 fn get_response_type (json: &Value) -> VoiceflowResponseBlockType {
     if let Some(payload_type) = json.get("trace")
         .and_then(|trace| trace.get("type"))

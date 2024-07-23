@@ -11,7 +11,6 @@ Voiceflousion is a framework designed to integrate chatbots from the Voiceflow c
 - **Admin Capabilities**: Features for creating an admin interface, such as retrieving all bot sessions, activating, and deactivating user sessions.
 - **Extensibility**: Easily extendable to support additional platforms like Instagram and WhatsApp.
 - **Multi-User Support**: The client bot supports multiple users simultaneously and offers flexible settings for the maximum number of users, session validity time, and cleanup interval.
-- **Crates.io Release**: Future plans include releasing the framework on crates.io.
 
 ## Installation and Setup
 
@@ -90,7 +89,7 @@ dotenv = "0.15.0"
 serde_json = "1.0.114"
 warp = "0.3.7"
 tokio = { version = "1.36.0", features = ["rt", "rt-multi-thread", "macros"] }
-voiceflousion = { path = "../voiceflousion", features = ["all-integrations"] }
+voiceflousion = { version = "0.1.0", features = ["all-integrations"] }
 ```
 
 ### Set Up the Main File
@@ -186,6 +185,12 @@ The dependencies required to run the project are listed in the [example/Cargo.to
 ## Usage
 
 By using this framework, you can easily and flexibly integrate your bots with pre-built integrations for Telegram and Instagram. Voiceflousion also provides toolkit for creating custom integrations by implementing the `Client`, `Update`, `Sender`, and `Responder` traits. Once implemented, you can use your custom client in the same way as demonstrated in the example.
+
+## Documentation
+
+Crates.io: https://crates.io/crates/voiceflousion
+
+Docs: https://docs.rs/voiceflousion/latest/voiceflousion/
 
 ## Contributing
 

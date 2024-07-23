@@ -1,5 +1,4 @@
 use std::ops::Deref;
-use std::vec;
 use async_trait::async_trait;
 use crate::core::session_wrappers::LockedSession;
 use crate::core::subtypes::{InteractionType, SentMessage};

@@ -36,8 +36,13 @@ impl TelegramClient{
     /// # Example
     ///
     /// ```
-    /// let voiceflow_client = Arc::new(VoiceflowClient::new(vf_api_key, bot_id.clone(), version_id, 10, Some(120));
-    /// let builder = ClientBuilder::new("client_id".to_string(), "api_key".to_string(), Arc::new(voiceflow_client), 10);
+    /// use std::sync::Arc;
+    /// use voiceflousion::core::ClientBuilder;
+    /// use voiceflousion::core::voiceflow::VoiceflowClient;
+    /// use voiceflousion::integrations::telegram::TelegramClient;
+    ///
+    /// let voiceflow_client = Arc::new(VoiceflowClient::new("vf_api_key".to_string(), "bot_id".to_string(), "version_id".to_string(), 10, Some(120)));
+    /// let builder = ClientBuilder::new("client_id".to_string(), "api_key".to_string(), voiceflow_client, 10);
     /// let client = TelegramClient::new(builder);
     /// ```
     pub fn new(builder: ClientBuilder) -> Self{
@@ -71,17 +76,6 @@ impl TelegramClient{
     /// # Returns
     ///
     /// A `Result` containing a `TelegramResponder` or a `VoiceflousionError` if the request fails.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// let client = TelegramClient::new(builder);
-    /// let message_id = "message_id_value".to_string();
-    /// let index = 1;
-    /// let interaction_time = 1624478392;
-    ///
-    /// let response = client.switch_carousel_card(&locked_session, &carousel, &message_id, index, interaction_time).await?;
-    /// ```
     async fn switch_carousel_card(&self, locked_session: &LockedSession<'_>,  carousel: &VoiceflowCarousel,  message_id: &String, index: usize, interaction_time: i64) -> Result<TelegramResponder, VoiceflousionError> {
         locked_session.set_last_interaction(Some(interaction_time));
         self.sender.update_carousel(carousel, index, locked_session.get_chat_id(), message_id).await
@@ -100,6 +94,14 @@ impl ClientBase for TelegramClient {
     /// # Example
     ///
     /// ```
+    /// use std::sync::Arc;
+    /// use voiceflousion::core::ClientBuilder;
+    /// use voiceflousion::core::traits::ClientBase;
+    /// use voiceflousion::core::voiceflow::VoiceflowClient;
+    /// use voiceflousion::integrations::telegram::TelegramClient;
+    ///
+    /// let voiceflow_client = Arc::new(VoiceflowClient::new("vf_api_key".to_string(), "bot_id".to_string(), "version_id".to_string(), 10, Some(120)));
+    /// let builder = ClientBuilder::new("client_id".to_string(), "api_key".to_string(), voiceflow_client, 10);
     /// let client = TelegramClient::new(builder);
     /// let client_id = client.client_id();
     /// ```
@@ -116,6 +118,14 @@ impl ClientBase for TelegramClient {
     /// # Example
     ///
     /// ```
+    /// use std::sync::Arc;
+    /// use voiceflousion::core::ClientBuilder;
+    /// use voiceflousion::core::traits::ClientBase;
+    /// use voiceflousion::core::voiceflow::VoiceflowClient;
+    /// use voiceflousion::integrations::telegram::TelegramClient;
+    ///
+    /// let voiceflow_client = Arc::new(VoiceflowClient::new("vf_api_key".to_string(), "bot_id".to_string(), "version_id".to_string(), 10, Some(120)));
+    /// let builder = ClientBuilder::new("client_id".to_string(), "api_key".to_string(), voiceflow_client, 10);
     /// let client = TelegramClient::new(builder);
     /// let sessions = client.sessions();
     /// ```
@@ -132,6 +142,14 @@ impl ClientBase for TelegramClient {
     /// # Example
     ///
     /// ```
+    /// use std::sync::Arc;
+    /// use voiceflousion::core::ClientBuilder;
+    /// use voiceflousion::core::traits::ClientBase;
+    /// use voiceflousion::core::voiceflow::VoiceflowClient;
+    /// use voiceflousion::integrations::telegram::TelegramClient;
+    ///
+    /// let voiceflow_client = Arc::new(VoiceflowClient::new("vf_api_key".to_string(), "bot_id".to_string(), "version_id".to_string(), 10, Some(120)));
+    /// let builder = ClientBuilder::new("client_id".to_string(), "api_key".to_string(), voiceflow_client, 10);
     /// let client = TelegramClient::new(builder);
     /// let vf_client = client.voiceflow_client();
     /// ```
@@ -148,6 +166,14 @@ impl ClientBase for TelegramClient {
     /// # Example
     ///
     /// ```
+    /// use std::sync::Arc;
+    /// use voiceflousion::core::ClientBuilder;
+    /// use voiceflousion::core::traits::ClientBase;
+    /// use voiceflousion::core::voiceflow::VoiceflowClient;
+    /// use voiceflousion::integrations::telegram::TelegramClient;
+    ///
+    /// let voiceflow_client = Arc::new(VoiceflowClient::new("vf_api_key".to_string(), "bot_id".to_string(), "version_id".to_string(), 10, Some(120)));
+    /// let builder = ClientBuilder::new("client_id".to_string(), "api_key".to_string(), voiceflow_client, 10);
     /// let client = TelegramClient::new(builder);
     /// let sender = client.sender();
     /// ```
@@ -173,12 +199,6 @@ impl Client for TelegramClient{
     /// # Returns
     ///
     /// A `Result` containing a vector of `SenderResponder` or a `VoiceflousionError` if the request fails.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// let response = client.handle_button_interaction(&locked_session, interaction_time, &message, &button_path, update_state, &update).await?;
-    /// ```
     async fn handle_button_interaction(&self, locked_session: &LockedSession<'_>, interaction_time: i64, message: &String, button_path: &String, update_state: Option<State>, update: &Self::ClientUpdate, ) -> Result<Vec<<Self::ClientSender as Sender>::SenderResponder>, VoiceflousionError> {
         if let Some(prev_message) = locked_session.previous_message().await.deref() {
             if let VoiceflowBlock::Carousel(carousel) = prev_message.block() {

@@ -43,6 +43,8 @@ impl HttpClient {
     /// # Example
     ///
     /// ```
+    /// use voiceflousion::core::subtypes::HttpClient;
+    ///
     /// let http_client = HttpClient::new(10, Some(60));
     /// let default_duration_client = HttpClient::new(10, None);
     /// ```
@@ -72,7 +74,11 @@ impl HttpClient {
     /// # Example
     ///
     /// ```
-    /// let max_connections = http_client.max_sessions_per_moment();
+    /// use voiceflousion::core::subtypes::HttpClient;
+    ///
+    /// let http_client = HttpClient::new(10, Some(60));
+    ///
+    /// let max_connections = http_client.max_connections_per_moment();
     /// ```
     pub fn max_connections_per_moment(&self) -> usize {
         self.max_connections_per_moment
@@ -87,6 +93,10 @@ impl HttpClient {
     /// # Example
     ///
     /// ```
+    /// use voiceflousion::core::subtypes::HttpClient;
+    ///
+    /// let http_client = HttpClient::new(10, Some(60));
+    ///
     /// let connection_duration = http_client.connection_duration();
     /// ```
     pub fn connection_duration(&self) -> u64{

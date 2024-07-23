@@ -24,14 +24,6 @@ impl VoiceflowResponseBlock{
     /// # Returns
     ///
     /// A new instance of `VoiceflowResponseBlock`.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// let block_type = VoiceflowResponseBlockType::Text;
-    /// let json = serde_json::json!({"text": "Hello, world!"});
-    /// let response_block = VoiceflowResponseBlock::new(block_type, json);
-    /// ```
     pub(crate) fn new(block_type: VoiceflowResponseBlockType, json: Value) -> Self {
         Self {
             block_type,
@@ -44,12 +36,6 @@ impl VoiceflowResponseBlock{
     /// # Returns
     ///
     /// A reference to the JSON data.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// let json = response_block.json();
-    /// ```
     pub fn json(&self) -> &Value {
         &self.json
     }
@@ -59,12 +45,6 @@ impl VoiceflowResponseBlock{
     /// # Returns
     ///
     /// A reference to the `VoiceflowResponseBlockType`.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// let block_type = response_block.block_type();
-    /// ```
     pub fn block_type(&self) -> &VoiceflowResponseBlockType {
         &self.block_type
     }

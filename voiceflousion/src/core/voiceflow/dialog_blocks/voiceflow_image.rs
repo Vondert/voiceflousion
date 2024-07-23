@@ -32,6 +32,8 @@ impl VoiceflowImage {
     /// # Example
     ///
     /// ```
+    /// use voiceflousion::core::voiceflow::dialog_blocks::VoiceflowImage;
+    ///
     /// let image = VoiceflowImage::new("https://example.com/image.jpg".to_string(), Some(100), Some(200));
     /// ```
     pub fn new(url: String, height: Option<u64>, width: Option<u64>) -> Self {
@@ -51,6 +53,9 @@ impl VoiceflowImage {
     /// # Example
     ///
     /// ```
+    /// use voiceflousion::core::voiceflow::dialog_blocks::VoiceflowImage;
+    ///
+    /// let image = VoiceflowImage::new("https://example.com/image.jpg".to_string(), Some(100), Some(200));
     /// let url = image.url();
     /// ```
     pub fn url(&self) -> &String {
@@ -66,6 +71,9 @@ impl VoiceflowImage {
     /// # Example
     ///
     /// ```
+    /// use voiceflousion::core::voiceflow::dialog_blocks::VoiceflowImage;
+    ///
+    /// let image = VoiceflowImage::new("https://example.com/image.jpg".to_string(), Some(100), Some(200));
     /// let height = image.height();
     /// ```
     pub fn height(&self) -> Option<u64> {
@@ -81,6 +89,9 @@ impl VoiceflowImage {
     /// # Example
     ///
     /// ```
+    /// use voiceflousion::core::voiceflow::dialog_blocks::VoiceflowImage;
+    ///
+    /// let image = VoiceflowImage::new("https://example.com/image.jpg".to_string(), Some(100), Some(200));
     /// let width = image.width();
     /// ```
     pub fn width(&self) -> Option<u64> {
@@ -101,23 +112,6 @@ impl FromValue for VoiceflowImage{
     /// A `Result` containing an `Option` with the `VoiceflowImage` instance if the conversion
     /// succeeds, or a `VoiceflousionError` if the conversion fails. If the conversion
     /// succeeds but there is no meaningful value, `None` can be returned.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// let json_value = serde_json::json!({
-    ///     "trace": {
-    ///         "payload": {
-    ///             "image": "https://example.com/image.jpg",
-    ///             "dimensions": {
-    ///                 "height": 100,
-    ///                 "width": 200
-    ///             }
-    ///         }
-    ///     }
-    /// });
-    /// let image = VoiceflowImage::from_value(&json_value)?;
-    /// ```
     fn from_value(value: &Value) -> Result<Option<Self>, VoiceflousionError> {
         let payload = value.get("trace")
             .and_then(|trace| trace.get("payload"))

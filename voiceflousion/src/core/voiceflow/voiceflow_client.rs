@@ -45,6 +45,8 @@ impl VoiceflowClient {
     /// # Example
     ///
     /// ```
+    /// use voiceflousion::core::voiceflow::VoiceflowClient;
+    ///
     /// let vf_client = VoiceflowClient::new("api_key".to_string(), "project_id".to_string(), "version_id".to_string(), 10, Some(120));
     /// let default_duration_client = VoiceflowClient::new("api_key".to_string(), "project_id".to_string(), "version_id".to_string(), 10, None);
     /// ```
@@ -72,7 +74,9 @@ impl VoiceflowClient {
     /// # Example
     ///
     /// ```
-    /// let vf_client = vf_client.change_unavailable_message("New error message".to_string());
+    /// use voiceflousion::core::voiceflow::VoiceflowClient;
+    /// let vf_client = VoiceflowClient::new("vf_api_key".to_string(), "bot_id".to_string(), "version_id".to_string(), 10, None)
+    /// .change_unavailable_message("New error message".to_string());
     /// ```
     pub fn change_unavailable_message(mut self, message: String) -> Self {
         self.unavailable_message = message;
@@ -92,7 +96,10 @@ impl VoiceflowClient {
     /// # Example
     ///
     /// ```
-    /// let vf_client = vf_client.change_unexpected_error_message("New unavailable message".to_string());
+    /// use voiceflousion::core::voiceflow::VoiceflowClient;
+    ///
+    /// let vf_client = VoiceflowClient::new("vf_api_key".to_string(), "bot_id".to_string(), "version_id".to_string(), 10, None)
+    /// .change_unexpected_error_message("New unavailable message".to_string());
     /// ```
     pub fn change_unexpected_error_message(mut self, message: String) -> Self {
         self.unexpected_error_message = message;
@@ -108,6 +115,10 @@ impl VoiceflowClient {
     /// # Example
     ///
     /// ```
+    /// use std::sync::Arc;
+    /// use voiceflousion::core::voiceflow::VoiceflowClient;
+    ///
+    /// let vf_client = Arc::new(VoiceflowClient::new("vf_api_key".to_string(), "bot_id".to_string(), "version_id".to_string(), 10, None));
     /// let version_id = vf_client.version_id();
     /// ```
     pub fn version_id(&self) -> &String {
@@ -123,6 +134,10 @@ impl VoiceflowClient {
     /// # Example
     ///
     /// ```
+    /// use std::sync::Arc;
+    /// use voiceflousion::core::voiceflow::VoiceflowClient;
+    ///
+    /// let vf_client = Arc::new(VoiceflowClient::new("vf_api_key".to_string(), "bot_id".to_string(), "version_id".to_string(), 10, None));
     /// let project_id = vf_client.project_id();
     /// ```
     pub fn project_id(&self) -> &String {
@@ -138,6 +153,10 @@ impl VoiceflowClient {
     /// # Example
     ///
     /// ```
+    /// use std::sync::Arc;
+    /// use voiceflousion::core::voiceflow::VoiceflowClient;
+    ///
+    /// let vf_client = Arc::new(VoiceflowClient::new("vf_api_key".to_string(), "bot_id".to_string(), "version_id".to_string(), 10, None));
     /// let api_key = vf_client.voiceflow_api_key();
     /// ```
     pub fn voiceflow_api_key(&self) -> &String {
@@ -153,6 +172,10 @@ impl VoiceflowClient {
     /// # Example
     ///
     /// ```
+    /// use std::sync::Arc;
+    /// use voiceflousion::core::voiceflow::VoiceflowClient;
+    ///
+    /// let vf_client = Arc::new(VoiceflowClient::new("vf_api_key".to_string(), "bot_id".to_string(), "version_id".to_string(), 10, None));
     /// let max_sessions = vf_client.max_sessions_per_moment();
     /// ```
     pub fn max_sessions_per_moment(&self) -> usize {
@@ -168,6 +191,10 @@ impl VoiceflowClient {
     /// # Example
     ///
     /// ```
+    /// use std::sync::Arc;
+    /// use voiceflousion::core::voiceflow::VoiceflowClient;
+    ///
+    /// let vf_client = Arc::new(VoiceflowClient::new("vf_api_key".to_string(), "bot_id".to_string(), "version_id".to_string(), 10, None));
     /// let error_message = vf_client.unavailable_message();
     /// ```
     pub fn unavailable_message(&self) -> &String {
@@ -183,6 +210,10 @@ impl VoiceflowClient {
     /// # Example
     ///
     /// ```
+    /// use std::sync::Arc;
+    /// use voiceflousion::core::voiceflow::VoiceflowClient;
+    ///
+    /// let vf_client = Arc::new(VoiceflowClient::new("vf_api_key".to_string(), "bot_id".to_string(), "version_id".to_string(), 10, None));
     /// let unavailable_message = vf_client.unexpected_error_message();
     /// ```
     pub fn unexpected_error_message(&self) -> &String {
@@ -203,7 +234,24 @@ impl VoiceflowClient {
     /// # Example
     ///
     /// ```
-    /// let response = vf_client.launch_dialog(&session, Some(state)).await;
+    /// use std::sync::Arc;
+    /// use voiceflousion::core::session_wrappers::{LockedSession, Session};
+    /// use voiceflousion::core::voiceflow::{State, VoiceflowClient, VoiceflowSession};
+    /// use tokio;
+    ///
+    /// #[tokio::main]
+    /// async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    ///     let session = Arc::new(Session::new("chat_id".to_string(), None, true));
+    ///     let locked_session = LockedSession::try_from_session(&session)?;
+    ///     let session = locked_session.voiceflow_session();
+    ///
+    ///     let vf_client = Arc::new(VoiceflowClient::new("vf_api_key".to_string(), "bot_id".to_string(), "version_id".to_string(), 10, None));
+    ///     let state = State::default();
+    ///
+    ///     let response = vf_client.launch_dialog(&session, Some(state)).await;
+    ///
+    ///     Ok(())
+    /// }
     /// ```
     pub async fn launch_dialog(&self, session: &VoiceflowSession, state: Option<State>) -> VoiceflowMessage {
         let action = ActionBuilder::new(ActionType::Launch).build();
@@ -226,7 +274,24 @@ impl VoiceflowClient {
     /// # Example
     ///
     /// ```
-    /// let response = vf_client.send_message(&session, Some(state), &"Hello".to_string()).await;
+    /// use std::sync::Arc;
+    /// use voiceflousion::core::session_wrappers::{LockedSession, Session};
+    /// use voiceflousion::core::voiceflow::{State, VoiceflowClient, VoiceflowSession};
+    /// use tokio;
+    ///
+    /// #[tokio::main]
+    /// async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    ///     let session = Arc::new(Session::new("chat_id".to_string(), None, true));
+    ///     let locked_session = LockedSession::try_from_session(&session)?;
+    ///     let session = locked_session.voiceflow_session();
+    ///
+    ///     let vf_client = Arc::new(VoiceflowClient::new("vf_api_key".to_string(), "bot_id".to_string(), "version_id".to_string(), 10, None));
+    ///     let state = State::default();
+    ///
+    ///     let response = vf_client.send_message(session, Some(state), &"Hello".to_string()).await;
+    ///
+    ///     Ok(())
+    /// }
     /// ```
     pub async fn send_message(&self, session: &VoiceflowSession, state: Option<State>, text: &String) -> VoiceflowMessage {
         let action = ActionBuilder::new(ActionType::Text).text(text.clone()).build();
@@ -250,7 +315,24 @@ impl VoiceflowClient {
     /// # Example
     ///
     /// ```
-    /// let response = vf_client.choose_button(&session, Some(state), &"Choice".to_string(), &"button_path".to_string()).await;
+    /// use std::sync::Arc;
+    /// use voiceflousion::core::session_wrappers::{LockedSession, Session};
+    /// use voiceflousion::core::voiceflow::{State, VoiceflowClient, VoiceflowSession};
+    /// use tokio;
+    ///
+    /// #[tokio::main]
+    /// async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    ///     let session = Arc::new(Session::new("chat_id".to_string(), None, true));
+    ///     let locked_session = LockedSession::try_from_session(&session)?;
+    ///     let session = locked_session.voiceflow_session();
+    ///
+    ///     let vf_client = Arc::new(VoiceflowClient::new("vf_api_key".to_string(), "bot_id".to_string(), "version_id".to_string(), 10, None));
+    ///     let state = State::default();
+    ///
+    ///     let response = vf_client.choose_button(&session, Some(state), &"Choice".to_string(), &"button_path".to_string()).await;
+    ///
+    ///     Ok(())
+    /// }
     /// ```
     pub async fn choose_button(&self, session: &VoiceflowSession, state: Option<State>, text: &String, button_path: &String) -> VoiceflowMessage {
         let action = ActionBuilder::new(ActionType::Path(button_path.clone())).path(text.clone()).build();

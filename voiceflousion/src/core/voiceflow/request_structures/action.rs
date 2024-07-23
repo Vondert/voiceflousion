@@ -35,12 +35,6 @@ impl ActionBuilder {
     /// # Returns
     ///
     /// A new instance of `ActionBuilder`.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// let builder = ActionBuilder::new(ActionType::Launch);
-    /// ```
     pub fn new(action_type: ActionType) -> Self {
         Self {
             action_type,
@@ -57,12 +51,6 @@ impl ActionBuilder {
     /// # Returns
     ///
     /// The `ActionBuilder` with the text payload set.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// let builder = ActionBuilder::new(ActionType::Text).text("Hello".to_string());
-    /// ```
     pub fn text(mut self, text: String) -> Self {
         let json_value: Value = Value::String(text);
         self.payload = Some(Payload::Single(json_value));
@@ -79,12 +67,6 @@ impl ActionBuilder {
     /// # Returns
     ///
     /// The `ActionBuilder` with the intent payload set.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// let builder = ActionBuilder::new(ActionType::Intent).intent("OrderPizza".to_string(), "pizza_intent".to_string());
-    /// ```
     pub fn intent(mut self, name: String, path: String) -> Self {
         let json_value: Value = serde_json::json!({
             "query": name,
@@ -104,12 +86,6 @@ impl ActionBuilder {
     /// # Returns
     ///
     /// The `ActionBuilder` with the path payload set.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// let builder = ActionBuilder::new(ActionType::Path).path("Navigate".to_string());
-    /// ```
     pub fn path(mut self, text: String) -> Self{
         let json_value: Value = serde_json::json!({
             "label": text,
@@ -123,12 +99,6 @@ impl ActionBuilder {
     /// # Returns
     ///
     /// A new instance of `Action` with the configured fields.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// let action = ActionBuilder::new(ActionType::Text).text("Hello".to_string()).build();
-    /// ```
     pub fn build(self) -> Action {
         Action {
             action_type: self.action_type,

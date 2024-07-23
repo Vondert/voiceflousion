@@ -1,7 +1,14 @@
 [package]
 name = "voiceflousion"
 version = "0.1.0"
+authors = ["Vondert (Ivan Milennyi) <25042018avic@gmail.com>"]
 edition = "2021"
+description = "A crate that provides toolkit for Voiceflow bots integrations and pre-built functionality for quick integration with popular messengers"
+license = "MIT"
+repository = "https://github.com/Vondert/voiceflousion"
+documentation = "https://docs.rs/voiceflousion"
+homepage = "https://github.com/Vondert/voiceflousion"
+readme = "README.md"
 
 [dependencies]
 reqwest = { version = "0.12.0", features = ["json"] }
@@ -17,3 +24,6 @@ async-trait = "0.1.80"
 default = []
 all-integrations = ["telegram"]
 telegram = []
+
+[package.metadata.docs.rs]
+features = ["all-integrations"]

@@ -27,12 +27,6 @@ impl SessionMap {
     /// # Returns
     ///
     /// A new instance of `SessionMap`.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// let session_map = SessionMap::new(Some(3600), Some(600));
-    /// ```
     pub(crate) fn new(valid_session_duration: Option<i64>) -> Self {
         Self {
             sessions: Arc::new(RwLock::new(HashMap::<String, Arc<Session>>::new())),
@@ -50,13 +44,6 @@ impl SessionMap {
     /// # Returns
     ///
     /// A new instance of `SessionMap`.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// let sessions_vec = vec![];
-    /// let session_map = SessionMap::from_sessions(sessions_vec, Some(3600));
-    /// ```
     pub(crate) fn from_sessions(sessions_vec: Vec<Session>, valid_session_duration: Option<i64>) -> Self {
         let mut hash_map = HashMap::<String, Arc<Session>>::new();
         let _ = sessions_vec.into_iter().map(|session| hash_map.insert(session.get_cloned_chat_id(), Arc::new(session)));
@@ -71,12 +58,6 @@ impl SessionMap {
     /// # Returns
     ///
     /// An `Option<i64>` representing the session duration in seconds.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// let duration = session_map.valid_session_duration();
-    /// ```
     pub fn valid_session_duration(&self) -> Option<i64>{
         self.valid_session_duration
     }
@@ -90,12 +71,6 @@ impl SessionMap {
     /// # Returns
     ///
     /// An `Option` containing an `Arc` to the session if found and valid.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// let session = session_map.get_session(&"chat_id".to_string()).await;
-    /// ```
     pub async fn get_session(&self, chat_id: &String) -> Option<Arc<Session>> {
         let read_lock = self.sessions.read().await;
         if let Some(session) = read_lock.get(chat_id) {
@@ -111,12 +86,6 @@ impl SessionMap {
     /// # Returns
     ///
     /// A vector of `Arc<Session>` containing all sessions.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// let sessions = session_map.get_all_sessions().await;
-    /// ```
     pub async fn get_all_sessions(&self) -> Vec<Arc<Session>> {
         let read_lock = self.sessions.read().await;
         let sessions = read_lock.values().cloned().collect();
@@ -132,12 +101,6 @@ impl SessionMap {
     /// # Returns
     ///
     /// An `Arc` to the newly added or existing session.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// let session = session_map.add_session("chat_id".to_string()).await;
-    /// ```
     pub async fn add_session(&self, chat_id: String) -> Arc<Session> {
         let mut write_lock = self.sessions.write().await;
         let session = write_lock.entry(chat_id.clone())
@@ -151,24 +114,12 @@ impl SessionMap {
     /// # Parameters
     ///
     /// * `chat_id` - The chat ID of the session to delete.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// session_map.delete_session(&"chat_id".to_string()).await;
-    /// ```
     pub async fn delete_session(&self, chat_id: &String) {
         let mut write_lock = self.sessions.write().await;
         write_lock.remove(chat_id);
     }
 
     /// Deletes all invalid sessions.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// session_map.delete_invalid_sessions().await;
-    /// ```
     async fn delete_invalid_sessions(&self) {
         let mut write_lock = self.sessions.write().await;
         let keys: Vec<String> = write_lock.keys().cloned().collect();
@@ -193,13 +144,6 @@ impl SessionMap {
     ///
     /// * `cleanup_interval` - The interval for cleanup in seconds.
     /// * `cancel_token` - An atomic boolean to cancel the cleanup process.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// let cancel_token = Arc::new(AtomicBool::new(false));
-    /// session_map.start_cleanup(600, cancel_token).await;
-    /// ```
     pub(crate) async fn start_cleanup(&self, cleanup_interval: u64, cancel_token: Arc<AtomicBool>) {
         let mut interval = interval(Duration::from_secs(cleanup_interval));
         interval.tick().await;
@@ -221,12 +165,6 @@ impl SessionMap {
     /// # Returns
     ///
     /// A boolean indicating whether the session is valid.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// let is_valid = session_map.is_valid_session(&session).await;
-    /// ```
     async fn is_valid_session(&self, session: &Arc<Session>) -> bool {
         if let Some(last_interaction) = session.get_last_interaction() {
             if let Some(duration) = &self.valid_session_duration {

@@ -37,6 +37,8 @@ impl TelegramSender {
     /// # Example
     ///
     /// ```
+    /// use voiceflousion::integrations::telegram::TelegramSender;
+    ///
     /// let sender = TelegramSender::new(10, "api_key".to_string(), Some(120));
     /// let default_duration_sender = TelegramSender::new(10, "api_key".to_string(), None);
     /// ```
@@ -63,8 +65,22 @@ impl TelegramSender {
     /// # Example
     ///
     /// ```
-    /// let sender = TelegramSender::new(10, "api_key".to_string());
-    /// let response = sender.update_carousel(&carousel, 0, &chat_id, &message_id).await?;
+    /// use voiceflousion::integrations::telegram::TelegramSender;
+    /// use voiceflousion::core::voiceflow::dialog_blocks::{VoiceflowCard, VoiceflowCarousel};
+    /// use voiceflousion::core::voiceflow::VoiceflousionError;
+    /// use voiceflousion::integrations::telegram::TelegramResponder;
+    /// use tokio;
+    ///
+    /// #[tokio::main]
+    /// async fn main() -> () {
+    ///     let cards = vec![VoiceflowCard::new(Some("https://example.com/image.jpg".to_string()), Some("Title".to_string()), Some("Description".to_string()), None)];
+    ///     let carousel = VoiceflowCarousel::new(cards, true);
+    ///     let sender = TelegramSender::new(10, "api_key".to_string(), None);
+    ///     let chat_id = String::new();
+    ///     let message_id = String::new();
+    ///     let response = sender.update_carousel(&carousel, 0, &chat_id, &message_id).await;
+    ///     println!("{:?}", response);
+    /// }
     /// ```
     pub async fn update_carousel(&self, carousel: &VoiceflowCarousel, index: usize, chat_id: &String, message_id: &String) -> Result<TelegramResponder, VoiceflousionError> {
         // Form the API URL for editing the message media via Telegram API
@@ -140,7 +156,10 @@ impl Sender for TelegramSender{
     /// # Example
     ///
     /// ```
-    /// let sender = TelegramSender::new(10, "api_key".to_string());
+    /// use voiceflousion::core::traits::Sender;
+    /// use voiceflousion::integrations::telegram::TelegramSender;
+    ///
+    /// let sender = TelegramSender::new(10, "api_key".to_string(), None);
     /// let http_client = &sender.http_client();
     /// ```
     fn http_client(&self) -> &HttpClient {
@@ -156,7 +175,10 @@ impl Sender for TelegramSender{
     /// # Example
     ///
     /// ```
-    /// let sender = TelegramSender::new(10, "api_key".to_string());
+    /// use voiceflousion::core::traits::Sender;
+    /// use voiceflousion::integrations::telegram::TelegramSender;
+    ///
+    /// let sender = TelegramSender::new(10, "api_key".to_string(), None);
     /// let api_key = &sender.api_key();
     /// ```
     fn api_key(&self) -> &String {
@@ -179,9 +201,23 @@ impl Sender for TelegramSender{
     /// # Example
     ///
     /// ```
-    /// let sender = TelegramSender::new(10, "api_key".to_string());
-    /// let chat_id = "chat_id_value".to_string();
-    /// let response = sender.send_text(text, &chat_id, &sender.http_client, &sender.api_key).await?;
+    /// use voiceflousion::integrations::telegram::TelegramSender;
+    /// use voiceflousion::core::voiceflow::dialog_blocks::{VoiceflowCard, VoiceflowCarousel};
+    /// use voiceflousion::core::voiceflow::dialog_blocks::VoiceflowText;
+    /// use voiceflousion::core::traits::Sender;
+    /// use tokio;
+    ///
+    /// #[tokio::main]
+    /// async fn main() -> () {
+    ///
+    ///     let cards = vec![VoiceflowCard::new(Some("https://example.com/image.jpg".to_string()), Some("Title".to_string()), Some("Description".to_string()), None)];
+    ///     let carousel = VoiceflowCarousel::new(cards, true);
+    ///     let sender = TelegramSender::new(10, "api_key".to_string(), None);
+    ///     let chat_id = String::new();
+    ///     let text = VoiceflowText::new("Hello, World!".to_string());
+    ///     let response = sender.send_text(text, &chat_id, &sender.http_client(), &sender.api_key()).await;
+    ///     println!("{:?}", response);
+    /// }
     /// ```
     async fn send_text(&self, text: VoiceflowText, chat_id: &String, sender_http_client: &HttpClient, api_key: &String) -> Result<Self::SenderResponder, VoiceflousionError> {
         // Form the API URL for sending the message via Telegram API
@@ -224,9 +260,19 @@ impl Sender for TelegramSender{
     /// # Example
     ///
     /// ```
-    /// let sender = TelegramSender::new(10, "api_key".to_string());
-    /// let chat_id = "chat_id_value".to_string();
-    /// let response = sender.send_image(image, &chat_id, &sender.http_client, &sender.api_key).await?;
+    /// use voiceflousion::integrations::telegram::TelegramSender;
+    /// use voiceflousion::core::traits::Sender;
+    /// use voiceflousion::core::voiceflow::dialog_blocks::VoiceflowImage;
+    /// use tokio;
+    ///
+    /// #[tokio::main]
+    /// async fn main() -> () {
+    ///     let sender = TelegramSender::new(10, "api_key".to_string(), None);
+    ///     let chat_id = String::new();
+    ///     let image = VoiceflowImage::new("https://example.com/image.jpg".to_string(), Some(100), Some(200));
+    ///     let response = sender.send_image(image, &chat_id, &sender.http_client(), &sender.api_key()).await;
+    ///     println!("{:?}", response);
+    /// }
     /// ```
     async fn send_image(&self, image: VoiceflowImage, chat_id: &String, sender_http_client: &HttpClient, api_key: &String) -> Result<Self::SenderResponder, VoiceflousionError> {
         // Form the API URL for sending the image via Telegram API
@@ -269,9 +315,21 @@ impl Sender for TelegramSender{
     /// # Example
     ///
     /// ```
-    /// let sender = TelegramSender::new(10, "api_key".to_string());
-    /// let chat_id = "chat_id_value".to_string();
-    /// let response = sender.send_buttons(buttons, &chat_id, &sender.http_client, &sender.api_key).await?;
+    /// use voiceflousion::integrations::telegram::TelegramSender;
+    /// use voiceflousion::core::traits::Sender;
+    /// use voiceflousion::core::voiceflow::dialog_blocks::enums::VoiceflowButtonActionType;
+    /// use voiceflousion::core::voiceflow::dialog_blocks::{VoiceflowButton, VoiceflowButtons};
+    /// use tokio;
+    ///
+    /// #[tokio::main]
+    /// async fn main() -> () {
+    ///     let sender = TelegramSender::new(10, "api_key".to_string(), None);
+    ///     let chat_id = String::new();
+    ///     let buttons = vec![VoiceflowButton::new("Click me".to_string(), "/path".to_string(), VoiceflowButtonActionType::Path)];
+    ///     let voiceflow_buttons = VoiceflowButtons::new(buttons);
+    ///     let response = sender.send_buttons(voiceflow_buttons, &chat_id, &sender.http_client(), &sender.api_key()).await;
+    ///     println!("{:?}", response);
+    /// }
     /// ```
     async fn send_buttons(&self, buttons: VoiceflowButtons, chat_id: &String, sender_http_client: &HttpClient, api_key: &String) -> Result<Self::SenderResponder, VoiceflousionError> {
         // Determine the API URL based on the button option (text or image)
@@ -340,9 +398,20 @@ impl Sender for TelegramSender{
     /// # Example
     ///
     /// ```
-    /// let sender = TelegramSender::new(10, "api_key".to_string());
-    /// let chat_id = "chat_id_value".to_string();
-    /// let response = sender.send_card(card, &chat_id, &sender.http_client, &sender.api_key).await?;
+    /// use voiceflousion::integrations::telegram::TelegramSender;
+    /// use voiceflousion::core::voiceflow::dialog_blocks::VoiceflowCard;
+    /// use voiceflousion::core::traits::Sender;
+    /// use tokio;
+    ///
+    /// #[tokio::main]
+    /// async fn main() -> () {
+    ///     let card = VoiceflowCard::new(Some("https://example.com/image.jpg".to_string()), Some("Title".to_string()), Some("Description".to_string()), None);
+    ///     let sender = TelegramSender::new(10, "api_key".to_string(), None);
+    ///     let chat_id = String::new();
+    ///     let message_id = String::new();
+    ///     let response = sender.send_card(card, &chat_id, &sender.http_client(), &sender.api_key()).await;
+    ///     println!("{:?}", response);
+    /// }
     /// ```
     async fn send_card(&self, card: VoiceflowCard, chat_id: &String, sender_http_client: &HttpClient, api_key: &String) -> Result<Self::SenderResponder, VoiceflousionError> {
         // Extract the title and description from the card
@@ -410,9 +479,21 @@ impl Sender for TelegramSender{
     /// # Example
     ///
     /// ```
-    /// let sender = TelegramSender::new(10, "api_key".to_string());
-    /// let chat_id = "chat_id_value".to_string();
-    /// let response = sender.send_carousel(carousel, &chat_id, &sender.http_client, &sender.api_key).await?;
+    /// use voiceflousion::integrations::telegram::TelegramSender;
+    /// use voiceflousion::core::voiceflow::dialog_blocks::{VoiceflowCard, VoiceflowCarousel};
+    /// use voiceflousion::core::traits::Sender;
+    /// use tokio;
+    ///
+    /// #[tokio::main]
+    /// async fn main() -> () {
+    ///     let cards = vec![VoiceflowCard::new(Some("https://example.com/image.jpg".to_string()), Some("Title".to_string()), Some("Description".to_string()), None)];
+    ///     let carousel = VoiceflowCarousel::new(cards, true);
+    ///     let sender = TelegramSender::new(10, "api_key".to_string(), None);
+    ///     let chat_id = String::new();
+    ///     let message_id = String::new();
+    ///     let response = sender.send_carousel(carousel, &chat_id, &sender.http_client(), &sender.api_key()).await;
+    ///     println!("{:?}", response);
+    /// }
     /// ```
     async fn send_carousel(&self, carousel: VoiceflowCarousel, chat_id: &String, sender_http_client: &HttpClient, api_key: &String) -> Result<Self::SenderResponder, VoiceflousionError> {
         // Check if the carousel is empty and return an error if it is

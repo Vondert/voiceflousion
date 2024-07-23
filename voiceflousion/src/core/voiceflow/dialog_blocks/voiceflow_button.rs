@@ -33,6 +33,9 @@ impl VoiceflowButton{
     /// # Example
     ///
     /// ```
+    /// use voiceflousion::core::voiceflow::dialog_blocks::enums::VoiceflowButtonActionType;
+    /// use voiceflousion::core::voiceflow::dialog_blocks::VoiceflowButton;
+    ///
     /// let button = VoiceflowButton::new("Button 1".to_string(), "/path".to_string(), VoiceflowButtonActionType::Path);
     /// ```
     pub fn new(name: String, path: String, action_type: VoiceflowButtonActionType) -> Self {
@@ -52,6 +55,11 @@ impl VoiceflowButton{
     /// # Example
     ///
     /// ```
+    /// use voiceflousion::core::voiceflow::dialog_blocks::enums::VoiceflowButtonActionType;
+    /// use voiceflousion::core::voiceflow::dialog_blocks::VoiceflowButton;
+    ///
+    /// let button = VoiceflowButton::new("Button 1".to_string(), "/path".to_string(), VoiceflowButtonActionType::Path);
+    ///
     /// let action_type = button.action_type();
     /// ```
     pub fn action_type(&self) -> &VoiceflowButtonActionType {
@@ -67,6 +75,11 @@ impl VoiceflowButton{
     /// # Example
     ///
     /// ```
+    /// use voiceflousion::core::voiceflow::dialog_blocks::enums::VoiceflowButtonActionType;
+    /// use voiceflousion::core::voiceflow::dialog_blocks::VoiceflowButton;
+    ///
+    /// let button = VoiceflowButton::new("Button 1".to_string(), "/path".to_string(), VoiceflowButtonActionType::Path);
+    ///
     /// let name = button.name();
     /// ```
     pub fn name(&self) -> &String {
@@ -82,6 +95,11 @@ impl VoiceflowButton{
     /// # Example
     ///
     /// ```
+    /// use voiceflousion::core::voiceflow::dialog_blocks::enums::VoiceflowButtonActionType;
+    /// use voiceflousion::core::voiceflow::dialog_blocks::VoiceflowButton;
+    ///
+    /// let button = VoiceflowButton::new("Button 1".to_string(), "/path".to_string(), VoiceflowButtonActionType::Path);
+    ///
     /// let path = button.path();
     /// ```
     pub fn path(&self) -> &String {
@@ -100,24 +118,6 @@ impl FromValue for VoiceflowButton{
     /// A `Result` containing an `Option` with the `VoiceflowButton` instance if the conversion
     /// succeeds, or a `VoiceflousionError` if the conversion fails. If the conversion
     /// succeeds but there is no meaningful value, `None` can be returned.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// let json_value = serde_json::json!({
-    ///     "name": "Button 1",
-    ///     "request": {
-    ///         "type": "path",
-    ///         "payload": {
-    ///             "actions": [{
-    ///                 "type": "open_url",
-    ///                 "payload": { "url": "https://example.com" }
-    ///             }]
-    ///         }
-    ///     }
-    /// });
-    /// let button = VoiceflowButton::from_value(&json_value)?;
-    /// ```
     fn from_value(value: &Value) -> Result<Option<Self>, VoiceflousionError> {
         let name = value.get("name")
             .and_then(|name| name.as_str())

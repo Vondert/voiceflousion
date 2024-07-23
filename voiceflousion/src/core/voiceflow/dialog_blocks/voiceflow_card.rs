@@ -38,6 +38,8 @@ impl VoiceflowCard {
     /// # Example
     ///
     /// ```
+    /// use voiceflousion::core::voiceflow::dialog_blocks::VoiceflowCard;
+    ///
     /// let card = VoiceflowCard::new(Some("https://example.com/image.jpg".to_string()), Some("Title".to_string()), Some("Description".to_string()), None);
     /// ```
     pub fn new(image_url: Option<String>, title: Option<String>, description: Option<String>, buttons: Option<VoiceflowButtons>) -> Self {
@@ -58,6 +60,9 @@ impl VoiceflowCard {
     /// # Example
     ///
     /// ```
+    /// use voiceflousion::core::voiceflow::dialog_blocks::VoiceflowCard;
+    ///
+    /// let card = VoiceflowCard::new(Some("https://example.com/image.jpg".to_string()), Some("Title".to_string()), Some("Description".to_string()), None);
     /// let url = card.image_url();
     /// ```
     pub fn image_url(&self) -> &Option<String> {
@@ -73,6 +78,9 @@ impl VoiceflowCard {
     /// # Example
     ///
     /// ```
+    /// use voiceflousion::core::voiceflow::dialog_blocks::VoiceflowCard;
+    ///
+    /// let card = VoiceflowCard::new(Some("https://example.com/image.jpg".to_string()), Some("Title".to_string()), Some("Description".to_string()), None);
     /// let title = card.title();
     /// ```
     pub fn title(&self) -> &Option<String> {
@@ -88,6 +96,9 @@ impl VoiceflowCard {
     /// # Example
     ///
     /// ```
+    /// use voiceflousion::core::voiceflow::dialog_blocks::VoiceflowCard;
+    ///
+    /// let card = VoiceflowCard::new(Some("https://example.com/image.jpg".to_string()), Some("Title".to_string()), Some("Description".to_string()), None);
     /// let description = card.description();
     /// ```
     pub fn description(&self) -> &Option<String> {
@@ -103,6 +114,9 @@ impl VoiceflowCard {
     /// # Example
     ///
     /// ```
+    /// use voiceflousion::core::voiceflow::dialog_blocks::VoiceflowCard;
+    ///
+    /// let card = VoiceflowCard::new(Some("https://example.com/image.jpg".to_string()), Some("Title".to_string()), Some("Description".to_string()), None);
     /// let buttons = card.buttons();
     /// ```
     pub fn buttons(&self) -> &Option<VoiceflowButtons> {
@@ -124,24 +138,6 @@ impl FromValue for VoiceflowCard{
     /// A `Result` containing an `Option` with the `VoiceflowCard` instance if the conversion
     /// succeeds, or a `VoiceflousionError` if the conversion fails. If the conversion
     /// succeeds but there is no meaningful value, `None` can be returned.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// let json_value = serde_json::json!({
-    ///     "trace": {
-    ///         "payload": {
-    ///             "imageUrl": "https://example.com/image.jpg",
-    ///             "title": "Title",
-    ///             "description": {
-    ///                 "text": "Description"
-    ///             },
-    ///             "buttons": [{"name": "Click me"}]
-    ///         }
-    ///     }
-    /// });
-    /// let card = VoiceflowCard::from_value(&json_value)?;
-    /// ```
     fn from_value(value: &Value) -> Result<Option<Self>, VoiceflousionError> {
         let payload = value.get("trace").and_then(|trace| trace.get("payload")).unwrap_or_else(|| value);
         let buttons: Option<VoiceflowButtons> = VoiceflowButtons::from_value(value)?;

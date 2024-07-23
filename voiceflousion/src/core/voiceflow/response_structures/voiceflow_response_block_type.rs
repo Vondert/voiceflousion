@@ -35,18 +35,10 @@ impl VoiceflowResponseBlockType {
     /// # Returns
     ///
     /// A `VoiceflowResponseBlockType` corresponding to the string representation.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// let block_type = VoiceflowResponseBlockType::new("text");
-    /// assert_eq!(block_type, VoiceflowResponseBlockType::Text);
-    /// ```
     pub fn new(response_type: &str) -> VoiceflowResponseBlockType {
         match response_type {
             "text" => VoiceflowResponseBlockType::Text,
             "choice" => VoiceflowResponseBlockType::Choice,
-            //"block" => VoiceflowResponseBlockType::Block,
             "cardV2" => VoiceflowResponseBlockType::CardV2,
             "visual" => VoiceflowResponseBlockType::Visual,
             "carousel" => VoiceflowResponseBlockType::Carousel,

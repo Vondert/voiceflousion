@@ -43,7 +43,12 @@ impl<'g> LockedSession<'g> {
     /// # Example
     ///
     /// ```
-    /// let locked_session = LockedSession::try_from_session(&session)?;
+    /// use std::sync::Arc;
+    /// use voiceflousion::core::session_wrappers::LockedSession;
+    /// use voiceflousion::core::session_wrappers::Session;
+    ///
+    /// let session = Arc::new(Session::new("chat_id".to_string(), Some(1627554661), true));
+    /// let locked_session = LockedSession::try_from_session(&session);
     /// ```
     pub fn try_from_session(session: &'g Arc<Session>) -> Result<Self, VoiceflousionError> {
         let guard = session.try_lock()?;
@@ -63,7 +68,26 @@ impl<'g> LockedSession<'g> {
     /// # Example
     ///
     /// ```
-    /// locked_session.set_previous_message(Some(sent_message)).await;
+    /// use std::sync::Arc;
+    /// use voiceflousion::core::session_wrappers::LockedSession;
+    /// use voiceflousion::core::session_wrappers::Session;    ///
+    /// use voiceflousion::core::subtypes::SentMessage;
+    /// use voiceflousion::core::voiceflow::dialog_blocks::VoiceflowText;
+    /// use voiceflousion::core::voiceflow::VoiceflowBlock;
+    /// use tokio;
+    ///
+    /// #[tokio::main]
+    /// async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    ///     let session = Arc::new(Session::new("chat_id".to_string(), Some(1627554661), true));
+    ///     let locked_session = LockedSession::try_from_session(&session);
+    ///     if let Ok(locked_session) = locked_session{
+    ///         let block = VoiceflowBlock::Text(VoiceflowText::new("text".to_string()));
+    ///         let sent_message = SentMessage::new(block, "message_id".to_string(), 1627554661);
+    ///         locked_session.set_previous_message(Some(sent_message)).await;
+    ///     }
+    ///
+    ///     Ok(())
+    /// }
     /// ```
     pub async fn set_previous_message(&self, message: Option<SentMessage>) {
         let mut write = self.session.write_previous_message().await;
@@ -79,7 +103,16 @@ impl<'g> LockedSession<'g> {
     /// # Example
     ///
     /// ```
-    /// locked_session.set_last_interaction(Some(Utc::now().timestamp()));
+    /// use std::sync::Arc;
+    /// use chrono::Utc;
+    /// use voiceflousion::core::session_wrappers::LockedSession;
+    /// use voiceflousion::core::session_wrappers::Session;
+    ///
+    /// let session = Arc::new(Session::new("chat_id".to_string(), Some(1627554661), true));
+    /// let locked_session = LockedSession::try_from_session(&session);
+    /// if let Ok(locked_session) = locked_session{
+    ///     locked_session.set_last_interaction(Some(Utc::now().timestamp()));
+    /// }
     /// ```
     pub fn set_last_interaction(&self, last_interaction: Option<i64>) {
         self.store_last_interaction(last_interaction)

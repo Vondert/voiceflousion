@@ -17,28 +17,6 @@ pub trait ClientBase: Sync + Send {
     /// # Returns
     ///
     /// A reference to the client ID string.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// struct MyClient {
-    ///     client_id: String,
-    ///     sessions: Arc<SessionsManager>,
-    ///     voiceflow_client: Arc<VoiceflowClient>,
-    ///     sender: MySender,
-    /// }
-    ///
-    /// impl ClientBase for MyClient {
-    ///     type ClientUpdate = MyUpdate;
-    ///     type ClientSender = MySender;
-    ///
-    ///     fn client_id(&self) -> &String {
-    ///         &self.client_id
-    ///     }
-    ///
-    ///     // Other method implementations...
-    /// }
-    /// ```
     fn client_id(&self) -> &String;
 
     /// Returns a reference to the session manager.
@@ -46,28 +24,6 @@ pub trait ClientBase: Sync + Send {
     /// # Returns
     ///
     /// A reference to the session manager wrapped in an `Arc`.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// struct MyClient {
-    ///     client_id: String,
-    ///     sessions: Arc<SessionsManager>,
-    ///     voiceflow_client: Arc<VoiceflowClient>,
-    ///     sender: MySender,
-    /// }
-    ///
-    /// impl ClientBase for MyClient {
-    ///     type ClientUpdate = MyUpdate;
-    ///     type ClientSender = MySender;
-    ///
-    ///     fn sessions(&self) -> &Arc<SessionsManager> {
-    ///         &self.sessions
-    ///     }
-    ///
-    ///     // Other method implementations...
-    /// }
-    /// ```
     fn sessions(&self) -> &Arc<SessionsManager>;
 
     /// Returns a reference to the Voiceflow client.
@@ -75,28 +31,6 @@ pub trait ClientBase: Sync + Send {
     /// # Returns
     ///
     /// A reference to the Voiceflow client wrapped in an `Arc`.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// struct MyClient {
-    ///     client_id: String,
-    ///     sessions: Arc<SessionsManager>,
-    ///     voiceflow_client: Arc<VoiceflowClient>,
-    ///     sender: MySender,
-    /// }
-    ///
-    /// impl ClientBase for MyClient {
-    ///     type ClientUpdate = MyUpdate;
-    ///     type ClientSender = MySender;
-    ///
-    ///     fn voiceflow_client(&self) -> &Arc<VoiceflowClient> {
-    ///         &self.voiceflow_client
-    ///     }
-    ///
-    ///     // Other method implementations...
-    /// }
-    /// ```
     fn voiceflow_client(&self) -> &Arc<VoiceflowClient>;
 
     /// Returns a reference to the message sender.
@@ -104,28 +38,6 @@ pub trait ClientBase: Sync + Send {
     /// # Returns
     ///
     /// A reference to the message sender.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// struct MyClient {
-    ///     client_id: String,
-    ///     sessions: Arc<SessionsManager>,
-    ///     voiceflow_client: Arc<VoiceflowClient>,
-    ///     sender: MySender,
-    /// }
-    ///
-    /// impl ClientBase for MyClient {
-    ///     type ClientUpdate = MyUpdate;
-    ///     type ClientSender = MySender;
-    ///
-    ///     fn sender(&self) -> &Self::ClientSender {
-    ///         &self.sender
-    ///     }
-    ///
-    ///     // Other method implementations...
-    /// }
-    /// ```
     fn sender(&self) -> &Self::ClientSender;
 
     /// Destructures the client into a `ClientBuilder` without sessions.
@@ -136,12 +48,6 @@ pub trait ClientBase: Sync + Send {
     /// # Returns
     ///
     /// A `ClientBuilder` instance without sessions.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// let builder = client.destructure_to_client_builder_without_sessions();
-    /// ```
     fn destructure_to_client_builder_without_sessions(&self) -> ClientBuilder{
         let client_id = self.client_id().clone();
         let api_key = self.sender().api_key().clone();

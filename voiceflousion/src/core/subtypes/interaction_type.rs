@@ -26,6 +26,8 @@ impl InteractionType {
     /// # Example
     ///
     /// ```
+    /// use voiceflousion::core::subtypes::InteractionType;
+    ///
     /// let interaction = InteractionType::new("message".to_string(), Some("path".to_string()));
     /// let interaction = InteractionType::new("message".to_string(), None);
     /// ```

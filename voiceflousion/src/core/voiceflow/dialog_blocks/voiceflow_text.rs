@@ -10,11 +10,41 @@ pub struct VoiceflowText {
     message: String,
 }
 impl VoiceflowText{
-    pub fn new(message: String) -> Self{
-        Self{
-            message
-        }
+    /// Creates a new `VoiceflowText` instance.
+    ///
+    /// # Parameters
+    ///
+    /// * `message` - The message string of the text block.
+    ///
+    /// # Returns
+    ///
+    /// A new instance of `VoiceflowText`.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use voiceflousion::core::voiceflow::dialog_blocks::VoiceflowText;
+    ///
+    /// let text_block = VoiceflowText::new("Hello, World!".to_string());
+    /// ```
+    pub fn new(message: String) -> Self {
+        Self { message }
     }
+
+    /// Returns a reference to the message string of the text block.
+    ///
+    /// # Returns
+    ///
+    /// A reference to the message string.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use voiceflousion::core::voiceflow::dialog_blocks::VoiceflowText;
+    ///
+    /// let text_block = VoiceflowText::new("Hello, World!".to_string());
+    /// let message = text_block.message();
+    /// ```
     pub fn message(&self) -> &String{
         &self.message
     }

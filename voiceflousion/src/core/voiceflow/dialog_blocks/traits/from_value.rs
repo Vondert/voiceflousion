@@ -18,15 +18,5 @@ pub(crate) trait FromValue: Sized {
     /// A `Result` containing an `Option` with the instance of the type if the conversion
     /// succeeds, or a `VoiceflousionError` if the conversion fails. If the conversion
     /// succeeds but there is no meaningful value, `None` can be returned.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// impl FromValue for MyType {
-    ///     fn from_value(value: &Value) -> Result<Option<Self>, VoiceflousionError> {
-    ///         // Implement the conversion logic here.
-    ///     }
-    /// }
-    /// ```
     fn from_value(value: &Value) -> Result<Option<Self>, VoiceflousionError>;
 }

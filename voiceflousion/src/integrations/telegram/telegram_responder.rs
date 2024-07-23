@@ -63,12 +63,6 @@ impl TelegramResponder{
     /// # Returns
     ///
     /// A reference to the bot ID string.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// let bot_id = &responder.bot_id();
-    /// ```
     pub fn bot_id(&self) -> &String{
         &self.bot_id
     }
@@ -78,12 +72,6 @@ impl TelegramResponder{
     /// # Returns
     ///
     /// A reference to the chat ID string.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// let chat_id = &responder.chat_id();
-    /// ```
     pub fn chat_id(&self) -> &String{
         &self.chat_id
     }
@@ -96,12 +84,6 @@ impl Responder for TelegramResponder {
     /// # Returns
     ///
     /// A reference to the message ID string.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// let message_id = &responder.message_id();
-    /// ```
     fn message_id(&self) -> &String {
         &self.message_id
     }
@@ -111,12 +93,6 @@ impl Responder for TelegramResponder {
     /// # Returns
     ///
     /// A reference to the `VoiceflowBlock` representing the message content.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// let message_content = &responder.message_content();
-    /// ```
     fn message_content(&self) -> &VoiceflowBlock {
         &self.message_content
     }
@@ -126,12 +102,6 @@ impl Responder for TelegramResponder {
     /// # Returns
     ///
     /// The date of the message as an `i64` timestamp.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// let date = &responder.date();
-    /// ```
     fn date(&self) -> i64 {
         self.date
     }
@@ -149,14 +119,6 @@ impl Responder for TelegramResponder {
     /// # Returns
     ///
     /// A `Result` containing the `TelegramResponder` instance or a `VoiceflousionError` if the process fails.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// let response: Response = // obtain the HTTP response
-    /// let content: VoiceflowBlock = // obtain the message content
-    /// let responder = TelegramResponder::from_response(response, content).await?;
-    /// ```
     async fn from_response(response: Response, content: VoiceflowBlock) -> Result<Self, VoiceflousionError> {
         let body = response.json::<ResponseBody>().await
             .map_err(|e| VoiceflousionError::ClientResponseReadingError("TelegramResponder".to_string(), e.to_string()))?;

@@ -5,7 +5,7 @@ use serde_json::Value;
 /// Represents the state for the Voiceflow API.
 ///
 /// `State` contains a list of variables represented as JSON values.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Clone)]
 pub struct State {
     /// The list of variables in the state.
     variables: Vec<Value>,

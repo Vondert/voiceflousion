@@ -225,7 +225,7 @@ impl VoiceflowClient {
     /// # Parameters
     ///
     /// * `session` - The Voiceflow session.
-    /// * `state` - The optional state for variables in the bot for the session.
+    /// * `state` - The state for variables in the bot for the session.
     ///
     /// # Returns
     ///
@@ -248,14 +248,14 @@ impl VoiceflowClient {
     ///     let vf_client = Arc::new(VoiceflowClient::new("vf_api_key".to_string(), "bot_id".to_string(), "version_id".to_string(), 10, None));
     ///     let state = State::default();
     ///
-    ///     let response = vf_client.launch_dialog(&session, Some(state)).await;
+    ///     let response = vf_client.launch_dialog(&session, state).await;
     ///
     ///     Ok(())
     /// }
     /// ```
-    pub async fn launch_dialog(&self, session: &VoiceflowSession, state: Option<State>) -> VoiceflowMessage {
+    pub async fn launch_dialog(&self, session: &VoiceflowSession, state: State) -> VoiceflowMessage {
         let action = ActionBuilder::new(ActionType::Launch).build();
-        let body = VoiceflowRequestBodyBuilder::new(action).session(Some(session)).state(state).build();
+        let body = VoiceflowRequestBodyBuilder::new(action).session(Some(session)).state(Some(state)).build();
         self.send_stream_request(body).await
     }
 

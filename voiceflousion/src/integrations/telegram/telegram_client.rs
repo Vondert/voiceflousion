@@ -20,6 +20,8 @@ pub struct TelegramClient {
     sessions: Arc<SessionsManager>,
     /// The sender for sending messages via Telegram.
     sender: TelegramSender,
+    /// The initial launch state of the client.
+    launch_state: State
 }
 impl TelegramClient{
 
@@ -53,13 +55,15 @@ impl TelegramClient{
         let session_duration = builder.session_duration();
         let connection_duration = builder.connection_duration();
         let sessions_cleanup_interval = builder.sessions_cleanup_interval();
+        let launch_state = builder.launch_state().clone();
         let sessions= builder.sessions();
 
         Self{
             client_id,
             voiceflow_client,
             sessions: Arc::new(SessionsManager::new(sessions, session_duration, sessions_cleanup_interval)),
-            sender: TelegramSender::new(max_connections_per_moment, api_key, connection_duration)
+            sender: TelegramSender::new(max_connections_per_moment, api_key, connection_duration),
+            launch_state
         }
     }
 
@@ -179,6 +183,34 @@ impl ClientBase for TelegramClient {
     /// ```
     fn sender(&self) -> &Self::ClientSender {
         &self.sender
+    }
+
+    /// Returns a reference to the launch state of the Telegram client.
+    ///
+    /// This method provides access to the initial state with which the client was configured to start.
+    /// The launch state can influence the behavior of the client during its interactions, providing
+    /// a base configuration for handling states and responses.
+    ///
+    /// # Returns
+    ///
+    /// A reference to the `State` representing the initial conditions or settings for the client's operations.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use std::sync::Arc;
+    /// use voiceflousion::core::ClientBuilder;
+    /// use voiceflousion::core::traits::ClientBase;
+    /// use voiceflousion::integrations::telegram::TelegramClient;
+    /// use voiceflousion::core::voiceflow::{VoiceflowClient, State};
+    ///
+    /// let voiceflow_client = Arc::new(VoiceflowClient::new("vf_api_key".to_string(), "bot_id".to_string(), "version_id".to_string(), 10, Some(120)));
+    /// let builder = ClientBuilder::new("client_id".to_string(), "api_key".to_string(), voiceflow_client, 10);
+    /// let client = TelegramClient::new(builder);
+    /// let launch_state = client.launch_state();
+    /// ```
+    fn launch_state(&self) -> &State {
+        &self.launch_state
     }
 }
 #[async_trait]

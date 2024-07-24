@@ -21,7 +21,6 @@ pub trait Client: ClientBase {
     ///
     /// * `locked_session` - The locked session for the interaction.
     /// * `interaction_time` - The interaction time.
-    /// * `state` - The optional state for launching the dialog.
     ///
     /// # Returns
     ///
@@ -33,8 +32,11 @@ pub trait Client: ClientBase {
         // Get the Voiceflow session associated with the locked session
         let voiceflow_session = locked_session.voiceflow_session();
 
+        // Get launch state for Voiceflow bot
+        let state = self.launch_state().clone();
+
         // Launch a new dialog with the Voiceflow client
-        let mut voiceflow_message = self.voiceflow_client().launch_dialog(voiceflow_session, Some(State::default())).await;
+        let mut voiceflow_message = self.voiceflow_client().launch_dialog(voiceflow_session, state).await;
 
         // If the Voiceflow message indicates the end of the block, clear the last interaction time to make session invalid
         if voiceflow_message.trim_end_block() {
@@ -148,7 +150,6 @@ pub trait Client: ClientBase {
     /// # Parameters
     ///
     /// * `update` - The update from the Telegram client.
-    /// * `launch_state` - The optional state for launching the dialog.
     /// * `update_state` - The optional state for updating the dialog.
     ///
     /// # Returns

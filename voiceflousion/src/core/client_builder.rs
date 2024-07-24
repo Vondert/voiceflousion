@@ -1,6 +1,6 @@
 use std::sync::Arc;
 use crate::core::session_wrappers::Session;
-use crate::core::voiceflow::VoiceflowClient;
+use crate::core::voiceflow::{State, VoiceflowClient};
 
 /// Builds a client with the necessary configurations.
 ///
@@ -23,6 +23,8 @@ pub struct ClientBuilder {
     session_duration: Option<i64>,
     /// The optional interval for session cleanup.
     sessions_cleanup_interval: Option<u64>,
+    /// The launch state of the Voiceflow client.
+    launch_state: State
 }
 
 impl ClientBuilder {
@@ -59,6 +61,7 @@ impl ClientBuilder {
             connection_duration: None,
             session_duration: None,
             sessions_cleanup_interval: None,
+            launch_state: State::default()
         }
     }
 
@@ -169,6 +172,38 @@ impl ClientBuilder {
         self.connection_duration = Some(duration);
         self
     }
+
+    /// Adds the initial launch state to the client builder.
+    ///
+    /// This method allows setting the initial state of the Voiceflow interaction when the client is started.
+    /// The state is used to configure the initial conditions or environment of the Voiceflow session.
+    ///
+    /// # Parameters
+    ///
+    /// * `state` - The initial state to set for the Voiceflow client interaction.
+    ///
+    /// # Returns
+    ///
+    /// The updated `ClientBuilder` instance with the new launch state set.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use std::sync::Arc;
+    /// use voiceflousion::core::ClientBuilder;
+    /// use voiceflousion::core::voiceflow::{VoiceflowClient, State};
+    ///
+    /// let voiceflow_client = Arc::new(VoiceflowClient::new("vf_api_key".to_string(), "bot_id".to_string(), "version_id".to_string(), 10, Some(120)));
+    /// let initial_state = State::default();
+    ///
+    /// let mut builder = ClientBuilder::new("client_id".to_string(), "api_key".to_string(), voiceflow_client, 10);
+    /// let builder = builder.add_launch_state(initial_state);
+    /// ```
+    pub fn add_launch_state(mut self, state: State) -> Self{
+        self.launch_state = state;
+        self
+    }
+
     /// Returns the client ID.
     ///
     /// # Returns
@@ -332,5 +367,30 @@ impl ClientBuilder {
     /// ```
     pub fn sessions_cleanup_interval(&self) -> Option<u64> {
         self.sessions_cleanup_interval
+    }
+
+    /// Returns a reference to the current launch state of the Voiceflow client.
+    ///
+    /// This method allows accessing the initial state that has been set for the Voiceflow client interaction.
+    /// It provides a way to retrieve the state that dictates the initial conditions or behaviors
+    /// of the Voiceflow session when the client is launched.
+    ///
+    /// # Returns
+    ///
+    /// A reference to the `State` object representing the initial state of the Voiceflow client.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use std::sync::Arc;
+    /// use voiceflousion::core::ClientBuilder;
+    /// use voiceflousion::core::voiceflow::{VoiceflowClient, State};
+    ///
+    /// let voiceflow_client = Arc::new(VoiceflowClient::new("vf_api_key".to_string(), "bot_id".to_string(), "version_id".to_string(), 10, Some(120)));
+    /// let mut builder = ClientBuilder::new("client_id".to_string(), "api_key".to_string(), voiceflow_client, 10);
+    /// let initial_state = builder.launch_state();
+    /// ```
+    pub fn launch_state(&self) -> &State{
+        &self.launch_state
     }
 }

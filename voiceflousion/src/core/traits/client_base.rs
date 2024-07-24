@@ -2,7 +2,7 @@ use std::sync::Arc;
 use crate::core::ClientBuilder;
 use crate::core::sessions_manager::SessionsManager;
 use crate::core::traits::{Sender, Update};
-use crate::core::voiceflow::VoiceflowClient;
+use crate::core::voiceflow::{State, VoiceflowClient};
 
 /// A trait that defines the base functionalities for a client.
 ///
@@ -40,6 +40,15 @@ pub trait ClientBase: Sync + Send {
     /// A reference to the message sender.
     fn sender(&self) -> &Self::ClientSender;
 
+    /// Returns a reference to the launch state.
+    ///
+    /// Provides access to the initial state used during the launch of the Voiceflow session.
+    ///
+    /// # Returns
+    ///
+    /// A reference to the `State`.
+    fn launch_state(&self) -> &State;
+
     /// Destructures the client into a `ClientBuilder` without sessions.
     ///
     /// This method creates a `ClientBuilder` with the client's current configurations,
@@ -54,8 +63,12 @@ pub trait ClientBase: Sync + Send {
         let voiceflow_client = self.voiceflow_client().clone();
         let max_connections_per_moment = self.sender().http_client().max_connections_per_moment();
         let connection_duration = self.sender().http_client().connection_duration();
+        let launch_state = self.launch_state().clone();
 
-        let mut builder = ClientBuilder::new(client_id, api_key, voiceflow_client, max_connections_per_moment).add_connection_duration(connection_duration);
+        let mut builder = ClientBuilder::new(client_id, api_key, voiceflow_client, max_connections_per_moment)
+            .add_connection_duration(connection_duration)
+            .add_launch_state(launch_state);
+
         builder = if let Some(interval) =  self.sessions().cleanup_interval(){
             builder.allow_sessions_cleaning(interval)
         }

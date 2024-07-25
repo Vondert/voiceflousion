@@ -10,6 +10,7 @@ use crate::core::voiceflow::VoiceflousionError;
 /// `TelegramUpdate` holds the details of an update from Telegram, such as update base, message ID, and optionally the carousel card index.
 #[derive(Debug)]
 pub struct TelegramUpdate {
+    /// The base structure that provides core functionalities.
     update_base: UpdateBase,
     /// The message ID.
     message_id: String,

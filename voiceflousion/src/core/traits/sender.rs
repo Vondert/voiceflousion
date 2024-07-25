@@ -1,4 +1,6 @@
+use std::ops::Deref;
 use async_trait::async_trait;
+use crate::core::base_structs::SenderBase;
 use crate::core::subtypes::HttpClient;
 use crate::core::traits::Responder;
 use crate::core::voiceflow::{VoiceflousionError, VoiceflowBlock, VoiceflowMessage};
@@ -11,23 +13,9 @@ use crate::core::voiceflow::dialog_blocks::{VoiceflowButtons, VoiceflowCard, Voi
 /// includes a method for sending a complete `VoiceflowMessage`, which can contain
 /// multiple types of blocks.
 #[async_trait]
-pub trait Sender: Send + Sync {
+pub trait Sender: Deref<Target=SenderBase> + Send + Sync {
     /// The type that represents the response from the sender.
     type SenderResponder: Responder;
-
-    /// Returns a reference to the HTTP client used for sending requests.
-    ///
-    /// # Returns
-    ///
-    /// A reference to the `HttpClient`.
-    fn http_client(&self) -> &HttpClient;
-
-    /// Returns a reference to the API key used for authentication.
-    ///
-    /// # Returns
-    ///
-    /// A reference to the API key string.
-    fn api_key(&self) -> &String;
 
     /// Sends a `VoiceflowMessage` to a client.
     ///
@@ -101,7 +89,7 @@ pub trait Sender: Send + Sync {
     /// # Returns
     ///
     /// A `Result` containing a `SenderResponder` or a `VoiceflousionError` if the request fails.
-    async fn send_text(&self, text: VoiceflowText, chat_id: &String, sender_http_client: &HttpClient, api_key: &String) -> Result<Self::SenderResponder, VoiceflousionError>;
+    async fn send_text(&self, text: VoiceflowText, chat_id: &String, sender_base: &HttpClient, api_key: &String) -> Result<Self::SenderResponder, VoiceflousionError>;
 
     /// Sends an image message to a client.
     ///

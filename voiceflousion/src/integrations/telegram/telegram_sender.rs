@@ -1,5 +1,7 @@
+use std::ops::Deref;
 use async_trait::async_trait;
 use serde_json::{json, Value};
+use crate::core::base_structs::SenderBase;
 use crate::core::subtypes::HttpClient;
 use crate::integrations::telegram::TelegramResponder;
 use crate::core::traits::{Responder, Sender};
@@ -15,10 +17,8 @@ static TELEGRAM_API_URL: &str = "https://api.telegram.org/bot";
 /// `TelegramSender` handles sending various types of messages (text, image, buttons, etc.)
 /// to a Telegram client using the Telegram API.
 pub struct TelegramSender {
-    /// The HTTP client for sending requests.
-    http_client: HttpClient,
-    /// The API key for authenticating with the Telegram API.
-    api_key: String,
+    /// The base structure that provides core functionalities.
+    sender_base: SenderBase
 }
 
 impl TelegramSender {
@@ -44,8 +44,7 @@ impl TelegramSender {
     /// ```
     pub fn new(max_sessions_per_moment: usize, api_key: String, connection_duration: Option<u64>) -> Self {
         Self {
-            http_client: HttpClient::new(max_sessions_per_moment, connection_duration),
-            api_key,
+            sender_base: SenderBase::new(max_sessions_per_moment, api_key, connection_duration)
         }
     }
 
@@ -84,7 +83,7 @@ impl TelegramSender {
     /// ```
     pub async fn update_carousel(&self, carousel: &VoiceflowCarousel, index: usize, chat_id: &String, message_id: &String) -> Result<TelegramResponder, VoiceflousionError> {
         // Form the API URL for editing the message media via Telegram API
-        let api_url = format!("{}{}/editMessageMedia", TELEGRAM_API_URL, &self.api_key);
+        let api_url = format!("{}{}/editMessageMedia", TELEGRAM_API_URL, &self.api_key());
 
         // Get the card at the specified index, returning an error if the index is out of bounds
         let card = carousel.get(index).ok_or_else(|| VoiceflousionError::ClientRequestInvalidBodyError(
@@ -128,7 +127,7 @@ impl TelegramSender {
         });
 
         // Send the POST request with the body to the Telegram API
-        let response = self.http_client.post(&api_url).json(&body).send()
+        let response = self.http_client().post(&api_url).json(&body).send()
             .await.map_err(|e| VoiceflousionError::ClientRequestError("TelegramSender update_carousel".to_string(), e.to_string()))?;
 
         // Check if the response status is successful
@@ -143,47 +142,17 @@ impl TelegramSender {
     }
 }
 
+impl Deref for TelegramSender {
+    type Target=SenderBase;
+
+    fn deref(&self) -> &Self::Target {
+        &self.sender_base
+    }
+}
+
 #[async_trait]
 impl Sender for TelegramSender{
     type SenderResponder = TelegramResponder;
-
-    /// Returns a reference to the HTTP client.
-    ///
-    /// # Returns
-    ///
-    /// A reference to the `HttpClient`.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// use voiceflousion::core::traits::Sender;
-    /// use voiceflousion::integrations::telegram::TelegramSender;
-    ///
-    /// let sender = TelegramSender::new(10, "api_key".to_string(), None);
-    /// let http_client = &sender.http_client();
-    /// ```
-    fn http_client(&self) -> &HttpClient {
-        &self.http_client
-    }
-
-    /// Returns a reference to the API key.
-    ///
-    /// # Returns
-    ///
-    /// A reference to the API key string.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// use voiceflousion::core::traits::Sender;
-    /// use voiceflousion::integrations::telegram::TelegramSender;
-    ///
-    /// let sender = TelegramSender::new(10, "api_key".to_string(), None);
-    /// let api_key = &sender.api_key();
-    /// ```
-    fn api_key(&self) -> &String {
-        &self.api_key
-    }
 
     /// Sends a text message to a chat.
     ///

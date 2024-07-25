@@ -1,6 +1,8 @@
+use std::ops::Deref;
 use async_trait::async_trait;
 use reqwest::Response;
 use serde::Deserialize;
+use crate::core::base_structs::ResponderBase;
 use crate::core::traits::Responder;
 use crate::core::voiceflow::{VoiceflousionError, VoiceflowBlock};
 
@@ -14,12 +16,8 @@ pub struct TelegramResponder {
     bot_id: String,
     /// The ID of the chat where the message was sent.
     chat_id: String,
-    /// The ID of the message.
-    message_id: String,
-    /// The date when the message was sent.
-    date: i64,
-    /// The content of the message.
-    message_content: VoiceflowBlock,
+    /// The base structure that provides core functionalities.
+    responder_base: ResponderBase
 }
 
 /// Represents the chat details in a Telegram response.
@@ -77,34 +75,16 @@ impl TelegramResponder{
     }
 }
 
+impl Deref for TelegramResponder {
+    type Target = ResponderBase;
+
+    fn deref(&self) -> &Self::Target {
+        &self.responder_base
+    }
+}
+
 #[async_trait]
 impl Responder for TelegramResponder {
-    /// Returns a reference to the message ID.
-    ///
-    /// # Returns
-    ///
-    /// A reference to the message ID string.
-    fn message_id(&self) -> &String {
-        &self.message_id
-    }
-
-    /// Returns a reference to the content of the message.
-    ///
-    /// # Returns
-    ///
-    /// A reference to the `VoiceflowBlock` representing the message content.
-    fn message_content(&self) -> &VoiceflowBlock {
-        &self.message_content
-    }
-
-    /// Returns the date of the message.
-    ///
-    /// # Returns
-    ///
-    /// The date of the message as an `i64` timestamp.
-    fn date(&self) -> i64 {
-        self.date
-    }
 
     /// Creates an instance of the `TelegramResponder` from HTTP response.
     ///
@@ -128,9 +108,7 @@ impl Responder for TelegramResponder {
         Ok(Self {
             bot_id: result.from.id.to_string(),
             chat_id: result.chat.id.to_string(),
-            message_id: result.message_id.to_string(),
-            date: result.date,
-            message_content: content,
+            responder_base: ResponderBase::new(result.message_id.to_string(), content, result.date)
         })
     }
 }

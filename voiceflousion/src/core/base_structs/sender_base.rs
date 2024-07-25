@@ -1,9 +1,13 @@
 use crate::core::subtypes::HttpClient;
 
+/// `SenderBase` is the foundational struct for managing HTTP requests and interactions with the API.
+///
+/// This struct encapsulates essential components such as the HTTP client for sending requests
+/// and the API key for authenticating with the API.
 pub struct SenderBase{
     /// The HTTP client for sending requests.
     http_client: HttpClient,
-    /// The API key for authenticating with the Telegram API.
+    /// The API key for authenticating with the API.
     api_key: String,
 }
 impl SenderBase{
@@ -13,7 +17,7 @@ impl SenderBase{
     /// # Parameters
     ///
     /// * `max_sessions_per_moment` - The maximum number of idle connections per host.
-    /// * `api_key` - The API key for authenticating with the Telegram API.
+    /// * `api_key` - The API key for authenticating with the API.
     /// * `connection_duration` - The optional duration for which sessions can remain idle (in seconds).
     ///
     /// # Returns

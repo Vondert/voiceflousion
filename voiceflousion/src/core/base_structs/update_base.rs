@@ -1,5 +1,9 @@
 use crate::core::subtypes::InteractionType;
 
+/// `UpdateBase` is the foundational struct for managing updates within the system.
+///
+/// This struct encapsulates essential components such as the chat ID, interaction time,
+/// type of interaction, and the update ID.
 #[derive(Debug)]
 pub struct UpdateBase{
     /// The chat ID associated with the update.

@@ -8,3 +8,4 @@ pub use self::sessions_manager::SessionsManager;
 pub use self::client_base::ClientBase;
 pub use self::update_base::UpdateBase;
 pub use self::sender_base::SenderBase;
+pub use self::responder_base::ResponderBase;

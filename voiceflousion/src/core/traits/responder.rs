@@ -1,5 +1,7 @@
+use std::ops::Deref;
 use async_trait::async_trait;
 use reqwest::Response;
+use crate::core::base_structs::ResponderBase;
 use crate::core::subtypes::SentMessage;
 use crate::core::voiceflow::{VoiceflousionError, VoiceflowBlock};
 
@@ -8,27 +10,7 @@ use crate::core::voiceflow::{VoiceflousionError, VoiceflowBlock};
 /// The `Responder` trait provides methods for extracting details from responses,
 /// creating `SentMessage` instances, and handling errors.
 #[async_trait]
-pub trait Responder: Sized + Send + Sync {
-    /// Returns a reference to the message ID.
-    ///
-    /// # Returns
-    ///
-    /// A reference to the message ID string.
-    fn message_id(&self) -> &String;
-
-    /// Returns a reference to the content of the message.
-    ///
-    /// # Returns
-    ///
-    /// A reference to the `VoiceflowBlock` representing the message content.
-    fn message_content(&self) -> &VoiceflowBlock;
-
-    /// Returns the date of the message.
-    ///
-    /// # Returns
-    ///
-    /// The date of the message as an `i64` timestamp.
-    fn date(&self) -> i64;
+pub trait Responder: Deref<Target=ResponderBase> + Sized + Send + Sync {
 
     /// Creates an instance of the `Responder` from a HTTP response.
     ///

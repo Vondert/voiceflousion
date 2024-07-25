@@ -46,7 +46,7 @@ impl SessionsManager {
     ///
     /// ```
     /// use voiceflousion::core::session_wrappers::Session;
-    /// use voiceflousion::core::SessionsManager;
+    /// use voiceflousion::core::base_structs::SessionsManager;
     /// use tokio;
     ///
     /// #[tokio::main]
@@ -93,7 +93,7 @@ impl SessionsManager {
     ///
     /// ```
     /// use voiceflousion::core::session_wrappers::Session;
-    /// use voiceflousion::core::SessionsManager;
+    /// use voiceflousion::core::base_structs::SessionsManager;
     /// use tokio;
     ///
     /// #[tokio::main]

@@ -1,22 +1,16 @@
+use std::ops::Deref;
 use serde_json::Value;
+use crate::core::base_structs::UpdateBase;
 use crate::core::subtypes::InteractionType;
 use crate::core::traits::Update;
 use crate::core::voiceflow::VoiceflousionError;
 
 /// Represents an update received from Telegram.
 ///
-/// `TelegramUpdate` holds the details of an update from Telegram, such as chat ID,
-/// interaction time, interaction type, update ID, message ID, and optionally the carousel card index.
+/// `TelegramUpdate` holds the details of an update from Telegram, such as update base, message ID, and optionally the carousel card index.
 #[derive(Debug)]
 pub struct TelegramUpdate {
-    /// The chat ID associated with the update.
-    chat_id: String,
-    /// The interaction time of the update.
-    interaction_time: i64,
-    /// The type of interaction.
-    interaction_type: InteractionType,
-    /// The update ID.
-    update_id: String,
+    update_base: UpdateBase,
     /// The message ID.
     message_id: String,
     /// The optional carousel card index.
@@ -51,11 +45,8 @@ impl TelegramUpdate {
     /// ```
     pub fn new(chat_id: String, message_id: String, interaction_time: i64, interaction_type: InteractionType, update_id: String, carousel_card_index: Option<usize>) -> Self {
         Self {
-            chat_id,
+            update_base: UpdateBase::new(chat_id, interaction_time, interaction_type, update_id),
             message_id,
-            interaction_time,
-            interaction_type,
-            update_id,
             carousel_card_index,
         }
     }
@@ -103,90 +94,15 @@ impl TelegramUpdate {
     }
 }
 
+impl Deref for TelegramUpdate {
+    type Target = UpdateBase;
+
+    fn deref(&self) -> &Self::Target {
+        &self.update_base
+    }
+}
+
 impl Update for TelegramUpdate {
-    /// Returns the chat ID associated with the update.
-    ///
-    /// # Returns
-    ///
-    /// A reference to the chat ID string.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// use voiceflousion::core::subtypes::InteractionType;
-    /// use voiceflousion::core::traits::Update;
-    /// use voiceflousion::integrations::telegram::TelegramUpdate;
-    ///
-    /// let interaction_type = InteractionType::new("message".to_string(), Some("path".to_string()));
-    /// let update = TelegramUpdate::new("chat_id".to_string(), "message_id".to_string(), 1627554661, interaction_type, "update_id".to_string(), Some(0));
-    /// let chat_id = update.chat_id();
-    /// ```
-    fn chat_id(&self) -> &String {
-        &self.chat_id
-    }
-
-    /// Returns the update ID.
-    ///
-    /// # Returns
-    ///
-    /// A reference to the update ID string.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// use voiceflousion::core::subtypes::InteractionType;
-    /// use voiceflousion::core::traits::Update;
-    /// use voiceflousion::integrations::telegram::TelegramUpdate;
-    ///
-    /// let interaction_type = InteractionType::new("message".to_string(), Some("path".to_string()));
-    /// let update = TelegramUpdate::new("chat_id".to_string(), "message_id".to_string(), 1627554661, interaction_type, "update_id".to_string(), Some(0));
-    /// let update_id = update.update_id();
-    /// ```
-    fn update_id(&self) -> &String {
-        &self.update_id
-    }
-
-    /// Returns the interaction time.
-    ///
-    /// # Returns
-    ///
-    /// An `i64` representing the interaction time.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// use voiceflousion::core::subtypes::InteractionType;
-    /// use voiceflousion::core::traits::Update;
-    /// use voiceflousion::integrations::telegram::TelegramUpdate;
-    ///
-    /// let interaction_type = InteractionType::new("message".to_string(), Some("path".to_string()));
-    /// let update = TelegramUpdate::new("chat_id".to_string(), "message_id".to_string(), 1627554661, interaction_type, "update_id".to_string(), Some(0));
-    /// let interaction_time = update.interaction_time();
-    /// ```
-    fn interaction_time(&self) -> i64 {
-        self.interaction_time
-    }
-
-    /// Returns the type of interaction.
-    ///
-    /// # Returns
-    ///
-    /// A reference to the `InteractionType`.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// use voiceflousion::core::subtypes::InteractionType;
-    /// use voiceflousion::core::traits::Update;
-    /// use voiceflousion::integrations::telegram::TelegramUpdate;
-    ///
-    /// let interaction_type = InteractionType::new("message".to_string(), Some("path".to_string()));
-    /// let update = TelegramUpdate::new("chat_id".to_string(), "message_id".to_string(), 1627554661, interaction_type, "update_id".to_string(), Some(0));
-    /// let interaction_type = update.interaction_type();
-    /// ```
-    fn interaction_type(&self) -> &InteractionType {
-        &self.interaction_type
-    }
 
     /// Creates an update from a JSON request body.
     ///
@@ -272,13 +188,13 @@ impl Update for TelegramUpdate {
         let interaction_type = InteractionType::new(text, callback_data);
 
         // Return the constructed TelegramUpdate
-        Ok(TelegramUpdate {
+        Ok(TelegramUpdate::new(
             chat_id,
             message_id,
             interaction_time,
             interaction_type,
             update_id,
             carousel_card_index,
-        })
+        ))
     }
 }

@@ -1,4 +1,6 @@
+use std::ops::Deref;
 use serde_json::Value;
+use crate::core::base_structs::UpdateBase;
 use crate::core::subtypes::InteractionType;
 use crate::core::voiceflow::VoiceflousionError;
 
@@ -6,34 +8,7 @@ use crate::core::voiceflow::VoiceflousionError;
 ///
 /// The `Update` trait provides methods for accessing update details,
 /// creating updates from request bodies, and checking if an update is deprecated.
-pub trait Update: Sized + Send + Sync {
-    /// Returns the chat ID associated with the update.
-    ///
-    /// # Returns
-    ///
-    /// A reference to the chat ID string.
-    fn chat_id(&self) -> &String;
-
-    /// Returns the update ID.
-    ///
-    /// # Returns
-    ///
-    /// A reference to the update ID string.
-    fn update_id(&self) -> &String;
-
-    /// Returns the interaction time.
-    ///
-    /// # Returns
-    ///
-    /// An `i64` representing the interaction time.
-    fn interaction_time(&self) -> i64;
-
-    /// Returns the type of interaction.
-    ///
-    /// # Returns
-    ///
-    /// A reference to the `InteractionType`.
-    fn interaction_type(&self) -> &InteractionType;
+pub trait Update: Deref<Target = UpdateBase> + Sized + Send + Sync {
 
     /// Creates an update from a JSON request body.
     ///

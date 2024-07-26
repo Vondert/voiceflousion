@@ -1,6 +1,6 @@
 [package]
 name = "voiceflousion"
-version = "0.1.1"
+version = "0.1.2"
 authors = ["Vondert (Ivan Milennyi) <25042018avic@gmail.com>"]
 edition = "2021"
 description = "A crate that provides toolkit for Voiceflow AI bots integrations and pre-built functionality for quick integration with popular messengers"

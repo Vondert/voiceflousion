@@ -89,7 +89,7 @@ dotenv = "0.15.0"
 serde_json = "1.0.114"
 warp = "0.3.7"
 tokio = { version = "1.36.0", features = ["rt", "rt-multi-thread", "macros"] }
-voiceflousion = { version = "^0.1.1", features = ["all-integrations"] }
+voiceflousion = { version = "^0.1.2", features = ["all-integrations"] }
 ```
 
 ### Set Up the Main File

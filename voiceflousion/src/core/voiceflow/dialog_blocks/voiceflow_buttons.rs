@@ -3,7 +3,7 @@ use serde_json::Value;
 use crate::core::voiceflow::dialog_blocks::enums::VoiceflowButtonsOption;
 use crate::core::voiceflow::dialog_blocks::traits::FromValue;
 use crate::core::voiceflow::dialog_blocks::VoiceflowButton;
-use crate::core::voiceflow::VoiceflousionError;
+use crate::errors::{VoiceflousionError, VoiceflousionResult};
 
 /// Represents a collection of buttons in a Voiceflow dialog.
 ///
@@ -106,7 +106,7 @@ impl FromValue for VoiceflowButtons{
     /// A `Result` containing an `Option` with the `VoiceflowButtons` instance if the conversion
     /// succeeds, or a `VoiceflousionError` if the conversion fails. If the conversion
     /// succeeds but there are no buttons, `None` can be returned.
-    fn from_value(value: &Value) -> Result<Option<Self>, VoiceflousionError> {
+    fn from_value(value: &Value) -> VoiceflousionResult<Option<Self>> {
 
         let buttons_value = match value.get("trace").and_then(|trace| trace.get("payload"))
             .and_then(|payload| payload.get("buttons")){

@@ -4,8 +4,8 @@ use crate::core::base_structs::ClientBase;
 use crate::core::session_wrappers::LockedSession;
 use crate::core::subtypes::{InteractionType, SentMessage};
 use crate::core::traits::{Responder, Sender, Update};
-use crate::core::voiceflow::{State, VoiceflousionError};
-
+use crate::core::voiceflow::State;
+use crate::errors::VoiceflousionResult;
 
 /// The `Client` trait adds methods for launching dialogs, sending messages,
 /// and choosing buttons in a Voiceflow dialog. It provides asynchronous methods
@@ -34,8 +34,8 @@ pub trait Client<H: Sender>: Sync + Send {
     ///
     /// # Returns
     ///
-    /// A `Result` containing a vector of `SenderResponder` or a `VoiceflousionError` if the request fails.
-    async fn launch_voiceflow_dialog(&self, locked_session: &LockedSession,  interaction_time: i64) -> Result<Vec<H::SenderResponder>, VoiceflousionError>{
+    /// A `VoiceflousionResult` containing a vector of `H::SenderResponder` or a `VoiceflousionError` if the request fails.
+    async fn launch_voiceflow_dialog(&self, locked_session: &LockedSession,  interaction_time: i64) -> VoiceflousionResult<Vec<H::SenderResponder>>{
         // Set the last interaction time for the session
         locked_session.set_last_interaction(Some(interaction_time));
 
@@ -83,8 +83,8 @@ pub trait Client<H: Sender>: Sync + Send {
     ///
     /// # Returns
     ///
-    /// A `Result` containing a vector of `SenderResponder` or a `VoiceflousionError` if the request fails.
-    async fn send_message_to_voiceflow_dialog(&self, locked_session: &LockedSession, interaction_time: i64, message: &String, state: Option<State>) -> Result<Vec<H::SenderResponder>, VoiceflousionError> {
+    /// A `VoiceflousionResult` containing a vector of `H::SenderResponder` or a `VoiceflousionError` if the request fails.
+    async fn send_message_to_voiceflow_dialog(&self, locked_session: &LockedSession, interaction_time: i64, message: &String, state: Option<State>) -> VoiceflousionResult<Vec<H::SenderResponder>> {
         // Set the last interaction time for the session
         locked_session.set_last_interaction(Some(interaction_time));
 
@@ -130,8 +130,8 @@ pub trait Client<H: Sender>: Sync + Send {
     ///
     /// # Returns
     ///
-    /// A `Result` containing a vector of `SenderResponder` or a `VoiceflousionError` if the request fails.
-    async fn choose_button_in_voiceflow_dialog(&self, locked_session: &LockedSession,  interaction_time: i64, message: &String, button_data: &String, state: Option<State>) -> Result<Vec<H::SenderResponder>, VoiceflousionError> {
+    /// A `VoiceflousionResult` containing a vector of `H::SenderResponder` or a `VoiceflousionError` if the request fails.
+    async fn choose_button_in_voiceflow_dialog(&self, locked_session: &LockedSession,  interaction_time: i64, message: &String, button_data: &String, state: Option<State>) -> VoiceflousionResult<Vec<H::SenderResponder>> {
         // Set the last interaction time for the session
         locked_session.set_last_interaction(Some(interaction_time));
 
@@ -174,8 +174,8 @@ pub trait Client<H: Sender>: Sync + Send {
     ///
     /// # Returns
     ///
-    /// A `Result` containing a vector of `SenderResponder` or a `VoiceflousionError` if the request fails.
-    async fn interact_with_client(&self, update: Self::ClientUpdate<'_>, update_state: Option<State>) -> Result<Vec<H::SenderResponder>, VoiceflousionError> {
+    /// A `VoiceflousionResult` containing a vector of `H::SenderResponder` or a `VoiceflousionError` if the request fails.
+    async fn interact_with_client(&self, update: Self::ClientUpdate<'_>, update_state: Option<State>) -> VoiceflousionResult<Vec<H::SenderResponder>> {
         // Get the interaction time from the update
         let interaction_time = update.interaction_time();
 
@@ -226,8 +226,8 @@ pub trait Client<H: Sender>: Sync + Send {
     ///
     /// # Returns
     ///
-    /// A `Result` containing a vector of `SenderResponder` or a `VoiceflousionError` if the request fails.
-    async fn handle_button_interaction(&self, locked_session: &LockedSession<'_>, interaction_time: i64, message: &String, button_path: &String, update_state: Option<State>, update: &Self::ClientUpdate<'_>, ) -> Result<Vec<H::SenderResponder>, VoiceflousionError>;
+    /// A `VoiceflousionResult` containing a vector of `H::SenderResponder` or a `VoiceflousionError` if the request fails.
+    async fn handle_button_interaction(&self, locked_session: &LockedSession<'_>, interaction_time: i64, message: &String, button_path: &String, update_state: Option<State>, update: &Self::ClientUpdate<'_>, ) -> VoiceflousionResult<Vec<H::SenderResponder>>;
 }
 
 /// Retrieves the last sent message from the response.

@@ -2,7 +2,8 @@ use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
 use tokio::sync::{Mutex, RwLock, RwLockReadGuard, RwLockWriteGuard, MutexGuard};
 use crate::core::subtypes::{AtomicTimestamp, SentMessage};
-use crate::core::voiceflow::{VoiceflousionError, VoiceflowSession};
+use crate::core::voiceflow::VoiceflowSession;
+use crate::errors::{VoiceflousionError, VoiceflousionResult};
 
 /// Represents a session for handling interactions.
 ///
@@ -95,8 +96,8 @@ impl Session {
     ///
     /// # Returns
     ///
-    /// A `Result` containing a `MutexGuard` if the lock was acquired, or a `VoiceflousionError` if the lock is already held.
-    pub(super) fn try_lock(&self) -> Result<MutexGuard<bool>, VoiceflousionError>{
+    /// A `VoiceflousionResult` containing a `MutexGuard` if the lock was acquired, or a `VoiceflousionError` if the lock is already held.
+    pub(super) fn try_lock(&self) -> VoiceflousionResult<MutexGuard<bool>>{
         let binding = &self.lock;
         binding.try_lock().map_err(|_| VoiceflousionError::SessionLockError(self.get_cloned_chat_id()))
     }

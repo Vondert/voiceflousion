@@ -5,9 +5,10 @@ use crate::core::base_structs::SenderBase;
 use crate::core::subtypes::HttpClient;
 use crate::integrations::telegram::TelegramResponder;
 use crate::core::traits::{Responder, Sender};
-use crate::core::voiceflow::{VoiceflousionError, VoiceflowBlock};
+use crate::core::voiceflow::VoiceflowBlock;
 use crate::core::voiceflow::dialog_blocks::{VoiceflowButtons, VoiceflowCard, VoiceflowCarousel, VoiceflowImage, VoiceflowText};
 use crate::core::voiceflow::dialog_blocks::enums::{VoiceflowButtonActionType, VoiceflowButtonsOption};
+use crate::errors::{VoiceflousionError, VoiceflousionResult};
 
 /// The base URL for the Telegram API.
 static TELEGRAM_API_URL: &str = "https://api.telegram.org/bot";
@@ -59,14 +60,13 @@ impl TelegramSender {
     ///
     /// # Returns
     ///
-    /// A `Result` containing a `TelegramResponder` or a `VoiceflousionError` if the request fails.
+    /// A `VoiceflousionResult` containing a `TelegramResponder` or a `VoiceflousionError` if the request fails.
     ///
     /// # Example
     ///
     /// ```
     /// use voiceflousion::integrations::telegram::TelegramSender;
     /// use voiceflousion::core::voiceflow::dialog_blocks::{VoiceflowCard, VoiceflowCarousel};
-    /// use voiceflousion::core::voiceflow::VoiceflousionError;
     /// use voiceflousion::integrations::telegram::TelegramResponder;
     /// use tokio;
     ///
@@ -81,7 +81,7 @@ impl TelegramSender {
     ///     println!("{:?}", response);
     /// }
     /// ```
-    pub async fn update_carousel(&self, carousel: &VoiceflowCarousel, index: usize, chat_id: &String, message_id: &String) -> Result<TelegramResponder, VoiceflousionError> {
+    pub async fn update_carousel(&self, carousel: &VoiceflowCarousel, index: usize, chat_id: &String, message_id: &String) -> VoiceflousionResult<TelegramResponder> {
         // Form the API URL for editing the message media via Telegram API
         let api_url = format!("{}{}/editMessageMedia", TELEGRAM_API_URL, &self.api_key());
 
@@ -165,7 +165,7 @@ impl Sender for TelegramSender{
     ///
     /// # Returns
     ///
-    /// A `Result` containing a `TelegramResponder` or a `VoiceflousionError` if the request fails.
+    /// A `VoiceflousionResult` containing a `TelegramResponder` or a `VoiceflousionError` if the request fails.
     ///
     /// # Example
     ///
@@ -188,7 +188,7 @@ impl Sender for TelegramSender{
     ///     println!("{:?}", response);
     /// }
     /// ```
-    async fn send_text(&self, text: VoiceflowText, chat_id: &String, sender_http_client: &HttpClient, api_key: &String) -> Result<Self::SenderResponder, VoiceflousionError> {
+    async fn send_text(&self, text: VoiceflowText, chat_id: &String, sender_http_client: &HttpClient, api_key: &String) -> VoiceflousionResult<Self::SenderResponder> {
         // Form the API URL for sending the message via Telegram API
         let api_url = format!("{}{}/sendMessage", TELEGRAM_API_URL, api_key);
 
@@ -224,7 +224,7 @@ impl Sender for TelegramSender{
     ///
     /// # Returns
     ///
-    /// A `Result` containing a `TelegramResponder` or a `VoiceflousionError` if the request fails.
+    /// A `VoiceflousionResult` containing a `TelegramResponder` or a `VoiceflousionError` if the request fails.
     ///
     /// # Example
     ///
@@ -243,7 +243,7 @@ impl Sender for TelegramSender{
     ///     println!("{:?}", response);
     /// }
     /// ```
-    async fn send_image(&self, image: VoiceflowImage, chat_id: &String, sender_http_client: &HttpClient, api_key: &String) -> Result<Self::SenderResponder, VoiceflousionError> {
+    async fn send_image(&self, image: VoiceflowImage, chat_id: &String, sender_http_client: &HttpClient, api_key: &String) -> VoiceflousionResult<Self::SenderResponder> {
         // Form the API URL for sending the image via Telegram API
         let api_url = format!("{}{}/sendPhoto", TELEGRAM_API_URL, api_key);
 
@@ -279,7 +279,7 @@ impl Sender for TelegramSender{
     ///
     /// # Returns
     ///
-    /// A `Result` containing a `TelegramResponder` or a `VoiceflousionError` if the request fails.
+    /// A `VoiceflousionResult` containing a `TelegramResponder` or a `VoiceflousionError` if the request fails.
     ///
     /// # Example
     ///
@@ -300,7 +300,7 @@ impl Sender for TelegramSender{
     ///     println!("{:?}", response);
     /// }
     /// ```
-    async fn send_buttons(&self, buttons: VoiceflowButtons, chat_id: &String, sender_http_client: &HttpClient, api_key: &String) -> Result<Self::SenderResponder, VoiceflousionError> {
+    async fn send_buttons(&self, buttons: VoiceflowButtons, chat_id: &String, sender_http_client: &HttpClient, api_key: &String) -> VoiceflousionResult<Self::SenderResponder> {
         // Determine the API URL based on the button option (text or image)
         let api_url = match &buttons.option() {
             VoiceflowButtonsOption::Image(_) => format!("{}{}/sendPhoto", TELEGRAM_API_URL, api_key),
@@ -362,7 +362,7 @@ impl Sender for TelegramSender{
     ///
     /// # Returns
     ///
-    /// A `Result` containing a `TelegramResponder` or a `VoiceflousionError` if the request fails.
+    /// A `VoiceflousionResult` containing a `TelegramResponder` or a `VoiceflousionError` if the request fails.
     ///
     /// # Example
     ///
@@ -382,7 +382,7 @@ impl Sender for TelegramSender{
     ///     println!("{:?}", response);
     /// }
     /// ```
-    async fn send_card(&self, card: VoiceflowCard, chat_id: &String, sender_http_client: &HttpClient, api_key: &String) -> Result<Self::SenderResponder, VoiceflousionError> {
+    async fn send_card(&self, card: VoiceflowCard, chat_id: &String, sender_http_client: &HttpClient, api_key: &String) -> VoiceflousionResult<Self::SenderResponder> {
         // Extract the title and description from the card
         let title = card.title().clone().unwrap_or(String::new());
         let description = card.description().clone().unwrap_or(String::new());
@@ -443,7 +443,7 @@ impl Sender for TelegramSender{
     ///
     /// # Returns
     ///
-    /// A `Result` containing a `TelegramResponder` or a `VoiceflousionError` if the request fails.
+    /// A `VoiceflousionResult` containing a `TelegramResponder` or a `VoiceflousionError` if the request fails.
     ///
     /// # Example
     ///
@@ -464,7 +464,7 @@ impl Sender for TelegramSender{
     ///     println!("{:?}", response);
     /// }
     /// ```
-    async fn send_carousel(&self, carousel: VoiceflowCarousel, chat_id: &String, sender_http_client: &HttpClient, api_key: &String) -> Result<Self::SenderResponder, VoiceflousionError> {
+    async fn send_carousel(&self, carousel: VoiceflowCarousel, chat_id: &String, sender_http_client: &HttpClient, api_key: &String) -> VoiceflousionResult<Self::SenderResponder> {
         // Check if the carousel is empty and return an error if it is
         if !carousel.is_full() {
             return Err(VoiceflousionError::ClientRequestInvalidBodyError("TelegramSender send_carousel".to_string(), "Provided carousel is empty!".to_string()));

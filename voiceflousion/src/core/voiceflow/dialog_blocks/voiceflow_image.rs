@@ -1,6 +1,7 @@
 use serde_json::Value;
 use crate::core::voiceflow::dialog_blocks::traits::FromValue;
-use crate::core::voiceflow::VoiceflousionError;
+use crate::errors::{VoiceflousionError, VoiceflousionResult};
+
 /// Represents an image in a Voiceflow dialog.
 ///
 /// `VoiceflowImage` contains the URL and optional dimensions (height and width) of the image.
@@ -112,7 +113,7 @@ impl FromValue for VoiceflowImage{
     /// A `Result` containing an `Option` with the `VoiceflowImage` instance if the conversion
     /// succeeds, or a `VoiceflousionError` if the conversion fails. If the conversion
     /// succeeds but there is no meaningful value, `None` can be returned.
-    fn from_value(value: &Value) -> Result<Option<Self>, VoiceflousionError> {
+    fn from_value(value: &Value) -> VoiceflousionResult<Option<Self>> {
         let payload = value.get("trace")
             .and_then(|trace| trace.get("payload"))
             .ok_or_else(|| VoiceflousionError::VoiceflowBlockConvertationError(("VoiceflowImage image payload".to_string(), value.clone())))?;

@@ -3,7 +3,7 @@ use serde_json::Value;
 use crate::core::base_structs::UpdateBase;
 use crate::core::subtypes::InteractionType;
 use crate::core::traits::Update;
-use crate::core::voiceflow::VoiceflousionError;
+use crate::errors::{VoiceflousionError, VoiceflousionResult};
 
 /// Represents an update received from Telegram.
 ///
@@ -113,7 +113,7 @@ impl Update for TelegramUpdate {
     ///
     /// # Returns
     ///
-    /// A `Result` containing the update or a `VoiceflousionError` if the conversion fails.
+    /// A `VoiceflousionResult` containing the `TelegramUpdate` or a `VoiceflousionError` if the conversion fails.
     ///
     /// # Example
     ///
@@ -126,7 +126,7 @@ impl Update for TelegramUpdate {
     ///
     /// let update = TelegramUpdate::from_request_body(body);
     /// ```
-    fn from_request_body(body: Value) -> Result<Self, VoiceflousionError> {
+    fn from_request_body(body: Value) -> VoiceflousionResult<Self> {
         // Check if the update contains a message or a callback query
         let is_message = body.get("message").is_some();
         // Extract the message or callback query data

@@ -1,6 +1,7 @@
 use serde_json::Value;
 use crate::core::voiceflow::dialog_blocks::traits::FromValue;
-use crate::core::voiceflow::VoiceflousionError;
+use crate::errors::{VoiceflousionError, VoiceflousionResult};
+
 /// Represents a text message block in a Voiceflow response.
 ///
 /// `VoiceflowText` contains the message string extracted from a Voiceflow response.
@@ -51,7 +52,7 @@ impl VoiceflowText{
 }
 
 impl FromValue for VoiceflowText{
-    fn from_value(value: &Value) -> Result<Option<Self>, VoiceflousionError> {
+    fn from_value(value: &Value) -> VoiceflousionResult<Option<Self>> {
         let message = value.get("trace")
             .and_then(|trace| trace.get("payload"))
             .and_then(|payload| payload.get("message"))

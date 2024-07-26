@@ -54,6 +54,12 @@ pub enum VoiceflousionError {
     DeprecatedError(String, String)
 }
 
+/// Type alias for `Result` with a `VoiceflousionError` error type.
+///
+/// `VoiceflousionResult` is a convenient shorthand for `Result` that defaults to using
+/// `VoiceflousionError` for the error type. This can be used throughout the Voiceflousion
+/// crate to simplify function signatures and error handling.
+pub type VoiceflousionResult<T> = Result<T, VoiceflousionError>;
 
 impl Display for VoiceflousionError {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), std::fmt::Error>{

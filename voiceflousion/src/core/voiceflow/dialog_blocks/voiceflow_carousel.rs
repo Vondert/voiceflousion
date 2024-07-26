@@ -2,7 +2,7 @@ use std::ops::Deref;
 use serde_json::Value;
 use crate::core::voiceflow::dialog_blocks::traits::FromValue;
 use crate::core::voiceflow::dialog_blocks::VoiceflowCard;
-use crate::core::voiceflow::VoiceflousionError;
+use crate::errors::{VoiceflousionError, VoiceflousionResult};
 
 /// Represents a carousel in a Voiceflow dialog.
 ///
@@ -83,7 +83,7 @@ impl FromValue for VoiceflowCarousel{
     /// A `Result` containing an `Option` with the `VoiceflowCarousel` instance if the conversion
     /// succeeds, or a `VoiceflousionError` if the conversion fails. If the conversion
     /// succeeds but there is no meaningful value, `None` can be returned.
-    fn from_value(value: &Value) -> Result<Option<Self>, VoiceflousionError> {
+    fn from_value(value: &Value) -> VoiceflousionResult<Option<Self>> {
         let payload = value.get("trace")
             .and_then(|trace| trace.get("payload"))
             .ok_or_else(|| VoiceflousionError::VoiceflowBlockConvertationError(("VoiceflowCarousel carousel payload".to_string(), value.clone())))?;

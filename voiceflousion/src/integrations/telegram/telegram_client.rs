@@ -6,8 +6,9 @@ use crate::core::base_structs::ClientBase;
 use crate::core::ClientBuilder;
 use crate::core::session_wrappers::LockedSession;
 use crate::core::traits::{Client, Sender};
-use crate::core::voiceflow::{State, VoiceflousionError, VoiceflowBlock};
+use crate::core::voiceflow::{State, VoiceflowBlock};
 use crate::core::voiceflow::dialog_blocks::VoiceflowCarousel;
+use crate::errors::VoiceflousionResult;
 use crate::integrations::telegram::{TelegramResponder, TelegramSender, TelegramUpdate};
 
 /// Represents a client for Telegram integration with Voiceflow.
@@ -67,8 +68,8 @@ impl TelegramClient {
     ///
     /// # Returns
     ///
-    /// A `Result` containing a `TelegramResponder` or a `VoiceflousionError` if the request fails.
-    async fn switch_carousel_card(&self, locked_session: &LockedSession<'_>,  carousel: &VoiceflowCarousel,  message_id: &String, index: usize, interaction_time: i64) -> Result<TelegramResponder, VoiceflousionError> {
+    /// A `VoiceflousionResult` containing a vector of `H::SenderResponder` or a `VoiceflousionError` if the request fails.
+    async fn switch_carousel_card(&self, locked_session: &LockedSession<'_>,  carousel: &VoiceflowCarousel,  message_id: &String, index: usize, interaction_time: i64) -> VoiceflousionResult<TelegramResponder> {
         locked_session.set_last_interaction(Some(interaction_time));
         self.client_base.sender().update_carousel(carousel, index, locked_session.get_chat_id(), message_id).await
     }
@@ -101,8 +102,8 @@ impl Client<TelegramSender> for TelegramClient{
     ///
     /// # Returns
     ///
-    /// A `Result` containing a vector of `SenderResponder` or a `VoiceflousionError` if the request fails.
-    async fn handle_button_interaction(&self, locked_session: &LockedSession<'_>, interaction_time: i64, message: &String, button_path: &String, update_state: Option<State>, update: &Self::ClientUpdate<'_>, ) -> Result<Vec<<TelegramSender as Sender>::SenderResponder>, VoiceflousionError> {
+    /// A `VoiceflousionResult` containing a vector of `H::SenderResponder` or a `VoiceflousionError` if the request fails.
+    async fn handle_button_interaction(&self, locked_session: &LockedSession<'_>, interaction_time: i64, message: &String, button_path: &String, update_state: Option<State>, update: &Self::ClientUpdate<'_>, ) -> VoiceflousionResult<Vec<<TelegramSender as Sender>::SenderResponder>> {
         if let Some(prev_message) = locked_session.previous_message().await.deref() {
             if let VoiceflowBlock::Carousel(carousel) = prev_message.block() {
                 if let Some(index) = update.carousel_card_index() {

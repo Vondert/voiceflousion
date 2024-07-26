@@ -1,8 +1,7 @@
 use std::ops::Deref;
 use serde_json::Value;
 use crate::core::base_structs::UpdateBase;
-use crate::core::subtypes::InteractionType;
-use crate::core::voiceflow::VoiceflousionError;
+use crate::errors::{VoiceflousionError, VoiceflousionResult};
 
 /// A trait for handling updates in the integration.
 ///
@@ -18,8 +17,8 @@ pub trait Update: Deref<Target = UpdateBase> + Sized + Send + Sync {
     ///
     /// # Returns
     ///
-    /// A `Result` containing the update or a `VoiceflousionError` if the conversion fails.
-    fn from_request_body(body: Value) -> Result<Self, VoiceflousionError>;
+    /// A `VoiceflousionResult` containing the `Update` instance or a `VoiceflousionError` if the conversion fails.
+    fn from_request_body(body: Value) -> VoiceflousionResult<Self>;
 
     /// Checks if the update is deprecated based on the last response time.
     ///
@@ -29,8 +28,8 @@ pub trait Update: Deref<Target = UpdateBase> + Sized + Send + Sync {
     ///
     /// # Returns
     ///
-    /// A `Result` indicating whether the update is deprecated.
-    fn is_deprecated(&self, last_response_time: i64) -> Result<(), VoiceflousionError> {
+    /// A `VoiceflousionResult` indicating whether the update is deprecated.
+    fn is_deprecated(&self, last_response_time: i64) -> VoiceflousionResult<()> {
         if last_response_time > self.interaction_time() {
             return Err(VoiceflousionError::DeprecatedError(self.chat_id().clone(), self.update_id().clone()));
         }

@@ -3,8 +3,9 @@ use reqwest::Response;
 use serde_json::Value;
 use crate::core::voiceflow::response_structures::voiceflow_response_block::VoiceflowResponseBlock;
 use crate::core::voiceflow::response_structures::voiceflow_response_block_type::VoiceflowResponseBlockType;
-use crate::core::voiceflow::{VoiceflousionError, VoiceflowMessage};
+use crate::core::voiceflow::VoiceflowMessage;
 use crate::core::voiceflow::voiceflow_message::VoiceflowMessageBuilder;
+use crate::errors::{VoiceflousionError, VoiceflousionResult};
 
 /// Represents a response from the Voiceflow API.
 ///
@@ -32,8 +33,8 @@ impl VoiceflowResponse{
     ///
     /// # Returns
     ///
-    /// A `Result` containing a vector of `VoiceflowResponseBlock` instances or a `VoiceflousionError` if the conversion fails.
-    async fn to_blocks(self) -> Result<Vec<VoiceflowResponseBlock>, VoiceflousionError> {
+    /// A `VoiceflousionResult` containing a vector of `VoiceflowResponseBlock` instances or a `VoiceflousionError` if the conversion fails.
+    async fn to_blocks(self) -> VoiceflousionResult<Vec<VoiceflowResponseBlock>> {
         let text = self.response.text().await.map_err(|error| VoiceflousionError::VoiceflowResponseReadingError(error.to_string()))?;
         let events = parse_sse(text.lines());
 
@@ -66,8 +67,8 @@ impl VoiceflowResponse{
     ///
     /// # Returns
     ///
-    /// A `Result` containing a `VoiceflowMessage` or a `VoiceflousionError` if the conversion fails.
-    pub(crate) async fn to_message(self) -> Result<VoiceflowMessage, VoiceflousionError>{
+    /// A `VoiceflousionResult` containing a `VoiceflowMessage` or a `VoiceflousionError` if the conversion fails.
+    pub(crate) async fn to_message(self) -> VoiceflousionResult<VoiceflowMessage>{
         let blocks = self.to_blocks().await?;
         let message = VoiceflowMessageBuilder::new().build_message(blocks);
         message

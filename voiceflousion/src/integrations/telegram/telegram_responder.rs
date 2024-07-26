@@ -4,7 +4,8 @@ use reqwest::Response;
 use serde::Deserialize;
 use crate::core::base_structs::ResponderBase;
 use crate::core::traits::Responder;
-use crate::core::voiceflow::{VoiceflousionError, VoiceflowBlock};
+use crate::core::voiceflow::VoiceflowBlock;
+use crate::errors::{VoiceflousionError, VoiceflousionResult};
 
 /// Represents a responder for Telegram interactions.
 ///
@@ -98,8 +99,8 @@ impl Responder for TelegramResponder {
     ///
     /// # Returns
     ///
-    /// A `Result` containing the `TelegramResponder` instance or a `VoiceflousionError` if the process fails.
-    async fn from_response(response: Response, content: VoiceflowBlock) -> Result<Self, VoiceflousionError> {
+    /// A `VoiceflousionResult` containing the `TelegramResponder` instance or a `VoiceflousionError` if the process fails.
+    async fn from_response(response: Response, content: VoiceflowBlock) -> VoiceflousionResult<Self> {
         let body = response.json::<ResponseBody>().await
             .map_err(|e| VoiceflousionError::ClientResponseReadingError("TelegramResponder".to_string(), e.to_string()))?;
 

@@ -2,8 +2,9 @@ use reqwest::header::{AUTHORIZATION, CONTENT_TYPE, ACCEPT};
 use crate::core::subtypes::HttpClient;
 use crate::core::voiceflow::request_structures::{ActionBuilder, ActionType, VoiceflowRequestBody, VoiceflowRequestBodyBuilder};
 use crate::core::voiceflow::response_structures::VoiceflowResponse;
-use crate::core::voiceflow::{State, VoiceflousionError, VoiceflowBlock, VoiceflowMessage, VoiceflowSession};
+use crate::core::voiceflow::{State, VoiceflowBlock, VoiceflowMessage, VoiceflowSession};
 use crate::core::voiceflow::dialog_blocks::VoiceflowText;
+use crate::errors::VoiceflousionError;
 
 /// Voiceflow API runtime interaction URL.
 static VOICEFLOW_API_URL: &str = "https://general-runtime.voiceflow.com/v2beta1/interact";

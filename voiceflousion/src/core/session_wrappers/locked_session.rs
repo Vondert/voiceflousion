@@ -3,7 +3,7 @@ use std::sync::Arc;
 use tokio::sync::MutexGuard;
 use crate::core::session_wrappers::Session;
 use crate::core::subtypes::SentMessage;
-use crate::core::voiceflow::VoiceflousionError;
+use crate::errors::VoiceflousionResult;
 
 /// Represents a locked session for thread-safe operations.
 ///
@@ -38,7 +38,7 @@ impl<'g> LockedSession<'g> {
     ///
     /// # Returns
     ///
-    /// A `Result` containing a `LockedSession` or a `VoiceflousionError` if the lock cannot be acquired.
+    /// A `VoiceflousionResult` containing a `LockedSession` or a `VoiceflousionError` if the lock cannot be acquired.
     ///
     /// # Example
     ///
@@ -50,7 +50,7 @@ impl<'g> LockedSession<'g> {
     /// let session = Arc::new(Session::new("chat_id".to_string(), Some(1627554661), true));
     /// let locked_session = LockedSession::try_from_session(&session);
     /// ```
-    pub fn try_from_session(session: &'g Arc<Session>) -> Result<Self, VoiceflousionError> {
+    pub fn try_from_session(session: &'g Arc<Session>) -> VoiceflousionResult<Self> {
         let guard = session.try_lock()?;
 
         Ok(Self {
@@ -70,7 +70,7 @@ impl<'g> LockedSession<'g> {
     /// ```
     /// use std::sync::Arc;
     /// use voiceflousion::core::session_wrappers::LockedSession;
-    /// use voiceflousion::core::session_wrappers::Session;    ///
+    /// use voiceflousion::core::session_wrappers::Session;
     /// use voiceflousion::core::subtypes::SentMessage;
     /// use voiceflousion::core::voiceflow::dialog_blocks::VoiceflowText;
     /// use voiceflousion::core::voiceflow::VoiceflowBlock;

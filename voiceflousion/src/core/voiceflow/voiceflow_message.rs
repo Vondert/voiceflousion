@@ -4,8 +4,9 @@ use std::vec::IntoIter;
 use crate::core::voiceflow::dialog_blocks::enums::VoiceflowButtonsOption;
 use crate::core::voiceflow::dialog_blocks::{VoiceflowButtons, VoiceflowCard, VoiceflowCarousel, VoiceflowImage, VoiceflowText};
 use crate::core::voiceflow::response_structures::{VoiceflowResponseBlock, VoiceflowResponseBlockType};
-use crate::core::voiceflow::{VoiceflowBlock, VoiceflousionError};
+use crate::core::voiceflow::VoiceflowBlock;
 use crate::core::voiceflow::dialog_blocks::traits::FromValue;
+use crate::errors::VoiceflousionResult;
 
 /// Represents a message from a Voiceflow response.
 ///
@@ -110,8 +111,8 @@ impl VoiceflowMessageBuilder {
     ///
     /// # Returns
     ///
-    /// A `Result` containing a `VoiceflowMessage` or a `VoiceflousionError` if the conversion fails.
-    pub fn build_message(self, blocks: Vec<VoiceflowResponseBlock>) -> Result<VoiceflowMessage, VoiceflousionError> {
+    /// A `VoiceflousionResult` containing a `VoiceflowMessage` or a `VoiceflousionError` if the conversion fails.
+    pub fn build_message(self, blocks: Vec<VoiceflowResponseBlock>) -> VoiceflousionResult<VoiceflowMessage> {
         let mut message = VoiceflowMessage {
             content: Vec::with_capacity(blocks.len()),
         };

@@ -3,8 +3,9 @@ use async_trait::async_trait;
 use crate::core::base_structs::SenderBase;
 use crate::core::subtypes::HttpClient;
 use crate::core::traits::Responder;
-use crate::core::voiceflow::{VoiceflousionError, VoiceflowBlock, VoiceflowMessage};
+use crate::core::voiceflow::{VoiceflowBlock, VoiceflowMessage};
 use crate::core::voiceflow::dialog_blocks::{VoiceflowButtons, VoiceflowCard, VoiceflowCarousel, VoiceflowImage, VoiceflowText};
+use crate::errors::{VoiceflousionError, VoiceflousionResult};
 
 /// A trait that defines the functionality for sending messages to a client.
 ///
@@ -32,8 +33,8 @@ pub trait Sender: Deref<Target=SenderBase> + Send + Sync {
     ///
     /// # Returns
     ///
-    /// A `Result` containing a vector of `SenderResponder` or a `VoiceflousionError` if the request fails.
-    async fn send_message(&self, chat_id: &String, message: VoiceflowMessage) -> Result<Vec<Self::SenderResponder>, VoiceflousionError> {
+    /// A `VoiceflousionResult` containing a vector of `SenderResponder` or a `VoiceflousionError` if the request fails.
+    async fn send_message(&self, chat_id: &String, message: VoiceflowMessage) -> VoiceflousionResult<Vec<Self::SenderResponder>> {
         // Obtain the HTTP client and API key
         let sender_http_client = self.http_client();
         let api_key = self.api_key();
@@ -88,8 +89,8 @@ pub trait Sender: Deref<Target=SenderBase> + Send + Sync {
     ///
     /// # Returns
     ///
-    /// A `Result` containing a `SenderResponder` or a `VoiceflousionError` if the request fails.
-    async fn send_text(&self, text: VoiceflowText, chat_id: &String, sender_base: &HttpClient, api_key: &String) -> Result<Self::SenderResponder, VoiceflousionError>;
+    /// A `VoiceflousionResult` containing a `SenderResponder` or a `VoiceflousionError` if the request fails.
+    async fn send_text(&self, text: VoiceflowText, chat_id: &String, sender_base: &HttpClient, api_key: &String) -> VoiceflousionResult<Self::SenderResponder>;
 
     /// Sends an image message to a client.
     ///
@@ -102,8 +103,8 @@ pub trait Sender: Deref<Target=SenderBase> + Send + Sync {
     ///
     /// # Returns
     ///
-    /// A `Result` containing a `SenderResponder` or a `VoiceflousionError` if the request fails.
-    async fn send_image(&self, image: VoiceflowImage, chat_id: &String, sender_http_client: &HttpClient, api_key: &String) -> Result<Self::SenderResponder, VoiceflousionError>;
+    /// A `VoiceflousionResult` containing a `SenderResponder` or a `VoiceflousionError` if the request fails.
+    async fn send_image(&self, image: VoiceflowImage, chat_id: &String, sender_http_client: &HttpClient, api_key: &String) -> VoiceflousionResult<Self::SenderResponder>;
 
     /// Sends a button message to a client.
     ///
@@ -116,8 +117,8 @@ pub trait Sender: Deref<Target=SenderBase> + Send + Sync {
     ///
     /// # Returns
     ///
-    /// A `Result` containing a `SenderResponder` or a `VoiceflousionError` if the request fails.
-    async fn send_buttons(&self, buttons: VoiceflowButtons, chat_id: &String, sender_http_client: &HttpClient, api_key: &String) -> Result<Self::SenderResponder, VoiceflousionError>;
+    /// A `VoiceflousionResult` containing a `SenderResponder` or a `VoiceflousionError` if the request fails.
+    async fn send_buttons(&self, buttons: VoiceflowButtons, chat_id: &String, sender_http_client: &HttpClient, api_key: &String) -> VoiceflousionResult<Self::SenderResponder>;
 
     /// Sends a card message to a client.
     ///
@@ -130,8 +131,8 @@ pub trait Sender: Deref<Target=SenderBase> + Send + Sync {
     ///
     /// # Returns
     ///
-    /// A `Result` containing a `SenderResponder` or a `VoiceflousionError` if the request fails.
-    async fn send_card(&self, card: VoiceflowCard, chat_id: &String, sender_http_client: &HttpClient, api_key: &String) -> Result<Self::SenderResponder, VoiceflousionError>;
+    /// A `VoiceflousionResult` containing a `SenderResponder` or a `VoiceflousionError` if the request fails.
+    async fn send_card(&self, card: VoiceflowCard, chat_id: &String, sender_http_client: &HttpClient, api_key: &String) -> VoiceflousionResult<Self::SenderResponder>;
 
     /// Sends a carousel message to a client.
     ///
@@ -144,6 +145,6 @@ pub trait Sender: Deref<Target=SenderBase> + Send + Sync {
     ///
     /// # Returns
     ///
-    /// A `Result` containing a `SenderResponder` or a `VoiceflousionError` if the request fails.
-    async fn send_carousel(&self, carousel: VoiceflowCarousel, chat_id: &String, sender_http_client: &HttpClient, api_key: &String) -> Result<Self::SenderResponder, VoiceflousionError>;
+    /// A `VoiceflousionResult` containing a `SenderResponder` or a `VoiceflousionError` if the request fails.
+    async fn send_carousel(&self, carousel: VoiceflowCarousel, chat_id: &String, sender_http_client: &HttpClient, api_key: &String) -> VoiceflousionResult<Self::SenderResponder>;
 }

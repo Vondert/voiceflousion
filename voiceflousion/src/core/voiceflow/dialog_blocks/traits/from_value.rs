@@ -1,5 +1,5 @@
 use serde_json::Value;
-use crate::core::voiceflow::VoiceflousionError;
+use crate::errors::VoiceflousionResult;
 
 /// A trait for converting from a JSON `Value` to an instance of a type.
 ///
@@ -15,8 +15,8 @@ pub(crate) trait FromValue: Sized {
     ///
     /// # Returns
     ///
-    /// A `Result` containing an `Option` with the instance of the type if the conversion
+    /// A `VoiceflousionResult` containing an `Option` with the instance of the type if the conversion
     /// succeeds, or a `VoiceflousionError` if the conversion fails. If the conversion
     /// succeeds but there is no meaningful value, `None` can be returned.
-    fn from_value(value: &Value) -> Result<Option<Self>, VoiceflousionError>;
+    fn from_value(value: &Value) -> VoiceflousionResult<Option<Self>>;
 }

@@ -1,7 +1,7 @@
 use serde_json::Value;
 use crate::core::voiceflow::dialog_blocks::traits::FromValue;
 use crate::core::voiceflow::dialog_blocks::VoiceflowButtons;
-use crate::core::voiceflow::VoiceflousionError;
+use crate::errors::{VoiceflousionError, VoiceflousionResult};
 
 /// Represents a card in a Voiceflow dialog.
 ///
@@ -138,7 +138,7 @@ impl FromValue for VoiceflowCard{
     /// A `Result` containing an `Option` with the `VoiceflowCard` instance if the conversion
     /// succeeds, or a `VoiceflousionError` if the conversion fails. If the conversion
     /// succeeds but there is no meaningful value, `None` can be returned.
-    fn from_value(value: &Value) -> Result<Option<Self>, VoiceflousionError> {
+    fn from_value(value: &Value) -> VoiceflousionResult<Option<Self>> {
         let payload = value.get("trace").and_then(|trace| trace.get("payload")).unwrap_or_else(|| value);
         let buttons: Option<VoiceflowButtons> = VoiceflowButtons::from_value(value)?;
 

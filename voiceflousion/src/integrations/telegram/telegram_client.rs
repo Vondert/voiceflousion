@@ -76,15 +76,16 @@ impl TelegramClient {
 }
 
 #[async_trait]
-impl Client<TelegramSender> for TelegramClient{
+impl Client for TelegramClient{
     type ClientUpdate<'async_trait> = TelegramUpdate;
+    type ClientSender<'async_trait> = TelegramSender;
 
     /// Returns a reference to the `ClientBase`.
     ///
     /// # Returns
     ///
     /// A reference to the `ClientBase` instance.
-    fn client_base(&self) -> &ClientBase<TelegramSender> {
+    fn client_base(&self) -> &ClientBase<Self::ClientSender<'_>> {
         &self.client_base
     }
 
@@ -103,7 +104,7 @@ impl Client<TelegramSender> for TelegramClient{
     /// # Returns
     ///
     /// A `VoiceflousionResult` containing a vector of `H::SenderResponder` or a `VoiceflousionError` if the request fails.
-    async fn handle_button_interaction(&self, locked_session: &LockedSession<'_>, interaction_time: i64, message: &String, button_path: &String, update_state: Option<State>, update: &Self::ClientUpdate<'_>, ) -> VoiceflousionResult<Vec<<TelegramSender as Sender>::SenderResponder>> {
+    async fn handle_button_interaction(&self, locked_session: &LockedSession<'_>, interaction_time: i64, message: &String, button_path: &String, update_state: Option<State>, update: &Self::ClientUpdate<'_>, ) -> VoiceflousionResult<Vec<<Self::ClientSender<'_> as Sender>::SenderResponder>> {
         if let Some(prev_message) = locked_session.previous_message().await.deref() {
             if let VoiceflowBlock::Carousel(carousel) = prev_message.block() {
                 if let Some(index) = update.carousel_card_index() {

@@ -46,13 +46,14 @@ impl SessionMap {
     /// A new instance of `SessionMap`.
     pub(crate) fn from_sessions(sessions_vec: Vec<Session>, valid_session_duration: Option<i64>) -> Self {
         let mut hash_map = HashMap::<String, Arc<Session>>::new();
-        let _ = sessions_vec.into_iter().map(|session| hash_map.insert(session.get_cloned_chat_id(), Arc::new(session)));
+        sessions_vec.into_iter().for_each(|session| {
+            hash_map.insert(session.get_cloned_chat_id(), Arc::new(session));
+        });
         Self {
             sessions: Arc::new(RwLock::new(hash_map)),
             valid_session_duration
         }
     }
-
     /// Returns the duration a session is considered valid.
     ///
     /// # Returns

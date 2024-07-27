@@ -14,7 +14,7 @@ use crate::errors::{VoiceflousionError, VoiceflousionResult};
 /// includes a method for sending a complete `VoiceflowMessage`, which can contain
 /// multiple types of blocks.
 #[async_trait]
-pub trait Sender: Deref<Target=SenderBase> + Send + Sync {
+pub trait Sender: Deref<Target=SenderBase> + Send + Sync + Sized {
     /// The type that represents the response from the sender.
     type SenderResponder: Responder;
 

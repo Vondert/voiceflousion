@@ -1,3 +1,4 @@
+use std::fmt::Debug;
 use std::ops::Deref;
 use async_trait::async_trait;
 use reqwest::Response;
@@ -11,7 +12,7 @@ use crate::errors::VoiceflousionResult;
 /// The `Responder` trait provides methods for extracting details from responses,
 /// creating `SentMessage` instances, and handling errors.
 #[async_trait]
-pub trait Responder: Deref<Target=ResponderBase> + Sized + Send + Sync {
+pub trait Responder: Deref<Target=ResponderBase> + Sized + Send + Sync + Debug{
 
     /// Creates an instance of the `Responder` from HTTP response.
     ///

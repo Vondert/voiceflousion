@@ -24,7 +24,9 @@ pub struct ClientBuilder {
     /// The optional interval for session cleanup.
     sessions_cleanup_interval: Option<u64>,
     /// The launch state of the Voiceflow client.
-    launch_state: State
+    launch_state: State,
+
+    status: bool
 }
 
 impl ClientBuilder {
@@ -61,7 +63,8 @@ impl ClientBuilder {
             connection_duration: None,
             session_duration: None,
             sessions_cleanup_interval: None,
-            launch_state: State::default()
+            launch_state: State::default(),
+            status: true
         }
     }
 
@@ -204,6 +207,10 @@ impl ClientBuilder {
         self
     }
 
+    pub fn add_status(mut self, status: bool) -> Self{
+        self.status = status;
+        self
+    }
     /// Returns the client ID.
     ///
     /// # Returns
@@ -392,5 +399,9 @@ impl ClientBuilder {
     /// ```
     pub fn launch_state(&self) -> &State{
         &self.launch_state
+    }
+
+    pub fn status(&self) -> bool{
+        self.status
     }
 }

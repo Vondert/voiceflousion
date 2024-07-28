@@ -1,3 +1,4 @@
+use std::fmt::Debug;
 use std::ops::Deref;
 use serde_json::Value;
 use crate::core::base_structs::UpdateBase;
@@ -7,7 +8,7 @@ use crate::errors::{VoiceflousionError, VoiceflousionResult};
 ///
 /// The `Update` trait provides methods for accessing update details,
 /// creating updates from request bodies, and checking if an update is deprecated.
-pub trait Update: Deref<Target = UpdateBase> + Sized + Send + Sync {
+pub trait Update: Deref<Target = UpdateBase> + Sized + Send + Sync + Debug{
 
     /// Creates an update from a JSON request body.
     ///

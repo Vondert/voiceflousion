@@ -1,4 +1,5 @@
 use std::sync::Arc;
+use std::sync::atomic::{AtomicBool, Ordering};
 use crate::core::base_structs::SessionsManager;
 use crate::core::ClientBuilder;
 use crate::core::traits::Sender;
@@ -20,6 +21,8 @@ pub struct ClientBase<H: Sender> {
     sender: H,
     /// The initial launch state of the client.
     launch_state: State,
+    //
+    status: Arc<AtomicBool>
 }
 
 impl<H: Sender> ClientBase<H> {
@@ -39,6 +42,7 @@ impl<H: Sender> ClientBase<H> {
         let session_duration = builder.session_duration();
         let sessions_cleanup_interval = builder.sessions_cleanup_interval();
         let launch_state = builder.launch_state().clone();
+        let status = builder.status();
         let sessions= builder.sessions();
 
         Self{
@@ -46,7 +50,8 @@ impl<H: Sender> ClientBase<H> {
             voiceflow_client,
             sessions: SessionsManager::new(sessions, session_duration, sessions_cleanup_interval),
             sender,
-            launch_state
+            launch_state,
+            status: Arc::new(AtomicBool::new(status))
         }
     }
 
@@ -99,6 +104,17 @@ impl<H: Sender> ClientBase<H> {
         &self.launch_state
     }
 
+    pub fn is_active(&self) -> bool{
+        self.status.load(Ordering::SeqCst)
+    }
+
+    pub fn activate(&self) -> (){
+        self.status.store(true, Ordering::SeqCst)
+    }
+
+    pub fn deactivate(&self) -> (){
+        self.status.store(false, Ordering::SeqCst)
+    }
     /// Destructures the client base into a `ClientBuilder` without sessions.
     ///
     /// This method creates a `ClientBuilder` with the client's current configurations,
@@ -115,10 +131,12 @@ impl<H: Sender> ClientBase<H> {
         let max_connections_per_moment = self.sender.http_client().max_connections_per_moment();
         let connection_duration = self.sender.http_client().connection_duration();
         let launch_state = self.launch_state.clone();
+        let status = self.is_active();
 
         let mut builder = ClientBuilder::new(client_id, api_key, voiceflow_client, max_connections_per_moment)
             .add_connection_duration(connection_duration)
-            .add_launch_state(launch_state);
+            .add_launch_state(launch_state)
+            .add_status(status);
 
         builder = if let Some(interval) =  self.sessions.cleanup_interval(){
             builder.allow_sessions_cleaning(interval)

@@ -2,7 +2,7 @@ use std::convert::Infallible;
 use std::net::SocketAddr;
 use std::sync::Arc;
 use axum::http::StatusCode;
-use axum::{Json, Router, };
+use axum::{Json, Router};
 use axum::extract::Path;
 use axum::response::IntoResponse;
 use axum::routing::post;
@@ -17,27 +17,26 @@ pub type BotHandler<U, C> = Arc<dyn Fn(U, Arc<C>) -> BoxFuture<'static, Voiceflo
 
 pub struct VoiceflousionServer<C: Client + 'static> {
     clients: Option<Arc<ClientsManager<C>>>,
-    base_url: Option<String>,
+    base_url: String,
     handler: Arc<BotHandler<C::ClientUpdate<'static>, C>>
 }
 
 impl<C: Client + 'static> VoiceflousionServer<C> {
-    pub fn new(webhook_handler: Arc<BotHandler<C::ClientUpdate<'static>, C>>) -> Self {
+    pub fn new(base_url: String, webhook_handler: Arc<BotHandler<C::ClientUpdate<'static>, C>>) -> Self {
         Self{
             clients: None,
-            base_url: None,
+            base_url,
             handler: webhook_handler
         }
     }
-    pub fn set_webhook(mut self, base_url: String, clients: Arc<ClientsManager<C>>) -> Self{
+    pub fn set_clients_manager(mut self, clients: Arc<ClientsManager<C>>) -> Self{
         self.clients = Some(clients);
-        self.base_url = Some(base_url);
         self
     }
     pub async fn serve(self, address: impl Into<SocketAddr>) {
         let clients = self.clients.clone().expect("Webhook is not set");
         let handler = self.handler.clone();
-        let base_url = self.base_url.clone().expect("Webhook is not set");
+        let base_url = self.base_url.clone();
 
         let app = Router::new()
             .route(
@@ -46,26 +45,32 @@ impl<C: Client + 'static> VoiceflousionServer<C> {
                     let clients = clients.clone();
                     let handler = handler.clone();
                     async move {
-                        if let Some(client) = clients.get_client(&id).await {
-                            let update = match deserialize_update::<C::ClientUpdate<'static>>(body) {
-                                Ok(update) => update,
-                                Err(err) => {
-                                    println!("Error deserializing update: {:?}", err);
-                                    return Ok::<Response, Infallible>(
-                                        Json("Ok".to_string()).into_response(),
-                                    );
-                                }
-                            };
-                            match handler(update, client).await {
-                                Ok(_) => Ok::<Response, Infallible>(
-                                    Json("Ok".to_string()).into_response(),
-                                ),
-                                Err(_) => Ok::<Response, Infallible>(
-                                    Json("Ok".to_string()).into_response(),
-                                ),
-                            }
+                        let client = if let Some(client) = clients.get_client(&id).await {
+                            client
                         } else {
-                            Ok::<Response, Infallible>(Json("Ok".to_string()).into_response())
+                            return Ok::<Response, Infallible>(Json("Ok".to_string()).into_response());
+                        };
+                        if !client.client_base().is_active(){
+                            println!("Client {} deactivated!", id);
+                            return Ok::<Response, Infallible>(Json("Ok".to_string()).into_response());
+                        }
+
+                        let update = match deserialize_update::<C::ClientUpdate<'static>>(body) {
+                            Ok(update) => update,
+                            Err(err) => {
+                                println!("Error deserializing update: {:?}", err);
+                                return Ok::<Response, Infallible>(
+                                    Json("Ok".to_string()).into_response(),
+                                );
+                            }
+                        };
+                        match handler(update, client).await {
+                            Ok(_) => Ok::<Response, Infallible>(
+                                Json("Ok".to_string()).into_response(),
+                            ),
+                            Err(_) => Ok::<Response, Infallible>(
+                                Json("Ok".to_string()).into_response(),
+                            ),
                         }
                     }
                 }),

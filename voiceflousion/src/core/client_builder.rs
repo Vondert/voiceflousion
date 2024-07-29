@@ -26,7 +26,9 @@ pub struct ClientBuilder {
     /// The launch state of the Voiceflow client.
     launch_state: State,
 
-    status: bool
+    status: bool,
+
+    bot_auth_token: Option<String>
 }
 
 impl ClientBuilder {
@@ -64,7 +66,8 @@ impl ClientBuilder {
             session_duration: None,
             sessions_cleanup_interval: None,
             launch_state: State::default(),
-            status: true
+            status: true,
+            bot_auth_token: None
         }
     }
 
@@ -209,6 +212,11 @@ impl ClientBuilder {
 
     pub fn add_status(mut self, status: bool) -> Self{
         self.status = status;
+        self
+    }
+
+    pub fn add_bot_auth_token(mut self, bot_auth_token: String) -> Self{
+        self.bot_auth_token = Some(bot_auth_token);
         self
     }
     /// Returns the client ID.
@@ -403,5 +411,9 @@ impl ClientBuilder {
 
     pub fn status(&self) -> bool{
         self.status
+    }
+
+    pub fn bot_auth_token(&self) ->  &Option<String>{
+        &self.bot_auth_token
     }
 }

@@ -4,7 +4,14 @@ use std::sync::Arc;
 use crate::core::traits::Client;
 use crate::errors::VoiceflousionResult;
 
-pub type BotHandler<U, C> = dyn Fn(U, Arc<C>) -> Pin<Box<dyn Future<Output=VoiceflousionResult<()>> + Send>> + Send + Sync;
+pub trait BotHandler<C: Client + 'static>: Fn(C::ClientUpdate<'static>, Arc<C>) -> Pin<Box<dyn Future<Output = VoiceflousionResult<()>> + Send>> + Send + Sync {
+
+}
+impl<C, F> BotHandler<C> for F
+where
+    F: Fn(C::ClientUpdate<'static>, Arc<C>) -> Pin<Box<dyn Future<Output = VoiceflousionResult<()>> + Send>> + Send + Sync,
+    C: Client + 'static ,
+{}
 
 pub async fn base_dialog_handler<C: Client>(update: C::ClientUpdate<'_>, client: Arc<C>) -> VoiceflousionResult<()> {
     println!("Update: {:?}", &update);
@@ -20,11 +27,11 @@ pub async fn base_dialog_handler<C: Client>(update: C::ClientUpdate<'_>, client:
     }
 }
 
-pub fn wrap_handler<C: Client + 'static>(handler: impl Fn(C::ClientUpdate<'static>, Arc<C>) -> Pin<Box<dyn Future<Output = VoiceflousionResult<()>> + Send>> + Clone + Send + Sync + 'static) -> Arc<BotHandler<C::ClientUpdate<'static>, C>> {
+pub fn wrap_handler<C: Client + 'static>(handler: impl BotHandler<C> + Clone + 'static) -> Arc<impl BotHandler<C>> {
     Arc::new(move |update: C::ClientUpdate<'static>, client: Arc<C>| {
         let handler = handler.clone();
         Box::pin(async move {
             handler(update, client).await
-        })
+        }) as Pin<Box<dyn Future<Output = VoiceflousionResult<()>> + Send>>
     })
 }

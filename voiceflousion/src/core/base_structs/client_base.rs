@@ -1,7 +1,10 @@
+use std::ops::Deref;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
+use tokio::sync::RwLock;
 use crate::core::base_structs::SessionsManager;
 use crate::core::ClientBuilder;
+use crate::core::subtypes::BotAuthToken;
 use crate::core::traits::Sender;
 use crate::core::voiceflow::{State, VoiceflowClient};
 
@@ -22,7 +25,9 @@ pub struct ClientBase<H: Sender> {
     /// The initial launch state of the client.
     launch_state: State,
     //
-    status: Arc<AtomicBool>
+    status: Arc<AtomicBool>,
+
+    bot_auth_token: Arc<RwLock<Option<BotAuthToken>>>
 }
 
 impl<H: Sender> ClientBase<H> {
@@ -43,6 +48,7 @@ impl<H: Sender> ClientBase<H> {
         let sessions_cleanup_interval = builder.sessions_cleanup_interval();
         let launch_state = builder.launch_state().clone();
         let status = builder.status();
+        let secret_auth_token = builder.bot_auth_token().clone();
         let sessions= builder.sessions();
 
         Self{
@@ -51,7 +57,16 @@ impl<H: Sender> ClientBase<H> {
             sessions: SessionsManager::new(sessions, session_duration, sessions_cleanup_interval),
             sender,
             launch_state,
-            status: Arc::new(AtomicBool::new(status))
+            status: Arc::new(AtomicBool::new(status)),
+            bot_auth_token: Arc::new(RwLock::new(
+                if let Some(token) = secret_auth_token{
+                    Some(BotAuthToken::new(token))
+                }
+                else{
+                    None
+                }
+
+            ))
         }
     }
 
@@ -115,6 +130,22 @@ impl<H: Sender> ClientBase<H> {
     pub fn deactivate(&self) -> (){
         self.status.store(false, Ordering::SeqCst)
     }
+
+    pub async fn bot_auth_token(&self) -> Option<BotAuthToken>{
+        let read = &self.bot_auth_token.read().await;
+        read.deref().clone()
+    }
+    pub async fn change_bot_auth_token(&self, token: Option<String>) -> (){
+        let bot_auth_token = if let Some(token) = token{
+            Some(BotAuthToken::new(token))
+        }
+        else{
+            None
+        };
+
+        let mut write = self.bot_auth_token.write().await;
+        *write = bot_auth_token
+    }
     /// Destructures the client base into a `ClientBuilder` without sessions.
     ///
     /// This method creates a `ClientBuilder` with the client's current configurations,
@@ -124,7 +155,7 @@ impl<H: Sender> ClientBase<H> {
     /// # Returns
     ///
     /// A `ClientBuilder` instance without sessions.
-    pub fn destructure_to_client_builder_without_sessions(&self) -> ClientBuilder{
+    pub async fn destructure_to_client_builder_without_sessions(&self) -> ClientBuilder{
         let client_id = self.client_id.clone();
         let api_key = self.sender.api_key().clone();
         let voiceflow_client = self.voiceflow_client.clone();
@@ -132,6 +163,7 @@ impl<H: Sender> ClientBase<H> {
         let connection_duration = self.sender.http_client().connection_duration();
         let launch_state = self.launch_state.clone();
         let status = self.is_active();
+        let token = self.bot_auth_token().await.map(|token| token.token().clone());
 
         let mut builder = ClientBuilder::new(client_id, api_key, voiceflow_client, max_connections_per_moment)
             .add_connection_duration(connection_duration)
@@ -144,11 +176,20 @@ impl<H: Sender> ClientBase<H> {
         else {
             builder
         };
+
+        builder = if let Some(token) = token{
+            builder.add_bot_auth_token(token)
+        }
+        else {
+            builder
+        };
+
         if let Some(duration) = self.sessions.valid_session_duration(){
             builder.add_session_duration(duration)
         }
         else {
             builder
         }
+
     }
 }

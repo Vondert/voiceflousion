@@ -5,7 +5,7 @@ use crate::core::session_wrappers::LockedSession;
 use crate::core::subtypes::{InteractionType, SentMessage};
 use crate::core::traits::{Responder, Sender, Update};
 use crate::core::voiceflow::State;
-use crate::errors::VoiceflousionResult;
+use crate::errors::{VoiceflousionError, VoiceflousionResult};
 
 /// The `Client` trait adds methods for launching dialogs, sending messages,
 /// and choosing buttons in a Voiceflow dialog. It provides asynchronous methods
@@ -177,6 +177,9 @@ pub trait Client: Sync + Send {
     ///
     /// A `VoiceflousionResult` containing a vector of `SenderResponder` or a `VoiceflousionError` if the request fails.
     async fn interact_with_client(&self, update: Self::ClientUpdate<'_>, update_state: Option<State>) -> VoiceflousionResult<Vec<<Self::ClientSender<'_> as Sender>::SenderResponder>> {
+        if !self.client_base().is_active(){
+            return Err(VoiceflousionError::ClientRequestError(format!("Client {} is deactivated!", self.client_base().client_id()), "".to_string()))
+        }
         // Get the interaction time from the update
         let interaction_time = update.interaction_time();
 

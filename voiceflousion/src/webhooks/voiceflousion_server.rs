@@ -7,13 +7,10 @@ use axum::extract::Path;
 use axum::response::IntoResponse;
 use axum::routing::post;
 use axum_core::response::Response;
-use futures::future::BoxFuture;
 use serde_json::Value;
 use crate::core::base_structs::ClientsManager;
 use crate::core::traits::{Client, Update};
-use crate::errors::VoiceflousionResult;
-
-pub type BotHandler<U, C> = Arc<dyn Fn(U, Arc<C>) -> BoxFuture<'static, VoiceflousionResult<()>> + Send + Sync>;
+use crate::webhooks::handlers::BotHandler;
 
 pub struct VoiceflousionServer<C: Client + 'static> {
     clients: Option<Arc<ClientsManager<C>>>,
@@ -77,6 +74,7 @@ impl<C: Client + 'static> VoiceflousionServer<C> {
             );
         let ip = address.into();
         let listener = tokio::net::TcpListener::bind(ip).await.unwrap();
+
         println!("Server is set on {}/{}", ip, base_url);
         println!("Bots are available on {}/{}/<bot_id>", ip, base_url);
         axum::serve(listener, app).await.unwrap();

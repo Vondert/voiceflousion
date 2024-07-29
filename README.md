@@ -202,7 +202,7 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 ## Author
 
-Vondert
+Vondert (Ivan Milennyi)
 
 Github: https://github.com/Vondert
 

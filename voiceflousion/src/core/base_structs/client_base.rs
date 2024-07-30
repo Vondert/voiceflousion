@@ -119,33 +119,50 @@ impl<H: Sender> ClientBase<H> {
         &self.launch_state
     }
 
-    pub fn is_active(&self) -> bool{
+    /// Checks if the client is active.
+    ///
+    /// # Returns
+    ///
+    /// A boolean indicating whether the client is active.
+    pub fn is_active(&self) -> bool {
         self.status.load(Ordering::SeqCst)
     }
 
-    pub fn activate(&self) -> (){
-        self.status.store(true, Ordering::SeqCst)
+    /// Activates the client and starts the sessions cleanup process.
+    pub fn activate(&self) {
+        self.status.store(true, Ordering::SeqCst);
+        if let Some(interval) = self.sessions.cleanup_interval() {
+            self.sessions.start_cleanup(interval);
+        }
     }
 
-    pub fn deactivate(&self) -> (){
-        self.status.store(false, Ordering::SeqCst)
+    /// Deactivates the client and stops the sessions cleanup process.
+    pub fn deactivate(&self) {
+        self.status.store(false, Ordering::SeqCst);
+        self.sessions.stop_cleanup();
     }
 
-    pub async fn bot_auth_token(&self) -> Option<BotAuthToken>{
-        let read = &self.bot_auth_token.read().await;
+    /// Returns the bot authentication token.
+    ///
+    /// # Returns
+    ///
+    /// An optional `BotAuthToken`.
+    pub async fn bot_auth_token(&self) -> Option<BotAuthToken> {
+        let read = self.bot_auth_token.read().await;
         read.deref().clone()
     }
-    pub async fn change_bot_auth_token(&self, token: Option<String>) -> (){
-        let bot_auth_token = if let Some(token) = token{
-            Some(BotAuthToken::new(token))
-        }
-        else{
-            None
-        };
 
+    /// Changes the bot authentication token.
+    ///
+    /// # Parameters
+    ///
+    /// * `token` - An optional new token.
+    pub async fn change_bot_auth_token(&self, token: Option<String>) {
+        let bot_auth_token = token.map(BotAuthToken::new);
         let mut write = self.bot_auth_token.write().await;
-        *write = bot_auth_token
+        *write = bot_auth_token;
     }
+
     /// Destructures the client base into a `ClientBuilder` without sessions.
     ///
     /// This method creates a `ClientBuilder` with the client's current configurations,
@@ -166,9 +183,9 @@ impl<H: Sender> ClientBase<H> {
         let token = self.bot_auth_token().await.map(|token| token.token().clone());
 
         let mut builder = ClientBuilder::new(client_id, api_key, voiceflow_client, max_connections_per_moment)
-            .add_connection_duration(connection_duration)
-            .add_launch_state(launch_state)
-            .add_status(status);
+            .set_connection_duration(connection_duration)
+            .set_launch_state(launch_state)
+            .set_status(status);
 
         builder = if let Some(interval) =  self.sessions.cleanup_interval(){
             builder.allow_sessions_cleaning(interval)
@@ -178,18 +195,17 @@ impl<H: Sender> ClientBase<H> {
         };
 
         builder = if let Some(token) = token{
-            builder.add_bot_auth_token(token)
+            builder.set_bot_auth_token(token)
         }
         else {
             builder
         };
 
         if let Some(duration) = self.sessions.valid_session_duration(){
-            builder.add_session_duration(duration)
+            builder.set_session_duration(duration)
         }
         else {
             builder
         }
-
     }
 }

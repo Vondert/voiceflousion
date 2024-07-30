@@ -71,11 +71,11 @@ impl ClientBuilder {
         }
     }
 
-    /// Adds sessions to the client builder.
+    /// Sets sessions for the client builder.
     ///
     /// # Parameters
     ///
-    /// * `sessions` - A vector of sessions to add.
+    /// * `sessions` - A vector of sessions to set.
     ///
     /// # Returns
     ///
@@ -93,9 +93,9 @@ impl ClientBuilder {
     /// let sessions: Vec<Session> = vec![];
     ///
     /// let mut builder = ClientBuilder::new("client_id".to_string(), "api_key".to_string(), voiceflow_client, 10);
-    /// let builder = builder.add_sessions(sessions);
+    /// let builder = builder.set_sessions(sessions);
     /// ```
-    pub fn add_sessions(mut self, sessions: Vec<Session>) -> Self {
+    pub fn set_sessions(mut self, sessions: Vec<Session>) -> Self {
         self.sessions = Some(sessions);
         self
     }
@@ -145,15 +145,14 @@ impl ClientBuilder {
     ///
     /// let voiceflow_client = Arc::new(VoiceflowClient::new("vf_api_key".to_string(), "bot_id".to_string(), "version_id".to_string(), 10, Some(120)));
     /// let mut builder = ClientBuilder::new("client_id".to_string(), "api_key".to_string(), voiceflow_client, 10);
-    /// let builder = builder.add_session_duration(3600);
+    /// let builder = builder.set_session_duration(3600);
     /// ```
-    pub fn add_session_duration(mut self, duration: i64) -> Self {
+    pub fn set_session_duration(mut self, duration: i64) -> Self {
         self.session_duration = Some(duration);
         self
     }
 
-
-    /// Adds the connection duration to the client builder.
+    /// Sets the connection duration for the client builder.
     ///
     /// # Parameters
     ///
@@ -172,14 +171,14 @@ impl ClientBuilder {
     ///
     /// let voiceflow_client = Arc::new(VoiceflowClient::new("vf_api_key".to_string(), "bot_id".to_string(), "version_id".to_string(), 10, Some(120)));
     /// let mut builder = ClientBuilder::new("client_id".to_string(), "api_key".to_string(), voiceflow_client, 10);
-    /// let builder = builder.add_connection_duration(120);
+    /// let builder = builder.set_connection_duration(120);
     /// ```
-    pub fn add_connection_duration(mut self, duration: u64) -> Self{
+    pub fn set_connection_duration(mut self, duration: u64) -> Self {
         self.connection_duration = Some(duration);
         self
     }
 
-    /// Adds the initial launch state to the client builder.
+    /// Sets the initial launch state for the client builder.
     ///
     /// This method allows setting the initial state of the Voiceflow interaction when the client is started.
     /// The state is used to configure the initial conditions or environment of the Voiceflow session.
@@ -203,22 +202,65 @@ impl ClientBuilder {
     /// let initial_state = State::default();
     ///
     /// let mut builder = ClientBuilder::new("client_id".to_string(), "api_key".to_string(), voiceflow_client, 10);
-    /// let builder = builder.add_launch_state(initial_state);
+    /// let builder = builder.set_launch_state(initial_state);
     /// ```
-    pub fn add_launch_state(mut self, state: State) -> Self{
+    pub fn set_launch_state(mut self, state: State) -> Self {
         self.launch_state = state;
         self
     }
 
-    pub fn add_status(mut self, status: bool) -> Self{
+    /// Sets the status for the client builder.
+    ///
+    /// # Parameters
+    ///
+    /// * `status` - The status indicating whether the client is active.
+    ///
+    /// # Returns
+    ///
+    /// The updated `ClientBuilder` instance.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use std::sync::Arc;
+    /// use voiceflousion::core::ClientBuilder;
+    /// use voiceflousion::core::voiceflow::VoiceflowClient;
+    ///
+    /// let voiceflow_client = Arc::new(VoiceflowClient::new("vf_api_key".to_string(), "bot_id".to_string(), "version_id".to_string(), 10, Some(120)));
+    /// let mut builder = ClientBuilder::new("client_id".to_string(), "api_key".to_string(), voiceflow_client, 10);
+    /// let builder = builder.set_status(true);
+    /// ```
+    pub fn set_status(mut self, status: bool) -> Self {
         self.status = status;
         self
     }
 
-    pub fn add_bot_auth_token(mut self, bot_auth_token: String) -> Self{
+    /// Sets the bot authentication token for the client builder.
+    ///
+    /// # Parameters
+    ///
+    /// * `bot_auth_token` - The bot authentication token.
+    ///
+    /// # Returns
+    ///
+    /// The updated `ClientBuilder` instance.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use std::sync::Arc;
+    /// use voiceflousion::core::ClientBuilder;
+    /// use voiceflousion::core::voiceflow::VoiceflowClient;
+    ///
+    /// let voiceflow_client = Arc::new(VoiceflowClient::new("vf_api_key".to_string(), "bot_id".to_string(), "version_id".to_string(), 10, Some(120)));
+    /// let mut builder = ClientBuilder::new("client_id".to_string(), "api_key".to_string(), voiceflow_client, 10);
+    /// let builder = builder.set_bot_auth_token("new_auth_token".to_string());
+    /// ```
+    pub fn set_bot_auth_token(mut self, bot_auth_token: String) -> Self {
         self.bot_auth_token = Some(bot_auth_token);
         self
     }
+
     /// Returns the client ID.
     ///
     /// # Returns
@@ -363,6 +405,7 @@ impl ClientBuilder {
     /// let connection_duration = builder.connection_duration();
     /// ```
     pub fn connection_duration(&self) -> Option<u64> {self.connection_duration}
+
     /// Returns the session cleanup interval.
     ///
     /// # Returns
@@ -409,11 +452,45 @@ impl ClientBuilder {
         &self.launch_state
     }
 
-    pub fn status(&self) -> bool{
+    /// Returns the status of the client.
+    ///
+    /// # Returns
+    ///
+    /// A boolean indicating whether the client is active.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use std::sync::Arc;
+    /// use voiceflousion::core::ClientBuilder;
+    /// use voiceflousion::core::voiceflow::VoiceflowClient;
+    ///
+    /// let voiceflow_client = Arc::new(VoiceflowClient::new("vf_api_key".to_string(), "bot_id".to_string(), "version_id".to_string(), 10, Some(120)));
+    /// let builder = ClientBuilder::new("client_id".to_string(), "api_key".to_string(), voiceflow_client, 10);
+    /// let status = builder.status();
+    /// ```
+    pub fn status(&self) -> bool {
         self.status
     }
 
-    pub fn bot_auth_token(&self) ->  &Option<String>{
+    /// Returns the bot authentication token.
+    ///
+    /// # Returns
+    ///
+    /// A reference to the optional bot authentication token.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use std::sync::Arc;
+    /// use voiceflousion::core::ClientBuilder;
+    /// use voiceflousion::core::voiceflow::VoiceflowClient;
+    ///
+    /// let voiceflow_client = Arc::new(VoiceflowClient::new("vf_api_key".to_string(), "bot_id".to_string(), "version_id".to_string(), 10, Some(120)));
+    /// let builder = ClientBuilder::new("client_id".to_string(), "api_key".to_string(), voiceflow_client, 10);
+    /// let bot_auth_token = builder.bot_auth_token();
+    /// ```
+    pub fn bot_auth_token(&self) -> &Option<String> {
         &self.bot_auth_token
     }
 }

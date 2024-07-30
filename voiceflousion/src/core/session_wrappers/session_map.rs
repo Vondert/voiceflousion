@@ -1,9 +1,7 @@
 use std::collections::HashMap;
 use std::sync::Arc;
-use std::sync::atomic::{AtomicBool, Ordering};
 use chrono::Utc;
 use tokio::sync::RwLock;
-use tokio::time::{interval, Duration};
 use crate::core::session_wrappers::Session;
 
 /// Represents a map of sessions with cleanup functionality.
@@ -54,6 +52,7 @@ impl SessionMap {
             valid_session_duration
         }
     }
+
     /// Returns the duration a session is considered valid.
     ///
     /// # Returns
@@ -121,7 +120,7 @@ impl SessionMap {
     }
 
     /// Deletes all invalid sessions.
-    async fn delete_invalid_sessions(&self) {
+    pub(crate) async fn delete_invalid_sessions(&self) {
         let mut write_lock = self.sessions.write().await;
         let keys: Vec<String> = write_lock.keys().cloned().collect();
         for key in keys {
@@ -136,24 +135,6 @@ impl SessionMap {
             if is_delete{
                 write_lock.remove(&key);
             }
-        }
-    }
-
-    /// Starts the periodic cleanup of invalid sessions.
-    ///
-    /// # Parameters
-    ///
-    /// * `cleanup_interval` - The interval for cleanup in seconds.
-    /// * `cancel_token` - An atomic boolean to cancel the cleanup process.
-    pub(crate) async fn start_cleanup(&self, cleanup_interval: u64, cancel_token: Arc<AtomicBool>) {
-        let mut interval = interval(Duration::from_secs(cleanup_interval));
-        interval.tick().await;
-        loop {
-            interval.tick().await;
-            if cancel_token.load(Ordering::Acquire) {
-                break;
-            }
-            self.delete_invalid_sessions().await;
         }
     }
 

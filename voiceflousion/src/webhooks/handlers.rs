@@ -27,11 +27,8 @@ pub async fn base_dialog_handler<C: Client>(update: C::ClientUpdate<'_>, client:
     }
 }
 
-pub fn wrap_handler<C: Client + 'static>(handler: impl BotHandler<C> + Clone + 'static) -> Arc<impl BotHandler<C>> {
+pub fn wrap_handler<C: Client + 'static>(handler: impl BotHandler<C> + 'static) -> Arc<impl BotHandler<C>> {
     Arc::new(move |update: C::ClientUpdate<'static>, client: Arc<C>| {
-        let handler = handler.clone();
-        Box::pin(async move {
-            handler(update, client).await
-        }) as Pin<Box<dyn Future<Output = VoiceflousionResult<()>> + Send>>
+        handler(update, client)
     })
 }

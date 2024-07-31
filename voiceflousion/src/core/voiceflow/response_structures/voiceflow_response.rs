@@ -50,7 +50,6 @@ impl VoiceflowResponse{
                     | VoiceflowResponseBlockType::Carousel
                     | VoiceflowResponseBlockType::End => {
                         let block = VoiceflowResponseBlock::new(response_type, json);
-                        //println!("\n Block: {:?}", &block);
                         blocks.push(block);
                     },
                     _ => {}
@@ -71,7 +70,7 @@ impl VoiceflowResponse{
     pub(crate) async fn to_message(self) -> VoiceflousionResult<VoiceflowMessage>{
         let blocks = self.to_blocks().await?;
         let message = VoiceflowMessageBuilder::new().build_message(blocks);
-        message
+        Ok(message)
     }
 }
 

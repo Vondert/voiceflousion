@@ -32,6 +32,10 @@ impl VoiceflowText{
         Self { message }
     }
 
+    pub(crate) fn error_default(error_text: &str) -> Self{
+        Self::new(error_text.to_string())
+    }
+
     /// Returns a reference to the message string of the text block.
     ///
     /// # Returns

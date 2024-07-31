@@ -24,8 +24,8 @@ pub struct VoiceflowClient {
     client: HttpClient,
     /// The message to return when an unexpected error occurs.
     unavailable_message: String,
-    /// The message to return when the bot is temporarily unavailable.
-    unexpected_error_message: String
+    /// The message to return when the bot sends invalid response.
+    invalid_response_message: String
 }
 
 impl VoiceflowClient {
@@ -57,8 +57,8 @@ impl VoiceflowClient {
             version_id,
             project_id,
             client: HttpClient::new(max_sessions_per_moment, connection_duration),
-            unavailable_message: "Unexpected error acquired, please try again".to_string(),
-            unexpected_error_message: "Bot is temporary unavailable".to_string()
+            unavailable_message: "Bot is temporary unavailable".to_string(),
+            invalid_response_message: "Can't read response from bot".to_string()
         }
     }
 
@@ -103,7 +103,7 @@ impl VoiceflowClient {
     /// .change_unexpected_error_message("New unavailable message".to_string());
     /// ```
     pub fn change_unexpected_error_message(mut self, message: String) -> Self {
-        self.unexpected_error_message = message;
+        self.invalid_response_message = message;
         self
     }
 
@@ -218,7 +218,7 @@ impl VoiceflowClient {
     /// let unavailable_message = vf_client.unexpected_error_message();
     /// ```
     pub fn unexpected_error_message(&self) -> &String {
-        &self.unexpected_error_message
+        &self.invalid_response_message
     }
 
     /// Launches a dialog with the Voiceflow Bot chosen session.
@@ -375,7 +375,7 @@ impl VoiceflowClient {
             Err(error) =>{
                 println!("{:?}", error);
                 let mut message = VoiceflowMessage::default();
-                message.add_block(VoiceflowBlock::Text(VoiceflowText::new(self.unexpected_error_message.clone())));
+                message.add_block(VoiceflowBlock::Text(VoiceflowText::new(self.invalid_response_message.clone())));
                 message
             }
         }

@@ -1,3 +1,4 @@
+use rand::Rng;
 use serde::Serialize;
 use sha2::{Digest, Sha256};
 
@@ -53,8 +54,12 @@ impl VoiceflowSession {
             format!("{:x}", hasher.finalize())
         }
 
-        let session_id = hash(chat_id, "session_id");
-        let user_id = hash(chat_id, "user_id");
+        let mut rng = rand::thread_rng();
+        let random_suffix: u64 = rng.gen();
+
+        let session_id = hash(chat_id, &format!("session_id_{}", random_suffix));
+        let user_id = hash(chat_id, &format!("user_id_{}", random_suffix));
+
         Self::new(session_id, user_id)
     }
 }

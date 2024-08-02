@@ -1,17 +1,11 @@
-use std::convert::Infallible;
 use std::net::SocketAddr;
 use std::sync::Arc;
-use axum::http::StatusCode;
-use axum::{Json, Router};
-use axum::extract::{Path, Query};
-use axum::response::IntoResponse;
+use axum::{Extension, Router};
 use axum::routing::post;
-use axum_core::response::Response;
-use serde_json::Value;
 use crate::core::base_structs::ClientsManager;
-use crate::core::subtypes::BotAuthToken;
-use crate::core::traits::{Client, Update};
+use crate::core::traits::{Client};
 use crate::server::BotHandler;
+use crate::server::endpoints::main_endpoint_function;
 
 /// VoiceflousionServer is responsible for handling HTTP requests to bots and routing them to the appropriate handlers.
 ///
@@ -22,7 +16,9 @@ pub struct VoiceflousionServer<C: Client + 'static> {
     /// Base part of the server's HTTP endpoint URL.
     base_url: String,
     /// Handler function for processing incoming webhook requests.
-    handler: Arc<dyn BotHandler<C>>
+    handler: Arc<dyn BotHandler<C>>,
+    /// Allowed origins for CORS settings.
+    allowed_origins: Arc<Option<Vec<&'static str>>>,
 }
 
 impl<C: Client + 'static> VoiceflousionServer<C> {
@@ -55,7 +51,8 @@ impl<C: Client + 'static> VoiceflousionServer<C> {
         Self {
             clients: None,
             base_url,
-            handler
+            handler,
+            allowed_origins: Arc::new(None)
         }
     }
 
@@ -96,6 +93,77 @@ impl<C: Client + 'static> VoiceflousionServer<C> {
         self
     }
 
+
+    /// Enables default allowed origins settings using predefined origins.
+    ///
+    /// # Returns
+    ///
+    /// The updated `VoiceflousionServer` instance with default allowed origins settings applied.
+    ///
+    /// If no predefined origins are set, it allows any origin.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use voiceflousion::server::VoiceflousionServer;
+    /// use voiceflousion::integrations::telegram::TelegramClient;
+    /// use voiceflousion::server::handlers::base_dialog_handler;
+    ///
+    /// let voiceflousion_telegram_server = VoiceflousionServer::<TelegramClient>::new("telegram".to_string(), {
+    ///             |update, client| Box::pin(base_dialog_handler(update, client))
+    /// })
+    /// .enable_default_origins();
+    /// ```
+    pub fn enable_default_origins(mut self) -> Self {
+        let origins = C::ORIGINS.to_vec();
+
+        self.allowed_origins = Arc::new(if origins.is_empty() {
+            None
+        } else {
+            Some(origins)
+        });
+        self
+    }
+
+    /// Overrides the allowed origins for server settings.
+    ///
+    /// # Parameters
+    ///
+    /// * `origins` - A vector of strings containing the origins to allow.
+    ///
+    /// # Returns
+    ///
+    /// The updated `VoiceflousionServer` instance with overridden allowed origins settings.
+    ///
+    /// This method extends the provided origins with the predefined origins.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use voiceflousion::server::VoiceflousionServer;
+    /// use voiceflousion::integrations::telegram::TelegramClient;
+    /// use voiceflousion::server::handlers::base_dialog_handler;
+    ///
+    /// let additional_origins = vec![
+    ///     "http://example.com",
+    ///     "http://another-example.com",
+    /// ];
+    ///
+    /// let voiceflousion_telegram_server = VoiceflousionServer::<TelegramClient>::new("telegram".to_string(), {
+    ///             |update, client| Box::pin(base_dialog_handler(update, client))
+    /// })
+    /// .override_allow_origins(additional_origins);
+    /// ```
+    pub fn override_allow_origins(mut self, mut origins: Vec<&'static str>) -> Self {
+        origins.extend(C::ORIGINS);
+        self.allowed_origins = Arc::new(if origins.is_empty() {
+            None
+        } else {
+            Some(origins)
+        });
+        self
+    }
+
     /// Starts the server and begins listening for incoming requests.
     ///
     /// # Parameters
@@ -128,70 +196,14 @@ impl<C: Client + 'static> VoiceflousionServer<C> {
     ///             |update, client| Box::pin(base_dialog_handler(update, client))
     ///         })
     ///         .set_clients_manager(telegram_client_manager)
-    ///         .serve(([127, 0, 0, 1], 8080))
+    ///         .run(([127, 0, 0, 1], 8080))
     ///         .await
     ///     });
     /// }
     /// ```
-    pub async fn serve(self, address: impl Into<SocketAddr>) {
-        let clients = self.clients.clone().expect("Webhook is not set");
-        let handler = self.handler.clone();
+    pub async fn run(self, address: impl Into<SocketAddr>) {
         let base_url = self.base_url.clone();
-
-        let app = Router::new()
-            .route(
-                &format!("/{}/:id", base_url),
-                post({
-                    let clients = clients.clone();
-                    let handler = handler.clone();
-                    move |Path(id): Path<String>, params: Option<Query<BotAuthToken>>, Json(body): Json<Value>| {
-                        async move {
-                            // Validate client ID
-                            let client = if let Some(client) = clients.get_client(&id).await {
-                                client
-                            } else {
-                                println!("Invalid client id - {}", id);
-                                return Ok::<Response, Infallible>(Json("Invalid client id".to_string()).into_response());
-                            };
-
-                            // Validate authentication token if present
-                            if let Some(client_token) = client.client_base().bot_auth_token().await {
-                                let params = if let Some(params) = params {
-                                    params
-                                } else {
-                                    println!("Missing token parameter");
-                                    return Ok::<Response, Infallible>(Json("Unauthorized access".to_string()).into_response());
-                                };
-                                if client_token.token() != params.token() {
-                                    println!("Unauthorized access to client {}", client.client_base().client_id());
-                                    return Ok::<Response, Infallible>(Json("Unauthorized access".to_string()).into_response());
-                                }
-                            };
-
-                            // Check if the client is active
-                            if !client.client_base().is_active() {
-                                println!("Client {} deactivated!", id);
-                                return Ok::<Response, Infallible>(Json("Access to deactivated client".to_string()).into_response());
-                            }
-
-                            // Deserialize the update
-                            let update = match deserialize_update::<C::ClientUpdate<'static>>(body) {
-                                Ok(update) => update,
-                                Err(err) => {
-                                    println!("Error deserializing update: {:?}", err);
-                                    return Ok::<Response, Infallible>(Json("Invalid update".to_string()).into_response());
-                                }
-                            };
-
-                            // Process the update using the handler function
-                            match handler(update, client).await {
-                                Ok(_) => Ok::<Response, Infallible>(Json("Ok".to_string()).into_response()),
-                                Err(_) => Ok::<Response, Infallible>(Json("Handler error".to_string()).into_response())
-                            }
-                        }
-                    }
-                }),
-            );
+        let router = self.create_router(&base_url).await.into_make_service();
 
         // Start the HTTP server
         let ip = address.into();
@@ -201,25 +213,42 @@ impl<C: Client + 'static> VoiceflousionServer<C> {
         println!("Bots without authentication token are available on {}/{}/<bot_id>", ip, base_url);
         println!("Bots with authentication token are available on {}/{}/<bot_id>/?token=<token>", ip, base_url);
 
-        axum::serve(listener, app).await.unwrap();
+        axum::serve(listener, router).await.unwrap();
     }
-}
 
-/// Deserializes the incoming JSON body into the appropriate update type.
-///
-/// # Parameters
-///
-/// * `body` - The JSON body to deserialize.
-///
-/// # Returns
-///
-/// A `Result` containing either the deserialized update or a `StatusCode` indicating an error.
-fn deserialize_update<U: Update>(body: Value) -> Result<U, StatusCode> {
-    match U::from_request_body(body) {
-        Ok(update) => Ok(update),
-        Err(err) => {
-            println!("Error: {:?}", &err);
-            Err(StatusCode::OK)
-        }
+
+    /// Creates a new router with the specified base URL.
+    ///
+    /// # Parameters
+    ///
+    /// * `base_url` - The base part of the server's HTTP endpoint URL.
+    ///
+    /// # Returns
+    ///
+    /// A `Router` instance configured with the appropriate routes and CORS settings.
+    async fn create_router(self, base_url: &String) -> Router{
+        let clients = self.clients.clone().expect("Webhook is not set");
+        let handler = self.handler.clone();
+        let optional_allowed_origins = self.allowed_origins.clone();
+
+        Router::new()
+            .route(&format!("/{}/:id", base_url),
+                   post({
+                       let clients = clients.clone();
+                       let optional_allowed_origins = optional_allowed_origins.clone();
+                       let handler = handler.clone();
+                       move |origin_header, path, params, json| {
+                           main_endpoint_function(
+                               path,
+                               params,
+                               json,
+                               Extension(clients),
+                               Extension(optional_allowed_origins),
+                               Extension(handler),
+                               origin_header,
+                           )
+                       }
+                   }),
+        )
     }
 }

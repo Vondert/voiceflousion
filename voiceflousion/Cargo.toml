@@ -21,6 +21,7 @@ chrono="0.4.38"
 async-trait = "0.1.80"
 axum = "0.7.5"
 axum-core = "0.4.3"
+axum-extra = { version = "0.9.3", features = ["typed-header"] }
 
 [features]
 default = []

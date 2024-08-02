@@ -12,10 +12,34 @@ use crate::errors::{VoiceflousionError, VoiceflousionResult};
 /// for interacting with the Voiceflow API and managing session states.
 #[async_trait]
 pub trait Client: Sync + Send {
+
+    /// A list of allowed origins for CORS.
+    ///
+    /// This constant defines an array of static string slices representing the origins
+    /// that are allowed to make cross-origin requests to client's server. These origins are
+    /// used to configure the CORS settings of the server, ensuring that only requests
+    /// from specified origins are permitted.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// const ORIGINS: &'static [&'static str] = &[
+    ///     "http://149.154.160.1",
+    ///     "http://149.154.160.2",
+    ///     "http://91.108.4.1",
+    ///     "http://91.108.4.2",
+    ///     "http://voiceflow.com"
+    /// ];
+    /// ```
+    const ORIGINS: &'static [&'static str];
+
     /// The associated update type that must implement the `Update` trait and be valid for the `'async_trait` lifetime.
     type ClientUpdate<'async_trait>: Update + 'async_trait;
+
+    /// The associated sender type that must implement the `Sender` trait and be valid for the `'async_trait` lifetime.
     type ClientSender<'async_trait>: Sender + 'async_trait
     where Self: 'async_trait;
+
     /// Returns a reference to the `ClientBase`.
     ///
     /// # Returns
@@ -185,6 +209,7 @@ pub trait Client: Sync + Send {
 
         // Check if a session exists for the given chat_id
         if let Some(telegram_session) = self.client_base().sessions().get_session(update.chat_id()).await {
+
             // Lock the session for safe access
             let locked_session = LockedSession::try_from_session(&telegram_session)?;
 
@@ -207,9 +232,16 @@ pub trait Client: Sync + Send {
                 }
             }
         } else {
+
             // If no session exists, create a new session and launch the dialog
             let telegram_session = self.client_base().sessions().add_session(update.chat_id().clone()).await;
             let locked_session = LockedSession::try_from_session(&telegram_session)?;
+
+            // Check if the update is deprecated
+            if let Some(message) = locked_session.previous_message().await.deref() {
+                 update.is_deprecated(message.date())?
+            }
+
             self.launch_voiceflow_dialog(&locked_session, interaction_time).await
         }
     }

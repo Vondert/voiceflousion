@@ -118,3 +118,8 @@ impl<'g> LockedSession<'g> {
         self.store_last_interaction(last_interaction)
     }
 }
+impl Drop for LockedSession<'_>{
+    fn drop(&mut self) {
+        //println!("drop");
+    }
+}

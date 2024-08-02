@@ -9,4 +9,5 @@ pub enum VoiceflowButtonActionType {
 
     /// An action to follow a path within the Voiceflow dialog.
     Path,
+    CustomPath
 }

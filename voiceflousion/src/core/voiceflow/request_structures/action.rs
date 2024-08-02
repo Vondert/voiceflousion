@@ -89,6 +89,7 @@ impl ActionBuilder {
     pub fn path(mut self, text: String) -> Self{
         let json_value: Value = serde_json::json!({
             "label": text,
+            "index": 0,
         });
         self.payload = Some(Payload::Object(json_value));
         self

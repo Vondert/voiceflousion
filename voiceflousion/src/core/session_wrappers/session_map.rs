@@ -104,7 +104,7 @@ impl SessionMap {
     pub async fn add_session(&self, chat_id: String) -> Arc<Session> {
         let mut write_lock = self.sessions.write().await;
         let session = write_lock.entry(chat_id.clone())
-            .or_insert_with(|| Arc::new(Session::new(chat_id, None, true)))
+            .or_insert_with(|| Arc::new(Session::new(chat_id, Some(Utc::now().timestamp()), true)))
             .clone();
         session
     }
@@ -151,7 +151,7 @@ impl SessionMap {
         if let Some(last_interaction) = session.get_last_interaction() {
             if let Some(duration) = &self.valid_session_duration {
                 let now = Utc::now().timestamp();
-                !(now - last_interaction > *duration)
+                !(now - last_interaction > *duration * 1000_i64)
             } else {
                 true
             }

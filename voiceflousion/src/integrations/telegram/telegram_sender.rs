@@ -549,7 +549,7 @@ fn buttons_to_keyboard(buttons: &VoiceflowButtons) -> Vec<Vec<Value>>{
                 };
                 json!({ "text": b.name(), "url": url, "callback_data": b.path() })
             },
-            VoiceflowButtonActionType::Path => json!({ "text": b.name(), "callback_data": b.path() }),
+            VoiceflowButtonActionType::Path | VoiceflowButtonActionType::CustomPath => json!({ "text": b.name(), "callback_data": b.path() }),
         }
     }).map(|key| vec![key]).collect()
 }

@@ -1,4 +1,5 @@
 use reqwest::header::{AUTHORIZATION, CONTENT_TYPE, ACCEPT};
+use serde_json::Value;
 use crate::core::subtypes::HttpClient;
 use crate::core::voiceflow::request_structures::{ActionBuilder, ActionType, VoiceflowRequestBody, VoiceflowRequestBodyBuilder};
 use crate::core::voiceflow::response_structures::VoiceflowResponse;
@@ -308,6 +309,7 @@ impl VoiceflowClient {
     /// * `state` - The optional state for variables in the bot for the session.
     /// * `text` - The text associated with the button.
     /// * `button_path` - The path of the button.
+    /// * `payload` - The payload associated with the button.
     ///
     /// # Returns
     ///
@@ -323,20 +325,21 @@ impl VoiceflowClient {
     ///
     /// #[tokio::main]
     /// async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    ///     let session = Arc::new(Session::new("chat_id".to_string(), None, true));
+    ///     use serde_json::Value;
+    /// let session = Arc::new(Session::new("chat_id".to_string(), None, true));
     ///     let locked_session = LockedSession::try_from_session(&session)?;
     ///     let session = locked_session.voiceflow_session();
     ///
     ///     let vf_client = Arc::new(VoiceflowClient::new("vf_api_key".to_string(), "bot_id".to_string(), "version_id".to_string(), 10, None));
     ///     let state = State::default();
     ///
-    ///     let response = vf_client.choose_button(&session, Some(state), &"Choice".to_string(), &"button_path".to_string()).await;
+    ///     let response = vf_client.choose_button(&session, Some(state), &"button_path".to_string(), Value::Null).await;
     ///
     ///     Ok(())
     /// }
     /// ```
-    pub async fn choose_button(&self, session: &VoiceflowSession, state: Option<State>, text: &String, button_path: &String) -> VoiceflowMessage {
-        let action = ActionBuilder::new(ActionType::Path(button_path.clone())).path(text.clone()).build();
+    pub async fn choose_button(&self, session: &VoiceflowSession, state: Option<State>, button_path: &String, payload: Value) -> VoiceflowMessage {
+        let action = ActionBuilder::new(ActionType::Path(button_path.clone())).path(payload).build();
         let body = VoiceflowRequestBodyBuilder::new(action).session(Some(session)).state(state).build();
         self.send_stream_request(body).await
     }

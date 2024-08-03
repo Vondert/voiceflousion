@@ -41,7 +41,7 @@ impl TelegramUpdate {
     /// use voiceflousion::core::traits::Update;
     /// use voiceflousion::integrations::telegram::TelegramUpdate;
     ///
-    /// let interaction_type = InteractionType::new("message".to_string(), Some("path".to_string()));
+    /// let interaction_type = InteractionType::new("message".to_string(), Some("path".to_string()), None);
     /// let update = TelegramUpdate::new("chat_id".to_string(), "message_id".to_string(), 1627554661, interaction_type, "update_id".to_string(), Some(0));
     /// ```
     pub fn new(chat_id: String, message_id: String, interaction_time: i64, interaction_type: InteractionType, update_id: String, carousel_card_index: Option<usize>) -> Self {
@@ -65,7 +65,7 @@ impl TelegramUpdate {
     /// use voiceflousion::core::traits::Update;
     /// use voiceflousion::integrations::telegram::TelegramUpdate;
     ///
-    /// let interaction_type = InteractionType::new("message".to_string(), Some("path".to_string()));
+    /// let interaction_type = InteractionType::new("message".to_string(), Some("path".to_string()), None);
     /// let update = TelegramUpdate::new("chat_id".to_string(), "message_id".to_string(), 1627554661, interaction_type, "update_id".to_string(), Some(0));
     /// let index = update.carousel_card_index();
     /// ```
@@ -86,7 +86,7 @@ impl TelegramUpdate {
     /// use voiceflousion::core::traits::Update;
     /// use voiceflousion::integrations::telegram::TelegramUpdate;
     ///
-    /// let interaction_type = InteractionType::new("message".to_string(), Some("path".to_string()));
+    /// let interaction_type = InteractionType::new("message".to_string(), Some("path".to_string()), None);
     /// let update = TelegramUpdate::new("chat_id".to_string(), "message_id".to_string(), 1627554661, interaction_type, "update_id".to_string(), Some(0));
     /// let message_id = update.message_id();
     /// ```
@@ -127,6 +127,7 @@ impl Update for TelegramUpdate {
     /// let update = TelegramUpdate::from_request_body(body);
     /// ```
     fn from_request_body(body: Value) -> VoiceflousionResult<Self> {
+
         // Check if the update contains a message or a callback query
         let is_message = body.get("message").is_some();
         // Extract the message or callback query data
@@ -170,23 +171,37 @@ impl Update for TelegramUpdate {
             .ok_or_else(|| VoiceflousionError::ClientUpdateConvertationError("TelegramUpdate update id".to_string(), body.clone()))?;
 
         // Extract the callback data if present
-        let callback_data = if !is_message {
-            //println!("{:?}", &body);
-            Some(body.get("callback_query")
+        let mut callback_data: Option<Value>  = if !is_message {
+            let data = body.get("callback_query")
                 .and_then(|q| q.get("data"))
                 .and_then(|data| data.as_str())
-                .map(|s| s.to_string())
-                .ok_or_else(|| VoiceflousionError::ClientUpdateConvertationError("TelegramUpdate callback data".to_string(), body.clone()))?)
+                .map(|s| s)
+                .ok_or_else(|| VoiceflousionError::ClientUpdateConvertationError("TelegramUpdate callback data".to_string(), body.clone()))?;
+
+            Some(serde_json::from_str(data)
+                .map_err(|_error| VoiceflousionError::ClientUpdateConvertationError("TelegramUpdate callback data must be a valid JSON string".to_string(), body.clone()))?)
+
         } else {
             None
         };
 
-        // Extract the carousel card index from the callback data if present
-        let carousel_card_index = callback_data.as_ref()
-            .and_then(|data| data.strip_prefix("c_").and_then(|index| index.parse::<usize>().ok()));
+        let mut path = None;
+        let mut carousel_card_index = None;
 
-        // Create an InteractionType from the text and callback data
-        let interaction_type = InteractionType::new(text, callback_data);
+        // Extract the carousel card index and path from the callback data if present
+        if !is_message {
+            let data = callback_data.as_mut().unwrap().as_object_mut();
+            if let Some(mut_data) = data{
+                carousel_card_index = mut_data.remove("telegram_carousel_card_index")
+                    .and_then(|value_index| value_index.as_str().map(|s| s.to_string()))
+                    .and_then(|index| index.parse::<usize>().ok());
+                path = mut_data.remove("path")
+                    .and_then(|value_path| value_path.as_str().map(|s| s.to_string()));
+            }
+        }
+
+        // Create an InteractionType from the text, path and callback data
+        let interaction_type = InteractionType::new(text, path, callback_data);
 
         // Return the constructed TelegramUpdate
         Ok(TelegramUpdate::new(

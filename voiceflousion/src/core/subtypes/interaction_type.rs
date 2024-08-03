@@ -1,3 +1,5 @@
+use serde_json::Value;
+
 /// Represents different types of interactions in the integration.
 ///
 /// `InteractionType` can be a text message, a button interaction, or an undefined interaction.
@@ -5,8 +7,8 @@
 pub enum InteractionType {
     /// Represents a text interaction.
     Text(String),
-    /// Represents a button interaction with the associated message and path.
-    Button(String, String),
+    /// Represents a button interaction with the associated path and payload.
+    Button(String, Value),
     /// Represents an undefined interaction.
     Undefined(String),
 }
@@ -18,6 +20,7 @@ impl InteractionType {
     ///
     /// * `message` - The message associated with the interaction.
     /// * `button_path` - An optional path for a button interaction.
+    /// * `button_payload` - An optional payload for a button interaction.
     ///
     /// # Returns
     ///
@@ -28,13 +31,13 @@ impl InteractionType {
     /// ```
     /// use voiceflousion::core::subtypes::InteractionType;
     ///
-    /// let interaction = InteractionType::new("message".to_string(), Some("path".to_string()));
-    /// let interaction = InteractionType::new("message".to_string(), None);
+    /// let interaction = InteractionType::new("message".to_string(), Some("path".to_string()), Some(serde_json::json!({"key": "value"})));
+    /// let interaction = InteractionType::new("message".to_string(), None, None);
     /// ```
-    pub fn new(message: String, button_path: Option<String>) -> Self {
-        match button_path {
-            Some(path) => InteractionType::Button(message, path),
-            None => InteractionType::Text(message),
+    pub fn new(message: String, button_path: Option<String>, button_payload: Option<Value>) -> Self {
+        match (button_path, button_payload) {
+            (Some(path), Some(payload)) => InteractionType::Button(path, payload),
+            _ => InteractionType::Text(message),
         }
     }
 }

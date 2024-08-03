@@ -31,10 +31,11 @@ impl VoiceflowButtons{
     /// # Example
     ///
     /// ```
+    /// use serde_json::Value;
     /// use voiceflousion::core::voiceflow::dialog_blocks::enums::VoiceflowButtonActionType;
     /// use voiceflousion::core::voiceflow::dialog_blocks::{VoiceflowButton, VoiceflowButtons};
     ///
-    /// let buttons = vec![VoiceflowButton::new("Click me".to_string(), "/path".to_string(), VoiceflowButtonActionType::Path)];
+    /// let buttons = vec![VoiceflowButton::new("Click me".to_string(), "/path".to_string(), VoiceflowButtonActionType::Path, Value::Null)];
     /// let voiceflow_buttons = VoiceflowButtons::new(buttons);
     /// ```
     pub fn new(buttons: Vec<VoiceflowButton>) -> Self {
@@ -53,10 +54,11 @@ impl VoiceflowButtons{
     /// # Example
     ///
     /// ```
+    /// use serde_json::Value;
     /// use voiceflousion::core::voiceflow::dialog_blocks::enums::VoiceflowButtonActionType;
     /// use voiceflousion::core::voiceflow::dialog_blocks::{VoiceflowButton, VoiceflowButtons};
     ///
-    /// let buttons = vec![VoiceflowButton::new("Click me".to_string(), "/path".to_string(), VoiceflowButtonActionType::Path)];
+    /// let buttons = vec![VoiceflowButton::new("Click me".to_string(), "/path".to_string(), VoiceflowButtonActionType::Path, Value::Null)];
     /// let voiceflow_buttons = VoiceflowButtons::new(buttons);
     ///
     /// let option = voiceflow_buttons.option();
@@ -74,10 +76,11 @@ impl VoiceflowButtons{
     /// # Example
     ///
     /// ```
+    /// use serde_json::Value;
     /// use voiceflousion::core::voiceflow::dialog_blocks::enums::{VoiceflowButtonActionType, VoiceflowButtonsOption};
     /// use voiceflousion::core::voiceflow::dialog_blocks::{VoiceflowButton, VoiceflowButtons, VoiceflowText};
     ///
-    /// let buttons = vec![VoiceflowButton::new("Click me".to_string(), "/path".to_string(), VoiceflowButtonActionType::Path)];
+    /// let buttons = vec![VoiceflowButton::new("Click me".to_string(), "/path".to_string(), VoiceflowButtonActionType::Path, Value::Null)];
     /// let mut voiceflow_buttons = VoiceflowButtons::new(buttons);
     ///
     /// voiceflow_buttons.set_option(VoiceflowButtonsOption::Text(VoiceflowText::new("Option text".to_string())));

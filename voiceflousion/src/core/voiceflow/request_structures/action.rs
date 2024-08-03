@@ -81,17 +81,13 @@ impl ActionBuilder {
     ///
     /// # Parameters
     ///
-    /// * `text` - The text to be included in the path payload.
+    /// * `payload` - The payload to be included in the path payload.
     ///
     /// # Returns
     ///
     /// The `ActionBuilder` with the path payload set.
-    pub fn path(mut self, text: String) -> Self{
-        let json_value: Value = serde_json::json!({
-            "label": text,
-            "index": 0,
-        });
-        self.payload = Some(Payload::Object(json_value));
+    pub fn path(mut self, payload: Value) -> Self{
+        self.payload = Some(Payload::Object(payload));
         self
     }
 

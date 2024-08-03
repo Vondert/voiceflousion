@@ -1,7 +1,7 @@
 use std::ops::Deref;
 
 use async_trait::async_trait;
-
+use serde_json::Value;
 use crate::core::base_structs::ClientBase;
 use crate::core::ClientBuilder;
 use crate::core::session_wrappers::LockedSession;
@@ -150,11 +150,12 @@ impl Client for TelegramClient{
     /// * `button_path` - The data associated with the button.
     /// * `update_state` - The optional state for updating the dialog.
     /// * `update` - The update from the Telegram client.
+    /// * `payload` - The payload associated with the button.
     ///
     /// # Returns
     ///
     /// A `VoiceflousionResult` containing a vector of `H::SenderResponder` or a `VoiceflousionError` if the request fails.
-    async fn handle_button_interaction(&self, locked_session: &LockedSession<'_>, interaction_time: i64, message: &String, button_path: &String, update_state: Option<State>, update: &Self::ClientUpdate<'_>, ) -> VoiceflousionResult<Vec<<Self::ClientSender<'_> as Sender>::SenderResponder>> {
+    async fn handle_button_interaction(&self, locked_session: &LockedSession<'_>, interaction_time: i64, button_path: &String, update_state: Option<State>, update: &Self::ClientUpdate<'_>, payload: &Value) -> VoiceflousionResult<Vec<<Self::ClientSender<'_> as Sender>::SenderResponder>> {
         if let Some(prev_message) = locked_session.previous_message().await.deref() {
             if let VoiceflowBlock::Carousel(carousel) = prev_message.block() {
                 if let Some(index) = update.carousel_card_index() {
@@ -162,6 +163,6 @@ impl Client for TelegramClient{
                 }
             }
         }
-        self.choose_button_in_voiceflow_dialog(locked_session, interaction_time, message, button_path, update_state).await
+        self.choose_button_in_voiceflow_dialog(locked_session, interaction_time, button_path, update_state, payload).await
     }
 }

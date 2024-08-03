@@ -35,7 +35,7 @@ impl UpdateBase{
     /// use voiceflousion::core::base_structs::UpdateBase;
     /// use voiceflousion::core::subtypes::InteractionType;
     ///
-    /// let interaction_type = InteractionType::new("message".to_string(), Some("path".to_string()));
+    /// let interaction_type = InteractionType::new("message".to_string(), Some("path".to_string()), None);
     /// let update_base = UpdateBase::new("chat_id".to_string(), 1627554661, interaction_type, "update_id".to_string());
     /// ```
     pub fn new(chat_id: String, interaction_time: i64, interaction_type: InteractionType, update_id: String) -> Self {
@@ -59,7 +59,7 @@ impl UpdateBase{
     /// use voiceflousion::core::base_structs::UpdateBase;
     /// use voiceflousion::core::subtypes::InteractionType;
     ///
-    /// let interaction_type = InteractionType::new("message".to_string(), Some("path".to_string()));
+    /// let interaction_type = InteractionType::new("message".to_string(), Some("path".to_string()), None);
     /// let update_base = UpdateBase::new("chat_id".to_string(), 1627554661, interaction_type, "update_id".to_string());
     /// let chat_id = update_base.chat_id();
     /// ```
@@ -79,7 +79,7 @@ impl UpdateBase{
     /// use voiceflousion::core::base_structs::UpdateBase;
     /// use voiceflousion::core::subtypes::InteractionType;
     ///
-    /// let interaction_type = InteractionType::new("message".to_string(), Some("path".to_string()));
+    /// let interaction_type = InteractionType::new("message".to_string(), Some("path".to_string()), None);
     /// let update_base = UpdateBase::new("chat_id".to_string(), 1627554661, interaction_type, "update_id".to_string());
     /// let update_id = update_base.update_id();
     /// ```
@@ -99,7 +99,7 @@ impl UpdateBase{
     /// use voiceflousion::core::base_structs::UpdateBase;
     /// use voiceflousion::core::subtypes::InteractionType;
     ///
-    /// let interaction_type = InteractionType::new("message".to_string(), Some("path".to_string()));
+    /// let interaction_type = InteractionType::new("message".to_string(), Some("path".to_string()), None);
     /// let update_base = UpdateBase::new("chat_id".to_string(), 1627554661, interaction_type, "update_id".to_string());
     /// let interaction_time = update_base.interaction_time();
     /// ```
@@ -119,7 +119,7 @@ impl UpdateBase{
     /// use voiceflousion::core::base_structs::UpdateBase;
     /// use voiceflousion::core::subtypes::InteractionType;
     ///
-    /// let interaction_type = InteractionType::new("message".to_string(), Some("path".to_string()));
+    /// let interaction_type = InteractionType::new("message".to_string(), Some("path".to_string()), None);
     /// let update_base = UpdateBase::new("chat_id".to_string(), 1627554661, interaction_type, "update_id".to_string());
     /// let interaction_type = update_base.interaction_type();
     /// ```

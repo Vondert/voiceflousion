@@ -1,6 +1,6 @@
 use std::ops::Deref;
 use async_trait::async_trait;
-use serde_json::{json, Value};
+use serde_json::{json, Map, Value};
 use crate::core::base_structs::SenderBase;
 use crate::core::subtypes::HttpClient;
 use crate::integrations::telegram::TelegramResponder;
@@ -98,13 +98,22 @@ impl TelegramSender {
             vec![]
         };
 
+
         // Add navigation buttons for the carousel
         let mut switch_buttons: Vec<Value> = Vec::new();
         if index > 0 {
-            switch_buttons.push(json!({ "text": "<--", "callback_data": format!("c_{}", index - 1) }));
+            let carousel_prev = json!({
+                "telegram_carousel_card_index": format!("{}", index - 1),
+                "path": format!("path-t-carousel-{}", index - 1)
+            });
+            switch_buttons.push(json!({ "text": "<--", "callback_data":  carousel_prev.to_string()}));
         }
         if index < carousel.len() - 1 {
-            switch_buttons.push(json!({ "text": "-->", "callback_data": format!("c_{}", index + 1) }));
+            let carousel_next = json!({
+                "telegram_carousel_card_index": format!("{}", index + 1),
+                "path": format!("path-t-carousel-{}", index + 1)
+            });
+            switch_buttons.push(json!({ "text": "-->", "callback_data": carousel_next.to_string() }));
         }
         inline_keyboard.push(switch_buttons);
 
@@ -292,9 +301,10 @@ impl Sender for TelegramSender{
     ///
     /// #[tokio::main]
     /// async fn main() -> () {
-    ///     let sender = TelegramSender::new(10, "api_key".to_string(), None);
+    ///     use serde_json::Value;
+    /// let sender = TelegramSender::new(10, "api_key".to_string(), None);
     ///     let chat_id = String::new();
-    ///     let buttons = vec![VoiceflowButton::new("Click me".to_string(), "/path".to_string(), VoiceflowButtonActionType::Path)];
+    ///     let buttons = vec![VoiceflowButton::new("Click me".to_string(), "/path".to_string(), VoiceflowButtonActionType::Path, Value::Null)];
     ///     let voiceflow_buttons = VoiceflowButtons::new(buttons);
     ///     let response = sender.send_buttons(voiceflow_buttons, &chat_id, &sender.http_client(), &sender.api_key()).await;
     ///     println!("{:?}", response);
@@ -491,7 +501,11 @@ impl Sender for TelegramSender{
         // Add navigation buttons for the carousel if there are multiple cards
         let mut switch_buttons: Vec<Value> = Vec::new();
         if carousel.len() > 1 {
-            switch_buttons.push(json!({ "text": "-->", "callback_data": format!("c_{}", 1) }));
+            let carousel_next = json!({
+                "telegram_carousel_card_index": "1",
+                "path": "path-t-carousel-1"
+            });
+            switch_buttons.push(json!({ "text": "-->", "callback_data": carousel_next.to_string()}));
         }
         inline_keyboard.push(switch_buttons);
 
@@ -539,6 +553,10 @@ fn buttons_to_keyboard(buttons: &VoiceflowButtons) -> Vec<Vec<Value>>{
     //println!("{:?}", buttons);
     // Map each button to a JSON value based on its action type
     buttons.iter().map(|b| {
+        let mut callback_data = b.payload().as_object().cloned().unwrap_or_else(Map::new);
+        callback_data.insert("path".to_string(), Value::String(b.path().clone()));
+        let callback_data = Value::Object(callback_data);
+
         match &b.action_type() {
             VoiceflowButtonActionType::OpenUrl(url) => {
                 let url = if url.is_empty(){
@@ -547,9 +565,9 @@ fn buttons_to_keyboard(buttons: &VoiceflowButtons) -> Vec<Vec<Value>>{
                 else{
                     url
                 };
-                json!({ "text": b.name(), "url": url, "callback_data": b.path() })
+                json!({ "text": b.name(), "url": url, "callback_data": callback_data.to_string() })
             },
-            VoiceflowButtonActionType::Path | VoiceflowButtonActionType::CustomPath => json!({ "text": b.name(), "callback_data": b.path() }),
+            VoiceflowButtonActionType::Path => json!({ "text": b.name(), "callback_data": callback_data.to_string() }),
         }
     }).map(|key| vec![key]).collect()
 }

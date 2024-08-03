@@ -5,21 +5,20 @@ use crate::errors::{VoiceflousionError, VoiceflousionResult};
 
 /// Represents a button in a Voiceflow dialog.
 ///
-/// `VoiceflowButton` contains the name, path, and action type of button.
+/// `VoiceflowButton` contains the name, path, action type, and payload of the button.
 #[derive(Debug, Clone)]
 pub struct VoiceflowButton {
     /// The action type of the button.
     action_type: VoiceflowButtonActionType,
-
     /// The path associated with the button.
     path: String,
-
     /// The name of the button.
     name: String,
-
+    /// The payload associated with the button.
     payload: Value
 }
-impl VoiceflowButton{
+
+impl VoiceflowButton {
     /// Creates a new `VoiceflowButton` instance.
     ///
     /// # Parameters
@@ -27,6 +26,7 @@ impl VoiceflowButton{
     /// * `name` - The name of the button.
     /// * `path` - The path associated with the button.
     /// * `action_type` - The action type of the button.
+    /// * `payload` - The payload associated with the button.
     ///
     /// # Returns
     ///
@@ -130,7 +130,7 @@ impl FromValue for VoiceflowButton{
     /// succeeds, or a `VoiceflousionError` if the conversion fails. If the conversion
     /// succeeds but there is no meaningful value, `None` can be returned.
     fn from_value(value: &Value) -> VoiceflousionResult<Option<Self>> {
-        println!("\nButton {:?}\n", &value);
+
         let name = value.get("name")
             .and_then(|name| name.as_str())
             .ok_or_else(|| VoiceflousionError::VoiceflowBlockConvertationError(("VoiceflowButton button name".to_string(), value.clone())))?
@@ -147,7 +147,8 @@ impl FromValue for VoiceflowButton{
         let request_payload = request.get("payload")
             .ok_or_else(|| VoiceflousionError::VoiceflowBlockConvertationError(("VoiceflowButton button payload".to_string(), value.clone())))?;
 
-        let payload = extract_values_except_actions(request_payload);
+        let payload = extract_payload(request_payload);
+
 
         let option_actions = match request_payload.get("actions"){
             Some(actions) => {
@@ -182,12 +183,21 @@ impl FromValue for VoiceflowButton{
     }
 }
 
-fn extract_values_except_actions(payload: &Value) -> Value {
+/// Extracts the payload from the JSON `Value` by removing specific keys.
+///
+/// # Parameters
+///
+/// * `payload` - A reference to the JSON `Value` containing the payload.
+///
+/// # Returns
+///
+/// A new JSON `Value` with the specified keys removed.
+fn extract_payload(payload: &Value) -> Value {
     if let Some(obj) = payload.as_object() {
         let mut new_obj = Map::new();
 
         for (key, value) in obj {
-            if key != "actions" {
+            if key != "actions" && key != "label"{
                 new_obj.insert(key.clone(), value.clone());
             }
         }

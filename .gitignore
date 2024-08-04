@@ -5,9 +5,6 @@
 /voiceflousion/Cargo.lock
 
 /example/
-/example/.env
-/example/target/
-/example/Cargo.lock
 
 /dev/
 /README_CARGO.md

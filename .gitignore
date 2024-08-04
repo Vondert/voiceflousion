@@ -4,6 +4,7 @@
 /voiceflousion/target/
 /voiceflousion/Cargo.lock
 
+/example/
 /example/.env
 /example/target/
 /example/Cargo.lock

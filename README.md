@@ -1,6 +1,6 @@
 # Voiceflousion
 
-Voiceflousion is a framework designed to integrate chatbots from the Voiceflow chatbot constructor into any chat platform. Currently, it supports Voiceflow bots integration with Telegram, with future plans for Instagram, WhatsApp, and more. The framework also provides tools for creating custom integrations for any chat platform, supporting message formats such as text, buttons, images, cards, and carousels.
+Voiceflousion is a framework designed to integrate chatbots from the Voiceflow chatbot constructor into any chat platform. Currently, it supports Voiceflow bots integration with Telegram, with future plans for Instagram, WhatsApp, Discord and more. The framework also provides own convenient web server for launching chatbots and tools for creating custom integrations for any chat platform, supporting message formats such as text, buttons, images, cards, and carousels.
 
 ## Features
 
@@ -11,6 +11,9 @@ Voiceflousion is a framework designed to integrate chatbots from the Voiceflow c
 - **Admin Capabilities**: Features for creating an admin interface, such as retrieving all bot sessions, activating, and deactivating user sessions.
 - **Extensibility**: Easily extendable to support additional platforms like Instagram and WhatsApp.
 - **Multi-User Support**: The client bot supports multiple users simultaneously and offers flexible settings for the maximum number of users, session validity time, and cleanup interval.
+- **Voiceflousion server**: Web server for launching and managing chatbots without needing of external dependencies.
+- **Custom handlers**: Developer can write a custom function for processing bot's workflow, for example save conversation parts into database.
+- **Server security opportunities**: Bot authentication tokens and allowed origins setting for Voiceflousion server.
 
 ## Installation and Setup
 
@@ -20,7 +23,6 @@ Voiceflousion is a framework designed to integrate chatbots from the Voiceflow c
 - Cargo (Rust package manager)
 - A ready Voiceflow bot, including its API key, bot ID, and version ID
 - A Telegram bot created with BotFather, including its API key
-- A webhook URL for the Telegram bot, set up using the Telegram API
 
 ### Environment Variables
 
@@ -60,7 +62,7 @@ mv .env.example .env
 cargo run --release
 ```
 
-## Adding Voiceflousion into Your Project
+## Adding Voiceflousion into Your Project (Telegram)
 
 ### Set Up the Environment
 
@@ -87,9 +89,8 @@ edition = "2021"
 serde = { version = "1.0.193", features = ["derive"] }
 dotenv = "0.15.0"
 serde_json = "1.0.114"
-warp = "0.3.7"
 tokio = { version = "1.36.0", features = ["rt", "rt-multi-thread", "macros"] }
-voiceflousion = { version = "^0.1.2", features = ["all-integrations"] }
+voiceflousion = { version = "0.2.0", features = ["all-integrations", "server"] }
 ```
 
 ### Set Up the Main File
@@ -98,6 +99,7 @@ voiceflousion = { version = "^0.1.2", features = ["all-integrations"] }
 
 ```rust
 use dotenv::dotenv;
+
 dotenv().ok();
 ```
 
@@ -105,6 +107,7 @@ dotenv().ok();
 
 ```rust
 use std::env;
+
 let bot_id: String = env::var("BOT_ID").unwrap_or_else(|_| "".to_string());
 let version_id: String = env::var("VERSION_ID").unwrap_or_else(|_| "".to_string());
 let vf_api_key: String = env::var("VF_API_KEY").unwrap_or_else(|_| "".to_string());
@@ -117,6 +120,7 @@ let telegram_bot_id = telegram_bot_token.split(':').next().unwrap().to_string();
 ```rust
 use std::sync::Arc;
 use voiceflousion::core::voiceflow::VoiceflowClient;
+
 let voiceflow_client = Arc::new(VoiceflowClient::new(vf_api_key, bot_id.clone(), version_id, 10, None));
 ```
 
@@ -125,57 +129,47 @@ let voiceflow_client = Arc::new(VoiceflowClient::new(vf_api_key, bot_id.clone(),
 ```rust
 use voiceflousion::core::ClientBuilder;
 use voiceflousion::integrations::telegram::TelegramClient;
+
 let client_builder = ClientBuilder::new(telegram_bot_id.clone(), telegram_bot_token.clone(), voiceflow_client.clone(), 10)
     .add_session_duration(120)
     .allow_sessions_cleaning(60);
 let telegram_client = Arc::new(TelegramClient::new(client_builder));
 ```
 
-**Set Up Webhook:** Define the webhook endpoint using Warp (or any other web framework of your choice).
+**Build Telegram Client manager:** Set up telegram the `ClientManager` with created clients
 
 ```rust
-use warp::Filter;
-let webhook = warp::post()
-    .and(warp::path("bot"))
-    .and(warp::body::json())
-    .and(warp::any().map(move || telegram_client.clone()))
-    .and_then(handle_webhook);
+use voiceflousion::core::base_structs::ClientsManager;
+
+let telegram_client_manager = Arc::new(ClientsManager::from_clients(vec![telegram_client]));
+```
+
+**Set Up Voiceflousion server:**  Create `VoiceflousionServer` with previously built `ClientManager` and set up the base dialog handler for handling updates from clients.
+
+```rust
+use voiceflousion::server::handlers::base_dialog_handler;
+use voiceflousion::server::VoiceflousionServer;
+
+let telegram_voiceflousion_server = VoiceflousionServer::<TelegramClient>::new("telegram".to_string(), {
+        |update, client| Box::pin(base_dialog_handler(update, client))
+    })
+    .set_clients_manager(telegram_client_manager);
 ```
 
 **Run the Server:** Start the server to listen for incoming webhook requests.
 
 ```rust
-warp::serve(webhook)
+telegram_voiceflousion_server
     .run(([127, 0, 0, 1], 8080))
     .await;
 ```
 
-**Handle Webhook Requests:** Define the `handle_webhook` function to process incoming Telegram updates.
+**Receive webhook address:** Copy given urls from console and set webhook with Telegram API.
 
-```rust
-use serde_json::Value;
-use voiceflousion::core::traits::Update;
-use voiceflousion::integrations::telegram::TelegramUpdate;
-
-async fn handle_webhook(body: Value, client: Arc<TelegramClient>) -> Result<impl warp::Reply, warp::Rejection> {
-    let update = match TelegramUpdate::from_request_body(body.clone()) {
-        Ok(update) => update,
-        Err(err) => {
-            println!("Error: {:?}", &err);
-            return Ok(warp::reply::json(&"Ok".to_string()));
-        }
-    };
-    println!("Telegram update: {:?}", &update);
-
-    match client.interact_with_client(update, None).await {
-        Ok(message) => println!("Task: {:?}", message),
-        Err(e) => {
-            println!("Dialog: Error {:?}", e);
-        },
-    };
-
-    Ok(warp::reply::json(&"Ok".to_string()))
-}
+```plaintext
+Server is set on 127.0.0.1:8080/telegram
+Bots without authentication token are available on 127.0.0.1:8080/telegram/<bot_id>
+Bots with authentication token are available on 127.0.0.1:8080/telegram/<bot_id>/?token=<token>
 ```
 
 ## Dependencies
@@ -184,7 +178,7 @@ The dependencies required to run the project are listed in the [example/Cargo.to
 
 ## Usage
 
-By using this framework, you can easily and flexibly integrate your bots with pre-built integrations for Telegram and Instagram. Voiceflousion also provides toolkit for creating custom integrations by implementing the `Client`, `Update`, `Sender`, and `Responder` traits. Once implemented, you can use your custom client in the same way as demonstrated in the example.
+By using this framework, you can easily and flexibly integrate your bots with pre-built integrations for Telegram and Instagram, create powerful and configurable bot management system. Voiceflousion also provides toolkit for creating custom integrations by implementing the `Client`, `Update`, `Sender`, and `Responder` traits. Once implemented, you can use your custom client in the same way as demonstrated in the example.
 
 ## Documentation
 

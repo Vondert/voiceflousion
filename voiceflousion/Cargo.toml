@@ -29,6 +29,7 @@ default = []
 all-integrations = ["telegram"]
 telegram = []
 server = []
+advanced = []
 
 [package.metadata.docs.rs]
-features = ["all-integrations"]
+features = ["all-integrations", "advanced"]

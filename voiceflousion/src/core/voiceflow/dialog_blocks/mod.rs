@@ -7,9 +7,22 @@ mod voiceflow_button;
 pub(crate) mod traits;
 pub mod enums;
 
-pub use self::voiceflow_buttons::VoiceflowButtons;
-pub use self::voiceflow_card::VoiceflowCard;
-pub use self::voiceflow_carousel::VoiceflowCarousel;
-pub use self::voiceflow_image::VoiceflowImage;
-pub use self::voiceflow_text::VoiceflowText;
-pub use self::voiceflow_button::VoiceflowButton;
+#[cfg(feature = "advanced")]
+pub use self::{
+    voiceflow_buttons::VoiceflowButtons,
+    voiceflow_card::VoiceflowCard,
+    voiceflow_carousel::VoiceflowCarousel,
+    voiceflow_image::VoiceflowImage,
+    voiceflow_text::VoiceflowText,
+    voiceflow_button::VoiceflowButton
+};
+
+#[cfg(not(feature = "advanced"))]
+pub(crate) use self::{
+    voiceflow_buttons::VoiceflowButtons,
+    voiceflow_card::VoiceflowCard,
+    voiceflow_carousel::VoiceflowCarousel,
+    voiceflow_image::VoiceflowImage,
+    voiceflow_text::VoiceflowText,
+    voiceflow_button::VoiceflowButton
+};

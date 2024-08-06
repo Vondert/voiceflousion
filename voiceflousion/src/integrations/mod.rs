@@ -1,2 +1,3 @@
-#[cfg(any(feature = "telegram", feature = "all-integrations"))]
+#[cfg(feature = "telegram")]
 pub mod telegram;
+mod discord;

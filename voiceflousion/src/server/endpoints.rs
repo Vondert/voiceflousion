@@ -7,9 +7,9 @@ use axum_core::response::IntoResponse;
 use axum_extra::headers::Origin;
 use serde_json::Value;
 use crate::core::base_structs::ClientsManager;
-use crate::core::subtypes::BotAuthToken;
 use crate::core::traits::{Client, Update};
-use crate::server::BotHandler;
+use crate::server::subtypes::QueryParams;
+use crate::server::traits::{BotHandler, ServerClient};
 
 /// Main endpoint function for handling incoming webhook requests.
 ///
@@ -29,9 +29,9 @@ use crate::server::BotHandler;
 /// # Returns
 ///
 /// A response indicating the result of the request processing.
-pub(super) async fn main_endpoint_function<C: Client>(
+pub(super) async fn main_endpoint<C: ServerClient>(
     Path(id): Path<String>,
-    params: Option<Query<BotAuthToken>>,
+    Query(mut params): Query<QueryParams>,
     Json(body): Json<Value>,
     Extension(clients): Extension<Arc<ClientsManager<C>>>,
     Extension(optional_allowed_origins): Extension<Arc<Option<Vec<&str>>>>,
@@ -65,13 +65,13 @@ pub(super) async fn main_endpoint_function<C: Client>(
 
     // Validate authentication token if present
     if let Some(client_token) = client.client_base().bot_auth_token().await {
-        let params = if let Some(params) = params {
-            params
+        let bot_auth_token = if let Some(token) = params.extract_bot_auth_token() {
+            token
         } else {
             println!("Missing token parameter");
             return (StatusCode::OK, Json("Unauthorized access".to_string())).into_response();
         };
-        if client_token.token() != params.token() {
+        if client_token.token() != bot_auth_token.token() {
             println!("Unauthorized access to client {}", client.client_base().client_id());
             return (StatusCode::OK, Json("Unauthorized access".to_string())).into_response();
         }
@@ -98,6 +98,58 @@ pub(super) async fn main_endpoint_function<C: Client>(
         Err(_) => (StatusCode::OK, Json("Handler error".to_string())).into_response(),
     }
 }
+
+pub(super) async fn authenticate_webhook_endpoint<C: ServerClient>(
+    Path(id): Path<String>,
+    Query(mut params): Query<QueryParams>,
+    Extension(clients): Extension<Arc<ClientsManager<C>>>,
+    Extension(optional_allowed_origins): Extension<Arc<Option<Vec<&str>>>>,
+    optional_origin_header: Option<TypedHeader<Origin>>
+) -> impl IntoResponse {
+    let _ = C::authenticate_webhook(&params, None, None);
+    println!("Params: {:?}", &params);
+    return (StatusCode::OK, Json("Unauthorized origin".to_string())).into_response();
+    // Check the Origin header
+    if let Some(allowed_origins) = &*optional_allowed_origins {
+        if let Some(origin_header) = optional_origin_header{
+            let origin = origin_header.hostname();
+            if !allowed_origins.iter().any(|allowed_origin| *allowed_origin == origin) {
+                println!("Unauthorized origin: {}", origin);
+                return (StatusCode::OK, Json("Unauthorized origin".to_string())).into_response();
+            }
+        }
+        else{
+            println!("Missing origin header in request! Client: {}\nAdd headers to request or turn of allowed origins in server!", id);
+            return (StatusCode::OK, Json("Missing origin header in request! Add headers to request or turn of allowed origins in server!".to_string())).into_response();
+        }
+
+    }
+
+    // Validate client ID
+    let client = if let Some(client) = clients.get_client(&id).await {
+        client
+    } else {
+        println!("Invalid client id - {}", id);
+        return (StatusCode::OK, Json("Invalid client id".to_string())).into_response();
+    };
+
+    // Validate authentication token if present
+    if let Some(client_token) = client.client_base().bot_auth_token().await {
+        let bot_auth_token = if let Some(token) = params.extract_bot_auth_token() {
+            token
+        } else {
+            println!("Missing token parameter");
+            return (StatusCode::OK, Json("Unauthorized access".to_string())).into_response();
+        };
+        if client_token.token() != bot_auth_token.token() {
+            println!("Unauthorized access to client {}", client.client_base().client_id());
+            return (StatusCode::OK, Json("Unauthorized access".to_string())).into_response();
+        }
+    };
+
+}
+
+
 
 /// Deserializes the incoming JSON body into the appropriate update type.
 ///

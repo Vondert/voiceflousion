@@ -8,7 +8,7 @@ use serde::Deserialize;
 #[derive(Debug, Clone, Deserialize)]
 pub struct BotAuthToken {
     /// The authentication token string.
-    token: String,
+    voiceflousion_bot_token: String,
 }
 
 impl BotAuthToken {
@@ -22,7 +22,7 @@ impl BotAuthToken {
     ///
     /// A new instance of `BotAuthToken`.
     pub(crate) fn new(token: String) -> Self {
-        Self { token }
+        Self { voiceflousion_bot_token: token }
     }
 
     /// Returns a reference to the token string.
@@ -31,6 +31,6 @@ impl BotAuthToken {
     ///
     /// A reference to the token string.
     pub fn token(&self) -> &String {
-        &self.token
+        &self.voiceflousion_bot_token
     }
 }

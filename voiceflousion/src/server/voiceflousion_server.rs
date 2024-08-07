@@ -4,15 +4,15 @@ use axum::{Extension, Router};
 use axum::routing::post;
 use crate::core::base_structs::ClientsManager;
 use crate::core::traits::{Client};
-use crate::server::BotHandler;
-use crate::server::endpoints::main_endpoint_function;
+use crate::server::endpoints::{authenticate_webhook_endpoint, main_endpoint};
+use crate::server::traits::{BotHandler, ServerClient};
 
 /// VoiceflousionServer is responsible for handling HTTP requests to bots and routing them to the appropriate handlers.
 ///
 /// This struct contains bots clients manager, base part of the server's HTTP endpoint URL, and the handler function for processing incoming webhook requests.
-pub struct VoiceflousionServer<C: Client + 'static> {
+pub struct VoiceflousionServer<C: ServerClient + 'static> {
     /// Manager for handling multiple bots clients.
-    clients: Option<Arc<ClientsManager<C>>>,
+    clients: Option<Arc<ClientsManager<C >>>,
     /// Base part of the server's HTTP endpoint URL.
     base_url: String,
     /// Handler function for processing incoming webhook requests.
@@ -21,7 +21,7 @@ pub struct VoiceflousionServer<C: Client + 'static> {
     allowed_origins: Arc<Option<Vec<&'static str>>>,
 }
 
-impl<C: Client + 'static> VoiceflousionServer<C> {
+impl<C: ServerClient + 'static> VoiceflousionServer<C> {
     /// Creates a new instance of `VoiceflousionServer`.
     ///
     /// # Parameters
@@ -238,7 +238,7 @@ impl<C: Client + 'static> VoiceflousionServer<C> {
                        let optional_allowed_origins = optional_allowed_origins.clone();
                        let handler = handler.clone();
                        move |origin_header, path, params, json| {
-                           main_endpoint_function(
+                           main_endpoint(
                                path,
                                params,
                                json,
@@ -248,7 +248,20 @@ impl<C: Client + 'static> VoiceflousionServer<C> {
                                origin_header,
                            )
                        }
+                   })
+                   .get({
+                       let clients = clients.clone();
+                       let optional_allowed_origins = optional_allowed_origins.clone();
+                       move |origin_header, path, params| {
+                            authenticate_webhook_endpoint(
+                                path,
+                                params,
+                                Extension(clients),
+                                Extension(optional_allowed_origins),
+                                origin_header
+                            )
+                       }
                    }),
-        )
+            )
     }
 }

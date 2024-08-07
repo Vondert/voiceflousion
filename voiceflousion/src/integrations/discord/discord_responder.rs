@@ -1,4 +1,4 @@
-use std::fmt::{Debug, Formatter};
+use std::fmt::Debug;
 use std::ops::Deref;
 use reqwest::Response;
 use crate::core::base_structs::ResponderBase;

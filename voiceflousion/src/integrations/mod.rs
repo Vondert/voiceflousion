@@ -1,3 +1,4 @@
 #[cfg(feature = "telegram")]
 pub mod telegram;
-mod discord;
+pub mod whatsapp;
+//mod discord;

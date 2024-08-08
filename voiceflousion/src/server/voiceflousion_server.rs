@@ -1,10 +1,18 @@
+use std::future::Future;
 use std::net::SocketAddr;
 use std::sync::Arc;
-use axum::{Extension, Router};
+use axum::{Extension, Json, Router};
+use axum::extract::{Path, Query};
+use axum::http::StatusCode;
 use axum::routing::post;
+use axum_core::response::IntoResponse;
+use axum_extra::headers::Origin;
+use axum_extra::TypedHeader;
+use serde_json::Value;
 use crate::core::base_structs::ClientsManager;
 use crate::core::traits::{Client};
-use crate::server::endpoints::{authenticate_webhook_endpoint, main_endpoint};
+use crate::server::endpoints::{get_auth_endpoint, main_endpoint};
+use crate::server::subtypes::{AuthResult, QueryParams};
 use crate::server::traits::{BotHandler, ServerClient};
 
 /// VoiceflousionServer is responsible for handling HTTP requests to bots and routing them to the appropriate handlers.
@@ -237,7 +245,7 @@ impl<C: ServerClient + 'static> VoiceflousionServer<C> {
                        let clients = clients.clone();
                        let optional_allowed_origins = optional_allowed_origins.clone();
                        let handler = handler.clone();
-                       move |origin_header, path, params, json| {
+                       move |origin_header, path, params, json: Json<Value>| {
                            main_endpoint(
                                path,
                                params,
@@ -245,7 +253,7 @@ impl<C: ServerClient + 'static> VoiceflousionServer<C> {
                                Extension(clients),
                                Extension(optional_allowed_origins),
                                Extension(handler),
-                               origin_header,
+                               origin_header
                            )
                        }
                    })
@@ -253,7 +261,7 @@ impl<C: ServerClient + 'static> VoiceflousionServer<C> {
                        let clients = clients.clone();
                        let optional_allowed_origins = optional_allowed_origins.clone();
                        move |origin_header, path, params| {
-                            authenticate_webhook_endpoint(
+                            get_auth_endpoint(
                                 path,
                                 params,
                                 Extension(clients),

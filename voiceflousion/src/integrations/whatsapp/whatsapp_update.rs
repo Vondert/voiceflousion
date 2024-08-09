@@ -31,15 +31,16 @@ impl WhatsAppUpdate{
 
 impl Update for WhatsAppUpdate{
     fn from_request_body(body: Value) -> VoiceflousionResult<Self> {
+        println!("\n\n{:?}\n\n", &body);
         let entry = body.get("entry")
             .and_then(|entry_value| entry_value.as_array())
             .and_then(|entry_array| entry_array.first())
             .ok_or_else(|| VoiceflousionError::ClientUpdateConvertationError("WhatsAppUpdate entry".to_string(), body.clone()))?;
 
-        let chat_id = entry.get("id")
-            .and_then(|id| id.as_str())
-            .map(|id| id.to_string())
-            .ok_or_else(|| VoiceflousionError::ClientUpdateConvertationError("WhatsAppUpdate entry id (chat id)".to_string(), entry.clone()))?;
+        // let chat_id = entry.get("id")
+        //     .and_then(|id| id.as_str())
+        //     .map(|id| id.to_string())
+        //     .ok_or_else(|| VoiceflousionError::ClientUpdateConvertationError("WhatsAppUpdate entry id (chat id)".to_string(), entry.clone()))?;
 
         let value = entry.get("changes")
             .and_then(|changes_value| changes_value.as_array())
@@ -51,6 +52,11 @@ impl Update for WhatsAppUpdate{
             .and_then(|messages_value| messages_value.as_array())
             .and_then(|messages_array| messages_array.first())
             .ok_or_else(|| VoiceflousionError::ClientUpdateConvertationError("WhatsAppUpdate messages".to_string(), value.clone()))?;
+
+        let chat_id = message.get("from")
+             .and_then(|from| from.as_str())
+             .map(|from| from.to_string())
+             .ok_or_else(|| VoiceflousionError::ClientUpdateConvertationError("WhatsAppUpdate message from (chat id)".to_string(), message.clone()))?;
 
         let interaction_time = message.get("timestamp")
             .and_then(|date| date.as_str())

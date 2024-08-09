@@ -79,8 +79,10 @@ pub trait Client: Sync + Send {
             locked_session.set_last_interaction(None);
         }
 
+        let client_id = self.client_base().client_id();
+
         // Send the Voiceflow message to the client and get the response
-        let response = self.client_base().sender().send_message(locked_session.get_chat_id(), voiceflow_message).await?;
+        let response = self.client_base().sender().send_message(client_id, locked_session.get_chat_id(), voiceflow_message).await?;
 
         // Retrieve the last message sent by the bot from the response
         let bot_last_message = get_last_sent_message(&response);
@@ -125,8 +127,10 @@ pub trait Client: Sync + Send {
             locked_session.set_last_interaction(None);
         }
 
+        let client_id = self.client_base().client_id();
+
         // Send the Voiceflow message to the client and get the response
-        let response = self.client_base().sender().send_message(locked_session.get_chat_id(), voiceflow_message).await?;
+        let response = self.client_base().sender().send_message(client_id, locked_session.get_chat_id(), voiceflow_message).await?;
 
         // Retrieve the last message sent by the bot from the response
         let bot_last_message = get_last_sent_message(&response);
@@ -173,8 +177,10 @@ pub trait Client: Sync + Send {
             locked_session.set_last_interaction(None);
         }
 
+        let client_id = self.client_base().client_id();
+
         // Send the Voiceflow message to the client and get the response
-        let response = self.client_base().sender().send_message(locked_session.get_chat_id(), voiceflow_message).await?;
+        let response = self.client_base().sender().send_message(client_id, locked_session.get_chat_id(), voiceflow_message).await?;
 
         // Retrieve the last message sent by the bot from the response
         let bot_last_message = get_last_sent_message(&response);
@@ -279,10 +285,10 @@ pub trait Client: Sync + Send {
 ///
 /// An `Option` containing the last `SentMessage` if available.
 pub fn get_last_sent_message<R: Responder>(response: &[R]) -> Option<SentMessage>{
-    return if let Some(responder) = response.last(){
+    if let Some(responder) = response.last(){
         Some(responder.create_sent_message())
     }
     else{
         None
-    };
+    }
 }

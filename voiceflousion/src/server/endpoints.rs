@@ -44,12 +44,6 @@ pub(super) async fn main_endpoint<C: ServerClient>(
         AuthResult::Response(response) => return response
     };
 
-    // Check if the client is active
-    if !client.client_base().is_active() {
-        println!("Client {} deactivated!", client.client_base().client_id());
-        return (StatusCode::OK, Json("Access to deactivated client".to_string())).into_response();
-    }
-
     // Deserialize the update
     let update = match deserialize_update::<C::ClientUpdate<'static>>(body) {
         Ok(update) => update,
@@ -58,6 +52,12 @@ pub(super) async fn main_endpoint<C: ServerClient>(
             return (StatusCode::OK, Json("Invalid update".to_string())).into_response();
         }
     };
+
+    // Check if the client is active
+    if !client.client_base().is_active() {
+        println!("Client {} deactivated!", client.client_base().client_id());
+        return (StatusCode::OK, Json("Access to deactivated client".to_string())).into_response();
+    }
 
     // Process the update using the handler function
     match handler(update, client).await {

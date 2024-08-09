@@ -127,7 +127,6 @@ impl Update for TelegramUpdate {
     /// let update = TelegramUpdate::from_request_body(body);
     /// ```
     fn from_request_body(body: Value) -> VoiceflousionResult<Self> {
-
         // Check if the update contains a message or a callback query
         let is_message = body.get("message").is_some();
         // Extract the message or callback query data
@@ -166,7 +165,7 @@ impl Update for TelegramUpdate {
 
         // Extract the update ID from the request body
         let update_id = body.get("update_id")
-            .and_then(|id| id.as_i64())
+            .and_then(|id| id.as_str())
             .map(|id| id.to_string())
             .ok_or_else(|| VoiceflousionError::ClientUpdateConvertationError("TelegramUpdate update id".to_string(), body.clone()))?;
 

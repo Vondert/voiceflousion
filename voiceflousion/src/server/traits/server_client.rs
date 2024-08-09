@@ -32,11 +32,8 @@ impl ServerClient for WhatsAppClient{
                     return Some((StatusCode::OK, Json("Webhook authorization failed!".to_string())).into_response());
                 }
             }
-
-
             return Some((StatusCode::OK, challenge).into_response());
         }
-
         None
     }
 }

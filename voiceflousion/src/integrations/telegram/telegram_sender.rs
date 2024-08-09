@@ -10,9 +10,6 @@ use crate::core::voiceflow::dialog_blocks::{VoiceflowButtons, VoiceflowCard, Voi
 use crate::core::voiceflow::dialog_blocks::enums::{VoiceflowButtonActionType, VoiceflowButtonsOption};
 use crate::errors::{VoiceflousionError, VoiceflousionResult};
 
-/// The base URL for the Telegram API.
-static TELEGRAM_API_URL: &str = "https://api.telegram.org/bot";
-
 /// Represents a sender for Telegram integration.
 ///
 /// `TelegramSender` handles sending various types of messages (text, image, buttons, etc.)
@@ -23,6 +20,10 @@ pub struct TelegramSender {
 }
 
 impl TelegramSender {
+
+    /// The base URL for the Telegram API.
+    const TELEGRAM_API_URL: &'static str = "https://api.telegram.org/bot";
+
     /// Creates a new `TelegramSender`.
     ///
     /// # Parameters
@@ -83,7 +84,7 @@ impl TelegramSender {
     /// ```
     pub async fn update_carousel(&self, carousel: &VoiceflowCarousel, index: usize, chat_id: &String, message_id: &String) -> VoiceflousionResult<TelegramResponder> {
         // Form the API URL for editing the message media via Telegram API
-        let api_url = format!("{}{}/editMessageMedia", TELEGRAM_API_URL, &self.api_key());
+        let api_url = format!("{}{}/editMessageMedia", TelegramSender::TELEGRAM_API_URL, &self.api_key());
 
         // Get the card at the specified index, returning an error if the index is out of bounds
         let card = carousel.get(index).ok_or_else(|| VoiceflousionError::ClientRequestInvalidBodyError(
@@ -199,7 +200,7 @@ impl Sender for TelegramSender{
     /// ```
     async fn send_text(&self, text: VoiceflowText, chat_id: &String, sender_http_client: &HttpClient, api_key: &String) -> VoiceflousionResult<Self::SenderResponder> {
         // Form the API URL for sending the message via Telegram API
-        let api_url = format!("{}{}/sendMessage", TELEGRAM_API_URL, api_key);
+        let api_url = format!("{}{}/sendMessage", TelegramSender::TELEGRAM_API_URL, api_key);
 
         // Create the JSON body of the request containing chat_id and message text
         let body = json!({
@@ -254,7 +255,7 @@ impl Sender for TelegramSender{
     /// ```
     async fn send_image(&self, image: VoiceflowImage, chat_id: &String, sender_http_client: &HttpClient, api_key: &String) -> VoiceflousionResult<Self::SenderResponder> {
         // Form the API URL for sending the image via Telegram API
-        let api_url = format!("{}{}/sendPhoto", TELEGRAM_API_URL, api_key);
+        let api_url = format!("{}{}/sendPhoto", TelegramSender::TELEGRAM_API_URL, api_key);
 
         // Create the JSON body of the request containing chat_id and image URL
         let body = json!({
@@ -313,8 +314,8 @@ impl Sender for TelegramSender{
     async fn send_buttons(&self, buttons: VoiceflowButtons, chat_id: &String, sender_http_client: &HttpClient, api_key: &String) -> VoiceflousionResult<Self::SenderResponder> {
         // Determine the API URL based on the button option (text or image)
         let api_url = match &buttons.option() {
-            VoiceflowButtonsOption::Image(_) => format!("{}{}/sendPhoto", TELEGRAM_API_URL, api_key),
-            _ => format!("{}{}/sendMessage", TELEGRAM_API_URL, api_key),
+            VoiceflowButtonsOption::Image(_) => format!("{}{}/sendPhoto", TelegramSender::TELEGRAM_API_URL, api_key),
+            _ => format!("{}{}/sendMessage", TelegramSender::TELEGRAM_API_URL, api_key),
         };
 
         // Convert the buttons to the inline keyboard format for Telegram
@@ -405,7 +406,7 @@ impl Sender for TelegramSender{
         };
 
         // Initialize the API URL and request body for sending a message
-        let mut api_url = format!("{}{}/sendMessage", TELEGRAM_API_URL, api_key);
+        let mut api_url = format!("{}{}/sendMessage", TelegramSender::TELEGRAM_API_URL, api_key);
         let mut body = json!({
             "chat_id": chat_id,
             "text": format!("{}\n\n{}", title, description),
@@ -416,7 +417,7 @@ impl Sender for TelegramSender{
 
         // If the card has an image URL, update the API URL and request body for sending a photo
         if let Some(url) = card.image_url() {
-            api_url = format!("{}{}/sendPhoto", TELEGRAM_API_URL, api_key);
+            api_url = format!("{}{}/sendPhoto", TelegramSender::TELEGRAM_API_URL, api_key);
             body = json!({
                 "chat_id": chat_id,
                 "photo": url,
@@ -481,7 +482,7 @@ impl Sender for TelegramSender{
         }
 
         // Form the API URL for sending the carousel via Telegram API
-        let api_url = format!("{}{}/sendPhoto", TELEGRAM_API_URL, api_key);
+        let api_url = format!("{}{}/sendPhoto", TelegramSender::TELEGRAM_API_URL, api_key);
 
         // Get the first card from the carousel
         let card = carousel.get(0)

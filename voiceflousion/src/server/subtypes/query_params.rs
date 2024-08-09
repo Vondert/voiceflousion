@@ -4,7 +4,7 @@ use serde::Deserialize;
 use crate::core::subtypes::BotAuthToken;
 
 #[derive(Deserialize, Debug)]
-pub(crate) struct QueryParams {
+pub struct QueryParams {
     #[serde(flatten)]
     params: HashMap<String, String>,
 }

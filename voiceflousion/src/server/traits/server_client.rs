@@ -17,9 +17,15 @@ pub trait ServerClient: Client{
 
 impl ServerClient for WhatsAppClient{
     fn authenticate_webhook(params: &mut QueryParams, value: Option<&Value>, bot_auth_token: Option<BotAuthToken>) -> Option<Response>{
-        println!("WhatsApp");
-        if let Some(_json) = value{
-            return None
+        if let Some(json) = value{
+            let origin_type = json["entry"][0]["changes"][0]["value"]["statuses"][0]["conversation"]["origin"]["type"]
+                .as_str();
+
+            if origin_type == Some("service") {
+                return Some((StatusCode::OK, Json("Service type Update rejected".to_string())).into_response());
+            }
+
+            return None;
         }
         if let Some(challenge) = params.remove("hub.challenge") {
             if let Some(bot_token) = bot_auth_token{

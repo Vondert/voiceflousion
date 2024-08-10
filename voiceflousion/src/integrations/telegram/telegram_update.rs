@@ -174,7 +174,6 @@ impl Update for TelegramUpdate {
             let data = body.get("callback_query")
                 .and_then(|q| q.get("data"))
                 .and_then(|data| data.as_str())
-                .map(|s| s)
                 .ok_or_else(|| VoiceflousionError::ClientUpdateConvertationError("TelegramUpdate callback data".to_string(), body.clone()))?;
 
             Some(serde_json::from_str(data)

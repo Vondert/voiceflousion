@@ -36,6 +36,6 @@ impl Client for WhatsAppClient {
     }
 
     async fn handle_button_interaction(&self, locked_session: &LockedSession<'_>, interaction_time: i64, button_path: &String, update_state: Option<State>, update: &Self::ClientUpdate<'_>, payload: &Value) -> VoiceflousionResult<Vec<<Self::ClientSender<'_> as Sender>::SenderResponder>> {
-        todo!()
+        self.choose_button_in_voiceflow_dialog(locked_session, interaction_time, button_path, update_state, payload).await
     }
 }

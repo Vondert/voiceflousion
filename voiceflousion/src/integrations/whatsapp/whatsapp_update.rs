@@ -42,10 +42,7 @@ impl Update for WhatsAppUpdate{
         //     .map(|id| id.to_string())
         //     .ok_or_else(|| VoiceflousionError::ClientUpdateConvertationError("WhatsAppUpdate entry id (chat id)".to_string(), entry.clone()))?;
 
-        let value = entry.get("changes")
-            .and_then(|changes_value| changes_value.as_array())
-            .and_then(|changes_array| changes_array.first())
-            .and_then(|changes| changes.get("value"))
+        let value = entry["changes"][0].get("value")
             .ok_or_else(|| VoiceflousionError::ClientUpdateConvertationError("WhatsAppUpdate value".to_string(), entry.clone()))?;
 
         let message = value.get("messages")
@@ -68,13 +65,49 @@ impl Update for WhatsAppUpdate{
             .map(|id| id.to_string())
             .ok_or_else(|| VoiceflousionError::ClientUpdateConvertationError("WhatsAppUpdate update id".to_string(), message.clone()))?;
 
-        let text = message.get("text")
-            .and_then(|text_value| text_value.get("body"))
-            .and_then(|text_message| text_message.as_str())
-            .unwrap_or_default()
-            .to_string();
+        let message_type = message["type"].as_str()
+            .ok_or_else(|| VoiceflousionError::ClientUpdateConvertationError("WhatsAppUpdate update type".to_string(), message.clone()))?;
 
-        let interaction_type = InteractionType::new(text, None, None);
+        let is_message = if message_type == "text"{
+            true
+        }
+        else{
+            false
+        };
+
+        let mut text: String = String::new();
+        let mut path = None;
+        let mut callback_data = None;
+
+        if is_message{
+            text = message["text"].get("body")
+                .and_then(|body| body.as_str())
+                .map(|text_str| text_str.to_string())
+                .ok_or_else(|| VoiceflousionError::ClientUpdateConvertationError("WhatsAppUpdate update message text".to_string(), message.clone()))?;
+        }
+        else{
+            let button_reply = message["interactive"].get("button_reply")
+                .ok_or_else(|| VoiceflousionError::ClientUpdateConvertationError("WhatsAppUpdate update button reply".to_string(), message.clone()))?;
+
+            text = button_reply.get("title").and_then(|text_value| text_value.as_str())
+                .map(|text_str| text_str.to_string())
+                .ok_or_else(|| VoiceflousionError::ClientUpdateConvertationError("WhatsAppUpdate update button title".to_string(), button_reply.clone()))?;
+
+            let data = button_reply.get("id")
+                .and_then(|data| data.as_str())
+                .ok_or_else(|| VoiceflousionError::ClientUpdateConvertationError("WhatsAppUpdate callback data".to_string(), button_reply.clone()))?;
+
+            let mut deserialized_data: Value = serde_json::from_str(data)
+                .map_err(|_error| VoiceflousionError::ClientUpdateConvertationError("WhatsAppUpdate callback data must be a valid JSON string".to_string(), button_reply.clone()))?;
+
+            if let Some(mut_data) = deserialized_data.as_object_mut(){
+                path = mut_data.remove("path")
+                    .and_then(|value_path| value_path.as_str().map(|s| s.to_string()));
+            }
+            callback_data = Some(deserialized_data);
+        }
+
+        let interaction_type = InteractionType::new(text, path, callback_data);
 
         Ok(Self::new(
             chat_id,

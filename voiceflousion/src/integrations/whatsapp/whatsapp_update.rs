@@ -31,7 +31,6 @@ impl WhatsAppUpdate{
 
 impl Update for WhatsAppUpdate{
     fn from_request_body(body: Value) -> VoiceflousionResult<Self> {
-        println!("\n\n{:?}\n\n", &body);
         let entry = body.get("entry")
             .and_then(|entry_value| entry_value.as_array())
             .and_then(|entry_array| entry_array.first())

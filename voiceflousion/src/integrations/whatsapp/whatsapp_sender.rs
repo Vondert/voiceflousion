@@ -132,15 +132,21 @@ impl Sender for WhatsAppSender{
             VoiceflowButtonsOption::Image(image) => json!({
                 "messaging_product": "whatsapp",
                 "to": chat_id,
-                "type": "image",
-                "image": {
-                    "link": image.url(),
-                },
+                "type": "interactive",
                 "interactive": {
                     "type": "button",
+                    "body": {
+                        "text": "There is a placeholder test. WhatsApp requires text with buttons, so please provide it in Voiceflow",
+                    },
                     "action": {
                         "buttons": interactive_buttons,
-                    }
+                    },
+                    "header": {
+                        "type": "image",
+                        "image": {
+                            "link": image.url()
+                        }
+                    },
                 }
             }),
             VoiceflowButtonsOption::Empty => json!({
@@ -150,7 +156,7 @@ impl Sender for WhatsAppSender{
                 "interactive": {
                     "type": "button",
                     "body": {
-                        "text": "",
+                        "text": "There is a placeholder test. WhatsApp requires text with buttons, so please provide it in Voiceflow",
                     },
                     "action": {
                         "buttons": interactive_buttons,

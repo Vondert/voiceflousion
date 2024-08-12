@@ -79,13 +79,13 @@ impl Sender for WhatsAppSender{
 
         // Create the JSON body of the request containing chat_id and image URL
         let body = json!({
-        "messaging_product": "whatsapp",
-        "to": chat_id,
-        "type": "image",
-        "image": {
-            "link": image.url(), // URL of the image
-        }
-    });
+            "messaging_product": "whatsapp",
+            "to": chat_id,
+            "type": "image",
+            "image": {
+                "link": image.url(),
+            }
+        });
 
         // Send the POST request with the body to the WhatsApp API
         let response = self.http_client()
@@ -110,8 +110,8 @@ impl Sender for WhatsAppSender{
         // Form the API URL for sending the message via WhatsApp API
         let api_url = format!("{}{}/messages", WhatsAppSender::WHATSAPP_API_URL, client_id);
 
-        // Convert VoiceflowButtons to WhatsApp interactive buttons with callback data (id)
-        let interactive_buttons: Vec<Value> = buttons_to_keyboard(&buttons);
+        // Convert VoiceflowButtons to WhatsApp list rows
+        let interactive_rows: Vec<Value> = buttons_to_list_rows(&buttons);
 
         // Create the JSON body of the request containing chat_id and buttons
         let body = match &buttons.option() {
@@ -120,49 +120,21 @@ impl Sender for WhatsAppSender{
                 "to": chat_id,
                 "type": "interactive",
                 "interactive": {
-                    "type": "button",
+                    "type": "list",
                     "body": {
                         "text": text.message(),
                     },
                     "action": {
-                        "buttons": interactive_buttons,
-                    }
-                }
-            }),
-            VoiceflowButtonsOption::Image(image) => json!({
-                "messaging_product": "whatsapp",
-                "to": chat_id,
-                "type": "interactive",
-                "interactive": {
-                    "type": "button",
-                    "body": {
-                        "text": "There is a placeholder test. WhatsApp requires text with buttons, so please provide it in Voiceflow",
-                    },
-                    "action": {
-                        "buttons": interactive_buttons,
-                    },
-                    "header": {
-                        "type": "image",
-                        "image": {
-                            "link": image.url()
+                    "button": "👇",
+                    "sections": [
+                        {
+                            "title": "Buttons",
+                            "rows": interactive_rows,
                         }
-                    },
+                    ]
                 }
-            }),
-            VoiceflowButtonsOption::Empty => json!({
-                "messaging_product": "whatsapp",
-                "to": chat_id,
-                "type": "interactive",
-                "interactive": {
-                    "type": "button",
-                    "body": {
-                        "text": "There is a placeholder test. WhatsApp requires text with buttons, so please provide it in Voiceflow",
-                    },
-                    "action": {
-                        "buttons": interactive_buttons,
-                    }
-                }
-            }),
+            }}),
+            VoiceflowButtonsOption::Empty =>  panic!("Buttons with empty text field caught!"),
         };
 
         // Send the POST request with the body to the WhatsApp API
@@ -185,7 +157,113 @@ impl Sender for WhatsAppSender{
     }
 
     async fn send_card(&self, client_id: &String, card: VoiceflowCard, chat_id: &String) -> VoiceflousionResult<Self::SenderResponder> {
-        todo!()
+        // Form the API URL for sending the message via WhatsApp API
+        let api_url = format!("{}{}/messages", WhatsAppSender::WHATSAPP_API_URL, client_id);
+
+        // Convert VoiceflowButtons to WhatsApp list rows
+        let mut interactive_rows: Vec<Value> = if let Some(buttons) = card.buttons() {
+            buttons_to_list_rows(buttons)
+            //buttons_to_keyboard(buttons)
+        } else {
+            vec![]
+        };
+
+        if interactive_rows.len() > 10{
+            interactive_rows = interactive_rows[0..10].to_owned();
+        }
+
+        // Extract the title and description from the card
+        let title = card.title().clone().unwrap_or(String::new());
+        let description = card.description().clone().unwrap_or(String::new());
+
+        let text = if title.is_empty() && description.is_empty(){
+            String::new()
+        }
+        else{
+            format!("{}\n\n{}", title, description)
+        };
+
+        let mut card_parts:Vec<Value> = Vec::with_capacity(2);
+
+        if interactive_rows.is_empty(){
+            let mut body = json!({
+                "messaging_product": "whatsapp",
+                "to": chat_id
+            });
+
+            let body_mut = body.as_object_mut().unwrap();
+
+            if let Some(url) = card.image_url(){
+                body_mut.insert("type".to_string(), json!("image"));
+
+                let mut image_object = serde_json::Map::new();
+                image_object.insert("link".to_string(), json!(url));
+                if !text.is_empty() {
+                    image_object.insert("caption".to_string(), json!(text));
+                }
+
+                body_mut.insert("image".to_string(), json!(image_object));
+            }
+            else{
+                body_mut.insert("type".to_string(), json!("text"));
+                body_mut.insert("text".to_string(), json!({
+                    "body": text,
+                }));
+            }
+            card_parts.push(body);
+        }
+        else{
+            if let Some(url) = card.image_url() {
+                let image_body = json!({
+                    "messaging_product": "whatsapp",
+                    "to": chat_id,
+                    "type": "image",
+                    "image": {
+                        "link": url,
+                    }
+                });
+                card_parts.push(image_body);
+            }
+            let body = json!({
+                "messaging_product": "whatsapp",
+                "to": chat_id,
+                "type": "interactive",
+                "interactive": {
+                    "type": "list",
+                    "body": {
+                        "text": text
+                    },
+                    "action": {
+                        "button": "👇",
+                        "sections": [
+                            {
+                                "title": "Buttons",
+                                "rows": interactive_rows,
+                            }
+                        ]
+                    }
+                }
+            });
+            card_parts.push(body);
+        };
+
+        let mut last_response = None;
+
+        for body in card_parts {
+            let response = self.http_client()
+                .post(&api_url)
+                .json(&body)
+                .header("Authorization", format!("Bearer {}", self.api_key()))
+                .send()
+                .await.map_err(|e| VoiceflousionError::ClientRequestError("WhatsAppSender send_card".to_string(), e.to_string()))?;
+
+            if !response.status().is_success() {
+                let error_text = response.text().await.unwrap_or_default();
+                return Err(VoiceflousionError::ClientRequestError("WhatsAppSender send_card".to_string(), error_text))
+            }
+            last_response = Some(response);
+        }
+        Self::SenderResponder::from_response(last_response.expect("Empty response"), VoiceflowBlock::Card(card)).await
     }
 
     async fn send_carousel(&self, client_id: &String, carousel: VoiceflowCarousel, chat_id: &String) -> VoiceflousionResult<Self::SenderResponder> {
@@ -193,7 +271,7 @@ impl Sender for WhatsAppSender{
     }
 }
 
-fn buttons_to_keyboard(buttons: &VoiceflowButtons) -> Vec<Value> {
+fn buttons_to_list_rows(buttons: &VoiceflowButtons) -> Vec<Value> {
     buttons.iter().map(|b| {
         let mut callback_data = b.payload().as_object().cloned().unwrap_or_else(Map::new);
         callback_data.insert("path".to_string(), Value::String(b.path().clone()));
@@ -201,27 +279,10 @@ fn buttons_to_keyboard(buttons: &VoiceflowButtons) -> Vec<Value> {
         // Convert callback_data to a JSON string
         let callback_data_string = serde_json::to_string(&callback_data).unwrap_or_else(|_| "".to_string());
 
-        match &b.action_type() {
-            VoiceflowButtonActionType::OpenUrl(url) => {
-                let url = if url.is_empty() { "empty" } else { url };
-                json!({
-                    "type": "url",
-                    "reply": {
-                        "id": callback_data_string,
-                        "title": b.name(),
-                        "url": url,
-                    }
-                })
-            },
-            VoiceflowButtonActionType::Path => {
-                json!({
-                    "type": "reply",
-                    "reply": {
-                        "id": callback_data_string,
-                        "title": b.name(),
-                    }
-                })
-            },
-        }
+        json!({
+            "id": callback_data_string,
+            "title": b.name(),
+            "description": ""
+        })
     }).collect()
 }

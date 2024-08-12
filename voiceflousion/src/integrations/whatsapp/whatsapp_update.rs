@@ -85,19 +85,26 @@ impl Update for WhatsAppUpdate{
                 .ok_or_else(|| VoiceflousionError::ClientUpdateConvertationError("WhatsAppUpdate update message text".to_string(), message.clone()))?;
         }
         else{
-            let button_reply = message["interactive"].get("button_reply")
-                .ok_or_else(|| VoiceflousionError::ClientUpdateConvertationError("WhatsAppUpdate update button reply".to_string(), message.clone()))?;
+            let interactive_reply =  if let Some(list_reply) = message["interactive"].get("list_reply"){
+                list_reply
+            }
+            else if let Some(button_reply) = message["interactive"].get("button_reply"){
+                button_reply
+            }
+            else{
+                return Err(VoiceflousionError::ClientUpdateConvertationError("WhatsAppUpdate update interactive reply".to_string(), message.clone()))
+            };
 
-            text = button_reply.get("title").and_then(|text_value| text_value.as_str())
+            text = interactive_reply.get("title").and_then(|text_value| text_value.as_str())
                 .map(|text_str| text_str.to_string())
-                .ok_or_else(|| VoiceflousionError::ClientUpdateConvertationError("WhatsAppUpdate update button title".to_string(), button_reply.clone()))?;
+                .ok_or_else(|| VoiceflousionError::ClientUpdateConvertationError("WhatsAppUpdate update button title".to_string(), interactive_reply.clone()))?;
 
-            let data = button_reply.get("id")
+            let data = interactive_reply.get("id")
                 .and_then(|data| data.as_str())
-                .ok_or_else(|| VoiceflousionError::ClientUpdateConvertationError("WhatsAppUpdate callback data".to_string(), button_reply.clone()))?;
+                .ok_or_else(|| VoiceflousionError::ClientUpdateConvertationError("WhatsAppUpdate callback data".to_string(), interactive_reply.clone()))?;
 
             let mut deserialized_data: Value = serde_json::from_str(data)
-                .map_err(|_error| VoiceflousionError::ClientUpdateConvertationError("WhatsAppUpdate callback data must be a valid JSON string".to_string(), button_reply.clone()))?;
+                .map_err(|_error| VoiceflousionError::ClientUpdateConvertationError("WhatsAppUpdate callback data must be a valid JSON string".to_string(), interactive_reply.clone()))?;
 
             if let Some(mut_data) = deserialized_data.as_object_mut(){
                 path = mut_data.remove("path")

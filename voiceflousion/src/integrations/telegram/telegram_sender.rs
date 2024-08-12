@@ -316,10 +316,7 @@ impl Sender for TelegramSender{
     /// ```
     async fn send_buttons(&self, _client_id: &String, buttons: VoiceflowButtons, chat_id: &String) -> VoiceflousionResult<Self::SenderResponder> {
         // Determine the API URL based on the button option (text or image)
-        let api_url = match &buttons.option() {
-            VoiceflowButtonsOption::Image(_) => format!("{}{}/sendPhoto", TelegramSender::TELEGRAM_API_URL, self.api_key()),
-            _ => format!("{}{}/sendMessage", TelegramSender::TELEGRAM_API_URL, self.api_key()),
-        };
+        let api_url = format!("{}{}/sendMessage", TelegramSender::TELEGRAM_API_URL, self.api_key());
 
         // Convert the buttons to the inline keyboard format for Telegram
         let inline_keyboard: Vec<Vec<Value>> = buttons_to_keyboard(&buttons);
@@ -333,20 +330,7 @@ impl Sender for TelegramSender{
                     "inline_keyboard": inline_keyboard,
                 }
             }),
-            VoiceflowButtonsOption::Image(image) => json!({
-                "chat_id": chat_id,
-                "photo": image.url(),
-                "reply_markup": {
-                    "inline_keyboard": inline_keyboard,
-                }
-            }),
-            VoiceflowButtonsOption::Empty => json!({
-                "chat_id": chat_id,
-                "text": "",
-                "reply_markup": {
-                    "inline_keyboard": inline_keyboard,
-                }
-            }),
+            VoiceflowButtonsOption::Empty => panic!("Buttons with empty text field caught!"),
         };
 
         // Send the POST request with the body to the Telegram API

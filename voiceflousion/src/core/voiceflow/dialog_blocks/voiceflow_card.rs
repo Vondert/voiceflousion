@@ -169,17 +169,22 @@ impl FromValue for VoiceflowCard{
             .and_then(|title| title.as_str())
             .ok_or_else(|| VoiceflousionError::VoiceflowBlockConvertationError(("VoiceflowCard card title".to_string(), value.clone())))?
             .to_string();
-        let title = if  title.is_empty(){
+        let mut title = if  title.is_empty(){
             None
         }
         else{
           Some(title)
         };
-        match (&image_url, &title, &description){
-            (None, None, None) => {
-                Ok(None)
-            },
-            _ =>  Ok(Some(Self::new(image_url, title, description, buttons)))
+
+        match (&title, &buttons, &description, &image_url){
+            (None, None, None, None) => Ok(None),
+            _ => {
+                if let (None, None, Some(_)) = (&title, &description, &buttons){
+                    title = Some(String::from("Voiceflousion placeholder card's title"))
+                }
+                Ok(Some(Self::new(image_url, title, description, buttons)))
+            }
         }
+
     }
 }

@@ -165,7 +165,7 @@ impl Update for TelegramUpdate {
 
         // Extract the update ID from the request body
         let update_id = body.get("update_id")
-            .and_then(|id| id.as_str())
+            .and_then(|id| id.as_u64())
             .map(|id| id.to_string())
             .ok_or_else(|| VoiceflousionError::ClientUpdateConvertationError("TelegramUpdate update id".to_string(), body.clone()))?;
 

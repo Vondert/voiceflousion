@@ -2,7 +2,7 @@ use std::ops::Deref;
 use serde_json::Value;
 use crate::core::voiceflow::dialog_blocks::enums::VoiceflowButtonsOption;
 use crate::core::voiceflow::dialog_blocks::traits::FromValue;
-use crate::core::voiceflow::dialog_blocks::VoiceflowButton;
+use crate::core::voiceflow::dialog_blocks::{VoiceflowButton, VoiceflowText};
 use crate::errors::{VoiceflousionError, VoiceflousionResult};
 
 /// Represents a collection of buttons in a Voiceflow dialog.
@@ -41,7 +41,7 @@ impl VoiceflowButtons{
     pub fn new(buttons: Vec<VoiceflowButton>) -> Self {
         Self {
             buttons,
-            option: VoiceflowButtonsOption::Empty,
+            option: VoiceflowButtonsOption::Text(VoiceflowText::new(String::from("Voiceflousion placeholder button's text"))),
         }
     }
 

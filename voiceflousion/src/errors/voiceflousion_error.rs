@@ -51,7 +51,10 @@ pub enum VoiceflousionError {
     /// Error occurred due to a deprecated update.
     ///
     /// Contains the chat ID and update ID of the deprecated update.
-    DeprecatedError(String, String)
+    DeprecatedError(String, String),
+
+
+    ValidationError(String, String)
 }
 
 /// Type alias for `Result` with a `VoiceflousionError` error type.
@@ -90,6 +93,9 @@ impl Display for VoiceflousionError {
             }
             VoiceflousionError::DeprecatedError(chat_id, update_id) =>{
                 write!(f, "Update {} from chat {} is deprecated", update_id, chat_id)
+            },
+            VoiceflousionError::ValidationError(validated, error) =>{
+                write!(f, "Validation failure of {}. {}", validated, error)
             }
         }
     }

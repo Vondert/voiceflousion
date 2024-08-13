@@ -182,8 +182,6 @@ pub trait Client: Sync + Send {
         // Send the Voiceflow message to the client and get the response
         let response = self.client_base().sender().send_message(client_id, locked_session.get_chat_id(), voiceflow_message).await?;
 
-        println!("\n{:?}\n", &response);
-
         // Retrieve the last message sent by the bot from the response
         let bot_last_message = get_last_sent_message(&response);
 

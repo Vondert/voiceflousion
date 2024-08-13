@@ -69,9 +69,9 @@ impl TelegramClient {
     /// # Returns
     ///
     /// A `VoiceflousionResult` containing a vector of `H::SenderResponder` or a `VoiceflousionError` if the request fails.
-    async fn switch_carousel_card(&self, locked_session: &LockedSession<'_>,  carousel: &VoiceflowCarousel,  message_id: &String, index: usize, interaction_time: i64) -> VoiceflousionResult<TelegramResponder> {
+    async fn switch_carousel_card(&self, locked_session: &LockedSession<'_>,  carousel: &VoiceflowCarousel,  message_id: &String, direction: bool, interaction_time: i64) -> VoiceflousionResult<TelegramResponder> {
         locked_session.set_last_interaction(Some(interaction_time));
-        self.client_base.sender().update_carousel(carousel, index, locked_session.get_chat_id(), message_id).await
+        self.client_base.sender().update_carousel(carousel, direction, locked_session.get_chat_id(), message_id).await
     }
 }
 
@@ -160,8 +160,8 @@ impl Client for TelegramClient{
             let binding = locked_session.previous_message().await;
             let previous_message = binding.deref().as_ref().expect("No buttons to handle in previous message!");
             if let VoiceflowBlock::Carousel(carousel) = previous_message.block() {
-                if let Some(index) = update.carousel_card_index() {
-                    return Ok(vec![self.switch_carousel_card(locked_session, carousel, previous_message.id(), index, interaction_time).await?]);
+                if let Some(carousel_direction) = update.carousel_card_index() {
+                    return Ok(vec![self.switch_carousel_card(locked_session, carousel, previous_message.id(), carousel_direction, interaction_time).await?]);
                 }
             }
         }

@@ -14,8 +14,8 @@ pub struct TelegramUpdate {
     update_base: UpdateBase,
     /// The message ID.
     message_id: String,
-    /// The optional carousel card index.
-    carousel_card_index: Option<usize>,
+    /// The optional carousel switch direction.
+    carousel_direction: Option<bool>,
 }
 
 impl TelegramUpdate {
@@ -42,13 +42,13 @@ impl TelegramUpdate {
     /// use voiceflousion::integrations::telegram::TelegramUpdate;
     ///
     /// let interaction_type = InteractionType::new("message".to_string(), None);
-    /// let update = TelegramUpdate::new("chat_id".to_string(), "message_id".to_string(), 1627554661, interaction_type, "update_id".to_string(), Some(0));
+    /// let update = TelegramUpdate::new("chat_id".to_string(), "message_id".to_string(), 1627554661, interaction_type, "update_id".to_string(), Some(true));
     /// ```
-    pub fn new(chat_id: String, message_id: String, interaction_time: i64, interaction_type: InteractionType, update_id: String, carousel_card_index: Option<usize>) -> Self {
+    pub fn new(chat_id: String, message_id: String, interaction_time: i64, interaction_type: InteractionType, update_id: String, carousel_direction: Option<bool>) -> Self {
         Self {
             update_base: UpdateBase::new(chat_id, interaction_time, interaction_type, update_id),
             message_id,
-            carousel_card_index,
+            carousel_direction,
         }
     }
 
@@ -66,11 +66,11 @@ impl TelegramUpdate {
     /// use voiceflousion::integrations::telegram::TelegramUpdate;
     ///
     /// let interaction_type = InteractionType::new("message".to_string(), None);
-    /// let update = TelegramUpdate::new("chat_id".to_string(), "message_id".to_string(), 1627554661, interaction_type, "update_id".to_string(), Some(0));
+    /// let update = TelegramUpdate::new("chat_id".to_string(), "message_id".to_string(), 1627554661, interaction_type, "update_id".to_string(), Some(true));
     /// let index = update.carousel_card_index();
     /// ```
-    pub fn carousel_card_index(&self) -> Option<usize> {
-        self.carousel_card_index
+    pub fn carousel_card_index(&self) -> Option<bool> {
+        self.carousel_direction
     }
 
     /// Returns the message ID.
@@ -87,7 +87,7 @@ impl TelegramUpdate {
     /// use voiceflousion::integrations::telegram::TelegramUpdate;
     ///
     /// let interaction_type = InteractionType::new("message".to_string(), None);
-    /// let update = TelegramUpdate::new("chat_id".to_string(), "message_id".to_string(), 1627554661, interaction_type, "update_id".to_string(), Some(0));
+    /// let update = TelegramUpdate::new("chat_id".to_string(), "message_id".to_string(), 1627554661, interaction_type, "update_id".to_string(), Some(true));
     /// let message_id = update.message_id();
     /// ```
     pub fn message_id(&self) -> &String {
@@ -183,15 +183,15 @@ impl Update for TelegramUpdate {
             None
         };
 
-        let mut carousel_card_index = None;
+        let mut carousel_direction = None;
 
         // Extract the carousel card index and path from the callback data if present
         if !is_message {
             let data = callback_data.as_mut().unwrap().as_object_mut();
             if let Some(mut_data) = data{
-                carousel_card_index = mut_data.remove("telegram_carousel_card_index")
+                carousel_direction = mut_data.remove("direction")
                     .and_then(|value_index| value_index.as_str().map(|s| s.to_string()))
-                    .and_then(|index| index.parse::<usize>().ok());
+                    .and_then(|index| index.parse::<bool>().ok());
             }
         }
 
@@ -205,7 +205,7 @@ impl Update for TelegramUpdate {
             interaction_time,
             interaction_type,
             update_id,
-            carousel_card_index,
+            carousel_direction,
         ))
     }
 }

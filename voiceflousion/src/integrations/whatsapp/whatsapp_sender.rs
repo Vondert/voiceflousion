@@ -111,7 +111,7 @@ impl Sender for WhatsAppSender{
         let api_url = format!("{}{}/messages", WhatsAppSender::WHATSAPP_API_URL, client_id);
 
         // Convert VoiceflowButtons to WhatsApp list rows
-        let interactive_rows: Vec<Value> = buttons_to_list_rows(&buttons);
+        let interactive_rows: Vec<Value> = buttons_to_list_rows(&buttons, buttons.mark());
 
         // Create the JSON body of the request containing chat_id and buttons
         let body = match &buttons.option() {
@@ -162,7 +162,7 @@ impl Sender for WhatsAppSender{
 
         // Convert VoiceflowButtons to WhatsApp list rows
         let mut interactive_rows: Vec<Value> = if let Some(buttons) = card.buttons() {
-            buttons_to_list_rows(buttons)
+            buttons_to_list_rows(buttons, buttons.mark())
             //buttons_to_keyboard(buttons)
         } else {
             vec![]
@@ -271,11 +271,10 @@ impl Sender for WhatsAppSender{
     }
 }
 
-fn buttons_to_list_rows(buttons: &VoiceflowButtons) -> Vec<Value> {
-    let mark = buttons.mark();
+fn buttons_to_list_rows(buttons: &VoiceflowButtons, buttons_mark: i64) -> Vec<Value> {
     buttons.iter().map(|b| {
         let mut callback_data = b.payload().as_object().cloned().unwrap_or_else(Map::new);
-        callback_data.insert("mark".to_string(), Value::from(mark));
+        callback_data.insert("mark".to_string(), Value::from(buttons_mark));
 
         // Convert callback_data to a JSON string
         let callback_data_string = serde_json::to_string(&callback_data).unwrap_or_else(|_| "".to_string());

@@ -78,19 +78,21 @@ impl TelegramSender {
     ///     let sender = TelegramSender::new(10, "api_key".to_string(), None);
     ///     let chat_id = String::new();
     ///     let message_id = String::new();
-    ///     let response = sender.update_carousel(&carousel, 0, &chat_id, &message_id).await;
+    ///     let response = sender.update_carousel(&carousel, true, &chat_id, &message_id).await;
     ///     println!("{:?}", response);
     /// }
     /// ```
-    pub async fn update_carousel(&self, carousel: &VoiceflowCarousel, index: usize, chat_id: &String, message_id: &String) -> VoiceflousionResult<TelegramResponder> {
+    pub async fn update_carousel(&self, carousel: &VoiceflowCarousel, direction: bool, chat_id: &String, message_id: &String) -> VoiceflousionResult<TelegramResponder> {
         // Form the API URL for editing the message media via Telegram API
         let api_url = format!("{}{}/editMessageMedia", TelegramSender::TELEGRAM_API_URL, &self.api_key());
 
-        // Get the card at the specified index, returning an error if the index is out of bounds
-        let card = carousel.get(index).ok_or_else(|| VoiceflousionError::ClientRequestInvalidBodyError(
-            "TelegramSender update_carousel".to_string(),
-            format!("Provided card index {} is out of bounds of {} length", index, carousel.len()),
-        ))?;
+        // // Get the card at the specified index, returning an error if the index is out of bounds
+        // let card = carousel.get(index).ok_or_else(|| VoiceflousionError::ClientRequestInvalidBodyError(
+        //     "TelegramSender update_carousel".to_string(),
+        //     format!("Provided card index {} is out of bounds of {} length", index, carousel.len()),
+        // ))?;
+
+        let (card, index) = carousel.shift_and_get_card(direction)?;
 
         // Convert the buttons from the card to the inline keyboard format
         let mut inline_keyboard: Vec<Vec<Value>> = if let Some(buttons) = card.buttons() {
@@ -104,15 +106,13 @@ impl TelegramSender {
         let mut switch_buttons: Vec<Value> = Vec::new();
         if index > 0 {
             let carousel_prev = json!({
-                "telegram_carousel_card_index": format!("{}", index - 1),
-                "path": format!("path-t-carousel-{}", index - 1)
+                "direction": format!("{}", false)
             });
             switch_buttons.push(json!({ "text": "<--", "callback_data":  carousel_prev.to_string()}));
         }
         if index < carousel.len() - 1 {
             let carousel_next = json!({
-                "telegram_carousel_card_index": format!("{}", index + 1),
-                "path": format!("path-t-carousel-{}", index + 1)
+                "direction": format!("{}", true)
             });
             switch_buttons.push(json!({ "text": "-->", "callback_data": carousel_next.to_string() }));
         }
@@ -300,12 +300,12 @@ impl Sender for TelegramSender{
     /// use voiceflousion::core::traits::Sender;
     /// use voiceflousion::core::voiceflow::dialog_blocks::enums::VoiceflowButtonActionType;
     /// use voiceflousion::core::voiceflow::dialog_blocks::{VoiceflowButton, VoiceflowButtons};
+    ///     use serde_json::Value;
     /// use tokio;
     ///
     /// #[tokio::main]
     /// async fn main() -> () {
-    ///     use serde_json::Value;
-    /// let sender = TelegramSender::new(10, "api_key".to_string(), None);
+    ///     let sender = TelegramSender::new(10, "api_key".to_string(), None);
     ///     let chat_id = String::new();
     ///     let client_id = String::new();
     ///     let buttons = vec![VoiceflowButton::new("Click me".to_string(), VoiceflowButtonActionType::Path, Value::Null)];
@@ -450,12 +450,12 @@ impl Sender for TelegramSender{
     /// use voiceflousion::integrations::telegram::TelegramSender;
     /// use voiceflousion::core::voiceflow::dialog_blocks::{VoiceflowCard, VoiceflowCarousel};
     /// use voiceflousion::core::traits::Sender;
+    /// use serde_json::Value::String;
     /// use tokio;
     ///
     /// #[tokio::main]
     /// async fn main() -> () {
-    ///     use serde_json::Value::String;
-    /// let cards = vec![VoiceflowCard::new(Some("https://example.com/image.jpg".to_string()), Some("Title".to_string()), Some("Description".to_string()), None)];
+    ///     let cards = vec![VoiceflowCard::new(Some("https://example.com/image.jpg".to_string()), Some("Title".to_string()), Some("Description".to_string()), None)];
     ///     let carousel = VoiceflowCarousel::new(cards, true);
     ///     let sender = TelegramSender::new(10, "api_key".to_string(), None);
     ///     let chat_id = String::new();
@@ -474,9 +474,8 @@ impl Sender for TelegramSender{
         // Form the API URL for sending the carousel via Telegram API
         let api_url = format!("{}{}/sendPhoto", TelegramSender::TELEGRAM_API_URL, self.api_key());
 
-        // Get the first card from the carousel
-        let card = carousel.get(0)
-            .ok_or_else(|| VoiceflousionError::ClientRequestInvalidBodyError("TelegramSender send_carousel".to_string(), format!("Provided card index {} is out of bounds of {} length", 0, carousel.len())))?;
+        // Get the first card and index from the carousel
+        let (card, index) = carousel.get_selected_card()?;
 
         // Extract the title and description from the card
         let title = card.title().clone().unwrap_or(String::new());
@@ -491,12 +490,17 @@ impl Sender for TelegramSender{
 
         // Add navigation buttons for the carousel if there are multiple cards
         let mut switch_buttons: Vec<Value> = Vec::new();
-        if carousel.len() > 1 {
-            let carousel_next = json!({
-                "telegram_carousel_card_index": "1",
-                "path": "path-t-carousel-1"
+        if index > 0 {
+            let carousel_prev = json!({
+                "direction": format!("{}", false)
             });
-            switch_buttons.push(json!({ "text": "-->", "callback_data": carousel_next.to_string()}));
+            switch_buttons.push(json!({ "text": "<--", "callback_data":  carousel_prev.to_string()}));
+        }
+        if index < carousel.len() - 1 {
+            let carousel_next = json!({
+                "direction": format!("{}", true)
+            });
+            switch_buttons.push(json!({ "text": "-->", "callback_data": carousel_next.to_string() }));
         }
         inline_keyboard.push(switch_buttons);
 

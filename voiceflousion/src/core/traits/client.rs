@@ -162,7 +162,7 @@ pub trait Client: Sync + Send {
     /// # Returns
     ///
     /// A `VoiceflousionResult` containing a vector of `SenderResponder` or a `VoiceflousionError` if the request fails.
-    async fn choose_button_in_voiceflow_dialog(&self, locked_session: &LockedSession,  interaction_time: i64, button_path: &String, state: Option<State>, payload: &Value) -> VoiceflousionResult<Vec<<Self::ClientSender<'_> as Sender>::SenderResponder>> {
+    async fn choose_button_in_voiceflow_dialog(&self, locked_session: &LockedSession,  interaction_time: i64, state: Option<State>, payload: &Value) -> VoiceflousionResult<Vec<<Self::ClientSender<'_> as Sender>::SenderResponder>> {
         // Set the last interaction time for the session
         locked_session.set_last_interaction(Some(interaction_time));
 
@@ -170,7 +170,7 @@ pub trait Client: Sync + Send {
         let voiceflow_session = locked_session.voiceflow_session();
 
         // Send the button data to the Voiceflow client
-        let mut voiceflow_message = self.client_base().voiceflow_client().choose_button(voiceflow_session, state, button_path, payload.clone()).await;
+        let mut voiceflow_message = self.client_base().voiceflow_client().choose_button(voiceflow_session, state, payload.clone()).await;
 
         // If the Voiceflow message indicates the end of the block, clear the last interaction time to make session invalid
         if voiceflow_message.trim_end_block() {
@@ -181,6 +181,8 @@ pub trait Client: Sync + Send {
 
         // Send the Voiceflow message to the client and get the response
         let response = self.client_base().sender().send_message(client_id, locked_session.get_chat_id(), voiceflow_message).await?;
+
+        println!("\n{:?}\n", &response);
 
         // Retrieve the last message sent by the bot from the response
         let bot_last_message = get_last_sent_message(&response);
@@ -229,9 +231,9 @@ pub trait Client: Sync + Send {
             // Handle the interaction based on its type
             match update.interaction_type() {
                 // If it is a button press
-                InteractionType::Button(button_path, payload) => {
+                InteractionType::Button(payload) => {
                     // Handle the button interaction
-                    self.handle_button_interaction(&locked_session, interaction_time, button_path, update_state, &update, payload).await
+                    self.handle_button_interaction(&locked_session, interaction_time, update_state, &update, payload).await
                 },
                 // If it is a text message or an undefined interaction
                 InteractionType::Text(message) | InteractionType::Undefined(message) => {
@@ -272,7 +274,7 @@ pub trait Client: Sync + Send {
     /// # Returns
     ///
     /// A `VoiceflousionResult` containing a vector of `SenderResponder` or a `VoiceflousionError` if the request fails.
-    async fn handle_button_interaction(&self, locked_session: &LockedSession<'_>, interaction_time: i64, button_path: &String, update_state: Option<State>, update: &Self::ClientUpdate<'_>, payload: &Value) -> VoiceflousionResult<Vec<<Self::ClientSender<'_> as Sender>::SenderResponder>>;
+    async fn handle_button_interaction(&self, locked_session: &LockedSession<'_>, interaction_time: i64, update_state: Option<State>, update: &Self::ClientUpdate<'_>, payload: &Value) -> VoiceflousionResult<Vec<<Self::ClientSender<'_> as Sender>::SenderResponder>>;
 }
 
 /// Retrieves the last sent message from the response.

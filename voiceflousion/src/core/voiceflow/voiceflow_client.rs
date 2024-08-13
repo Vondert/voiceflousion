@@ -333,13 +333,14 @@ impl VoiceflowClient {
     ///     let vf_client = Arc::new(VoiceflowClient::new("vf_api_key".to_string(), "bot_id".to_string(), "version_id".to_string(), 10, None));
     ///     let state = State::default();
     ///
-    ///     let response = vf_client.choose_button(&session, Some(state), &"button_path".to_string(), Value::Null).await;
+    ///     let response = vf_client.choose_button(&session, Some(state), Value::Null).await;
     ///
     ///     Ok(())
     /// }
     /// ```
-    pub async fn choose_button(&self, session: &VoiceflowSession, state: Option<State>, button_path: &String, payload: Value) -> VoiceflowMessage {
-        let action = ActionBuilder::new(ActionType::Path(button_path.clone())).path(payload).build();
+    pub async fn choose_button(&self, session: &VoiceflowSession, state: Option<State>, mut payload: Value) -> VoiceflowMessage {
+        let path = payload.as_object_mut().unwrap().remove("path").expect("Button has no path!").as_str().unwrap().to_string();
+        let action = ActionBuilder::new(ActionType::Path(path.to_string())).path(payload).build();
         let body = VoiceflowRequestBodyBuilder::new(action).session(Some(session)).state(state).build();
         self.send_stream_request(body).await
     }

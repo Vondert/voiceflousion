@@ -8,7 +8,7 @@ pub enum InteractionType {
     /// Represents a text interaction.
     Text(String),
     /// Represents a button interaction with the associated path and payload.
-    Button(String, Value),
+    Button(Value),
     /// Represents an undefined interaction.
     Undefined(String),
 }
@@ -31,12 +31,12 @@ impl InteractionType {
     /// ```
     /// use voiceflousion::core::subtypes::InteractionType;
     ///
-    /// let interaction = InteractionType::new("message".to_string(), Some("path".to_string()), Some(serde_json::json!({"key": "value"})));
-    /// let interaction = InteractionType::new("message".to_string(), None, None);
+    /// let interaction = InteractionType::new("message".to_string(), Some(serde_json::json!({"key": "value"})));
+    /// let interaction = InteractionType::new("message".to_string(), None);
     /// ```
-    pub fn new(message: String, button_path: Option<String>, button_payload: Option<Value>) -> Self {
-        match (button_path, button_payload) {
-            (Some(path), Some(payload)) => InteractionType::Button(path, payload),
+    pub fn new(message: String, button_payload: Option<Value>) -> Self {
+        match button_payload {
+            Some(payload) => InteractionType::Button(payload),
             _ => InteractionType::Text(message),
         }
     }

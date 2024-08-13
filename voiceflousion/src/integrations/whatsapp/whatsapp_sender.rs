@@ -1,6 +1,6 @@
 use std::ops::Deref;
 use async_trait::async_trait;
-use serde_json::{json, Map, Value};
+use serde_json::{json, Map, Number, Value};
 use crate::core::base_structs::SenderBase;
 use crate::core::subtypes::HttpClient;
 use crate::core::traits::{Responder, Sender};
@@ -272,9 +272,10 @@ impl Sender for WhatsAppSender{
 }
 
 fn buttons_to_list_rows(buttons: &VoiceflowButtons) -> Vec<Value> {
+    let mark = buttons.mark();
     buttons.iter().map(|b| {
         let mut callback_data = b.payload().as_object().cloned().unwrap_or_else(Map::new);
-        callback_data.insert("path".to_string(), Value::String(b.path().clone()));
+        callback_data.insert("mark".to_string(), Value::from(mark));
 
         // Convert callback_data to a JSON string
         let callback_data_string = serde_json::to_string(&callback_data).unwrap_or_else(|_| "".to_string());

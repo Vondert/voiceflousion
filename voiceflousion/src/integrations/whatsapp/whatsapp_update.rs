@@ -10,6 +10,8 @@ use crate::integrations::telegram::TelegramUpdate;
 pub struct WhatsAppUpdate{
     /// The base structure that provides core functionalities.
     update_base: UpdateBase,
+    ///
+    interaction_mark: i64,
 }
 
 impl Deref for WhatsAppUpdate {
@@ -22,15 +24,19 @@ impl Deref for WhatsAppUpdate {
 
 
 impl WhatsAppUpdate{
-    pub fn new(chat_id: String, interaction_time: i64, interaction_type: InteractionType, update_id: String) -> Self {
+    pub fn new(chat_id: String, interaction_time: i64, interaction_type: InteractionType, update_id: String, interaction_mark: i64) -> Self {
         Self {
             update_base: UpdateBase::new(chat_id, interaction_time, interaction_type, update_id),
+            interaction_mark
         }
     }
+
+    pub fn mark(&self) -> i64{ self.interaction_mark}
 }
 
 impl Update for WhatsAppUpdate{
     fn from_request_body(body: Value) -> VoiceflousionResult<Self> {
+
         let entry = body.get("entry")
             .and_then(|entry_value| entry_value.as_array())
             .and_then(|entry_array| entry_array.first())
@@ -67,16 +73,12 @@ impl Update for WhatsAppUpdate{
         let message_type = message["type"].as_str()
             .ok_or_else(|| VoiceflousionError::ClientUpdateConvertationError("WhatsAppUpdate update type".to_string(), message.clone()))?;
 
-        let is_message = if message_type == "text"{
-            true
-        }
-        else{
-            false
-        };
+        let is_message = message_type != "interactive";
 
         let mut text: String = String::new();
-        let mut path = None;
         let mut callback_data = None;
+        let mut interaction_mark = interaction_time;
+
 
         if is_message{
             text = message["text"].get("body")
@@ -107,19 +109,22 @@ impl Update for WhatsAppUpdate{
                 .map_err(|_error| VoiceflousionError::ClientUpdateConvertationError("WhatsAppUpdate callback data must be a valid JSON string".to_string(), interactive_reply.clone()))?;
 
             if let Some(mut_data) = deserialized_data.as_object_mut(){
-                path = mut_data.remove("path")
-                    .and_then(|value_path| value_path.as_str().map(|s| s.to_string()));
+                if let Some(mark) = mut_data.remove("mark").and_then(|value_mark| value_mark.as_i64()){
+                    interaction_mark = mark;
+                }
             }
+
             callback_data = Some(deserialized_data);
         }
 
-        let interaction_type = InteractionType::new(text, path, callback_data);
+        let interaction_type = InteractionType::new(text, callback_data);
 
         Ok(Self::new(
             chat_id,
             interaction_time,
             interaction_type,
-            update_id
+            update_id,
+            interaction_mark
         ))
     }
 }

@@ -1,4 +1,5 @@
 use std::ops::Deref;
+use chrono::Utc;
 use serde_json::Value;
 use crate::core::voiceflow::dialog_blocks::enums::VoiceflowButtonsOption;
 use crate::core::voiceflow::dialog_blocks::traits::FromValue;
@@ -16,6 +17,8 @@ pub struct VoiceflowButtons {
 
     /// The list of buttons.
     buttons: Vec<VoiceflowButton>,
+
+    mark_timestamp: i64,
 }
 impl VoiceflowButtons{
     /// Creates a new `VoiceflowButtons` instance.
@@ -41,6 +44,7 @@ impl VoiceflowButtons{
     pub fn new(buttons: Vec<VoiceflowButton>) -> Self {
         Self {
             buttons,
+            mark_timestamp: Utc::now().timestamp(),
             option: VoiceflowButtonsOption::Text(VoiceflowText::new(String::from("Voiceflousion placeholder button's text"))),
         }
     }
@@ -66,6 +70,8 @@ impl VoiceflowButtons{
     pub fn option(&self) -> &VoiceflowButtonsOption {
         &self.option
     }
+
+    pub fn mark(&self) -> i64 {self.mark_timestamp}
 
     /// Sets the buttons option.
     ///
@@ -125,6 +131,7 @@ impl FromValue for VoiceflowButtons{
         if buttons.is_empty(){
             return Ok(None)
         }
+
        Ok(Some(Self::new(buttons)))
     }
 }

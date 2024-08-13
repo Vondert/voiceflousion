@@ -308,7 +308,7 @@ impl Sender for TelegramSender{
     /// let sender = TelegramSender::new(10, "api_key".to_string(), None);
     ///     let chat_id = String::new();
     ///     let client_id = String::new();
-    ///     let buttons = vec![VoiceflowButton::new("Click me".to_string(), "/path".to_string(), VoiceflowButtonActionType::Path, Value::Null)];
+    ///     let buttons = vec![VoiceflowButton::new("Click me".to_string(), VoiceflowButtonActionType::Path, Value::Null)];
     ///     let voiceflow_buttons = VoiceflowButtons::new(buttons);
     ///     let response = sender.send_buttons(&client_id, voiceflow_buttons, &chat_id).await;
     ///     println!("{:?}", response);
@@ -544,10 +544,7 @@ fn buttons_to_keyboard(buttons: &VoiceflowButtons) -> Vec<Vec<Value>>{
     //println!("{:?}", buttons);
     // Map each button to a JSON value based on its action type
     buttons.iter().map(|b| {
-        let mut callback_data = b.payload().as_object().cloned().unwrap_or_else(Map::new);
-        callback_data.insert("path".to_string(), Value::String(b.path().clone()));
-        let callback_data = Value::Object(callback_data);
-
+        let callback_data = b.payload();
         match &b.action_type() {
             VoiceflowButtonActionType::OpenUrl(url) => {
                 let url = if url.is_empty(){

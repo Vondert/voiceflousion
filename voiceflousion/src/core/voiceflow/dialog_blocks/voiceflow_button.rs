@@ -1,4 +1,4 @@
-use serde_json::{Map, Value};
+use serde_json::{json, Map, Value};
 use crate::core::voiceflow::dialog_blocks::enums::VoiceflowButtonActionType;
 use crate::core::voiceflow::dialog_blocks::traits::FromValue;
 use crate::errors::{VoiceflousionError, VoiceflousionResult};
@@ -10,8 +10,6 @@ use crate::errors::{VoiceflousionError, VoiceflousionResult};
 pub struct VoiceflowButton {
     /// The action type of the button.
     action_type: VoiceflowButtonActionType,
-    /// The path associated with the button.
-    path: String,
     /// The name of the button.
     name: String,
     /// The payload associated with the button.
@@ -39,12 +37,11 @@ impl VoiceflowButton {
     /// use voiceflousion::core::voiceflow::dialog_blocks::enums::VoiceflowButtonActionType;
     /// use voiceflousion::core::voiceflow::dialog_blocks::VoiceflowButton;
     ///
-    /// let button = VoiceflowButton::new("Button 1".to_string(), "/path".to_string(), VoiceflowButtonActionType::Path, Value::Null);
+    /// let button = VoiceflowButton::new("Button 1".to_string(), VoiceflowButtonActionType::Path, Value::Null);
     /// ```
-    pub fn new(name: String, path: String, action_type: VoiceflowButtonActionType, payload: Value) -> Self {
+    pub fn new(name: String, action_type: VoiceflowButtonActionType, payload: Value) -> Self {
         Self {
             name,
-            path,
             action_type,
             payload
         }
@@ -63,7 +60,7 @@ impl VoiceflowButton {
     /// use voiceflousion::core::voiceflow::dialog_blocks::enums::VoiceflowButtonActionType;
     /// use voiceflousion::core::voiceflow::dialog_blocks::VoiceflowButton;
     ///
-    /// let button = VoiceflowButton::new("Button 1".to_string(), "/path".to_string(), VoiceflowButtonActionType::Path, Value::Null);
+    /// let button = VoiceflowButton::new("Button 1".to_string(), VoiceflowButtonActionType::Path, Value::Null);
     ///
     /// let action_type = button.action_type();
     /// ```
@@ -84,33 +81,12 @@ impl VoiceflowButton {
     /// use voiceflousion::core::voiceflow::dialog_blocks::enums::VoiceflowButtonActionType;
     /// use voiceflousion::core::voiceflow::dialog_blocks::VoiceflowButton;
     ///
-    /// let button = VoiceflowButton::new("Button 1".to_string(), "/path".to_string(), VoiceflowButtonActionType::Path, Value::Null);
+    /// let button = VoiceflowButton::new("Button 1".to_string(), VoiceflowButtonActionType::Path, Value::Null);
     ///
     /// let name = button.name();
     /// ```
     pub fn name(&self) -> &String {
         &self.name
-    }
-
-    /// Returns a reference to the path of the button.
-    ///
-    /// # Returns
-    ///
-    /// A reference to the path string.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// use serde_json::Value;
-    /// use voiceflousion::core::voiceflow::dialog_blocks::enums::VoiceflowButtonActionType;
-    /// use voiceflousion::core::voiceflow::dialog_blocks::VoiceflowButton;
-    ///
-    /// let button = VoiceflowButton::new("Button 1".to_string(), "/path".to_string(), VoiceflowButtonActionType::Path, Value::Null);
-    ///
-    /// let path = button.path();
-    /// ```
-    pub fn path(&self) -> &String {
-        &self.path
     }
 
     pub fn payload(&self) -> &Value{
@@ -147,7 +123,9 @@ impl FromValue for VoiceflowButton{
         let request_payload = request.get("payload")
             .ok_or_else(|| VoiceflousionError::VoiceflowBlockConvertationError(("VoiceflowButton button payload".to_string(), value.clone())))?;
 
-        let payload = extract_payload(request_payload);
+        let mut payload = extract_payload(request_payload);
+
+        payload.as_object_mut().unwrap().insert("path".to_string(), json!(path));
 
 
         let option_actions = match request_payload.get("actions"){
@@ -179,7 +157,9 @@ impl FromValue for VoiceflowButton{
             }
         }
 
-        Ok(Some(Self::new(name, path, action_type, payload)))
+
+
+        Ok(Some(Self::new(name, action_type, payload)))
     }
 }
 

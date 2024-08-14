@@ -7,7 +7,6 @@ use serde_json::Value;
 use crate::core::base_structs::ResponderBase;
 use crate::core::traits::Responder;
 use crate::core::voiceflow::VoiceflowBlock;
-use crate::errors::VoiceflousionError::VoiceflowRequestError;
 use crate::errors::{VoiceflousionError, VoiceflousionResult};
 
 #[derive(Debug)]
@@ -29,7 +28,20 @@ impl Deref for WhatsAppResponder {
 #[async_trait]
 impl Responder for WhatsAppResponder{
     async fn from_response(response: Response, content: VoiceflowBlock) -> VoiceflousionResult<Self> {
-        let timestamp = Utc::now().timestamp();
+        let timestamp = match &content{
+            VoiceflowBlock::Buttons(buttons) => {
+                buttons.mark()
+            },
+            VoiceflowBlock::Card(card) => {
+                if let Some(buttons) = card.buttons(){
+                    buttons.mark()
+                }
+                else{
+                    Utc::now().timestamp()
+                }
+            },
+            _ => Utc::now().timestamp()
+        };
 
         let json: Value = response.json().await.map_err(|e| VoiceflousionError::ClientResponseReadingError("WhatsAppResponder".to_string(), e.to_string()))?;
 

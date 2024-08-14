@@ -1,8 +1,7 @@
 use std::ops::Deref;
 use async_trait::async_trait;
-use serde_json::{json, Map, Number, Value};
+use serde_json::{json, Map, Value};
 use crate::core::base_structs::SenderBase;
-use crate::core::subtypes::HttpClient;
 use crate::core::traits::{Responder, Sender};
 use crate::core::voiceflow::dialog_blocks::{VoiceflowButtons, VoiceflowCard, VoiceflowCarousel, VoiceflowImage, VoiceflowText};
 use crate::core::voiceflow::dialog_blocks::enums::{VoiceflowButtonActionType, VoiceflowButtonsOption};
@@ -279,10 +278,17 @@ fn buttons_to_list_rows(buttons: &VoiceflowButtons, buttons_mark: i64) -> Vec<Va
         // Convert callback_data to a JSON string
         let callback_data_string = serde_json::to_string(&callback_data).unwrap_or_else(|_| "".to_string());
 
+        let description = if let VoiceflowButtonActionType::OpenUrl(url) =  &b.action_type(){
+            url.clone()
+        }else{
+            String::new()
+        };
+
         json!({
             "id": callback_data_string,
             "title": b.name(),
-            "description": ""
+            "description": description
         })
+
     }).collect()
 }

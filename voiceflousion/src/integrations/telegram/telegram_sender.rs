@@ -1,8 +1,8 @@
 use std::ops::Deref;
 use async_trait::async_trait;
-use serde_json::{json, Map, Value};
+use chrono::Utc;
+use serde_json::{json, Value};
 use crate::core::base_structs::SenderBase;
-use crate::core::subtypes::HttpClient;
 use crate::integrations::telegram::TelegramResponder;
 use crate::core::traits::{Responder, Sender};
 use crate::core::voiceflow::VoiceflowBlock;
@@ -55,7 +55,7 @@ impl TelegramSender {
     /// # Parameters
     ///
     /// * `carousel` - The carousel to update.
-    /// * `index` - The index of the card to display.
+    /// * `direction` - The direction to navigate within the carousel (true for next, false for previous).
     /// * `chat_id` - The chat ID of the recipient.
     /// * `message_id` - The ID of the message to update.
     ///
@@ -86,37 +86,14 @@ impl TelegramSender {
         // Form the API URL for editing the message media via Telegram API
         let api_url = format!("{}{}/editMessageMedia", TelegramSender::TELEGRAM_API_URL, &self.api_key());
 
-        // // Get the card at the specified index, returning an error if the index is out of bounds
-        // let card = carousel.get(index).ok_or_else(|| VoiceflousionError::ClientRequestInvalidBodyError(
-        //     "TelegramSender update_carousel".to_string(),
-        //     format!("Provided card index {} is out of bounds of {} length", index, carousel.len()),
-        // ))?;
+        // Get the current timestamp to record when the card is selected
+        let timestamp = Utc::now().timestamp();
 
-        let (card, index) = carousel.shift_and_get_card(direction)?;
+        // Retrieve the next card in the carousel based on the direction
+        let (card, index) = carousel.get_next_card(direction)?;
 
         // Convert the buttons from the card to the inline keyboard format
-        let mut inline_keyboard: Vec<Vec<Value>> = if let Some(buttons) = card.buttons() {
-            buttons_to_keyboard(buttons)
-        } else {
-            vec![]
-        };
-
-
-        // Add navigation buttons for the carousel
-        let mut switch_buttons: Vec<Value> = Vec::new();
-        if index > 0 {
-            let carousel_prev = json!({
-                "direction": format!("{}", false)
-            });
-            switch_buttons.push(json!({ "text": "<--", "callback_data":  carousel_prev.to_string()}));
-        }
-        if index < carousel.len() - 1 {
-            let carousel_next = json!({
-                "direction": format!("{}", true)
-            });
-            switch_buttons.push(json!({ "text": "-->", "callback_data": carousel_next.to_string() }));
-        }
-        inline_keyboard.push(switch_buttons);
+        let inline_keyboard: Vec<Vec<Value>> = carousel_card_buttons_to_keyboard(card, index, carousel.len());
 
         // Extract the title and description from the card
         let title = card.title().clone().unwrap_or(String::new());
@@ -142,6 +119,10 @@ impl TelegramSender {
 
         // Check if the response status is successful
         if response.status().is_success() {
+            // If the response is successful, update the carousel's selected card
+            // with the new index and timestamp to reflect the change
+            carousel.set_selected_card(index, timestamp);
+
             // Convert the response to a TelegramResponder
             TelegramResponder::from_response(response, VoiceflowBlock::Card(card.clone())).await
         } else {
@@ -153,7 +134,7 @@ impl TelegramSender {
 }
 
 impl Deref for TelegramSender {
-    type Target=SenderBase;
+    type Target = SenderBase;
 
     fn deref(&self) -> &Self::Target {
         &self.sender_base
@@ -450,7 +431,6 @@ impl Sender for TelegramSender{
     /// use voiceflousion::integrations::telegram::TelegramSender;
     /// use voiceflousion::core::voiceflow::dialog_blocks::{VoiceflowCard, VoiceflowCarousel};
     /// use voiceflousion::core::traits::Sender;
-    /// use serde_json::Value::String;
     /// use tokio;
     ///
     /// #[tokio::main]
@@ -482,27 +462,7 @@ impl Sender for TelegramSender{
         let description = card.description().clone().unwrap_or(String::new());
 
         // Convert the buttons from the card to the inline keyboard format
-        let mut inline_keyboard: Vec<Vec<Value>> = if let Some(buttons) = card.buttons() {
-            buttons_to_keyboard(buttons)
-        } else {
-            vec![]
-        };
-
-        // Add navigation buttons for the carousel if there are multiple cards
-        let mut switch_buttons: Vec<Value> = Vec::new();
-        if index > 0 {
-            let carousel_prev = json!({
-                "direction": format!("{}", false)
-            });
-            switch_buttons.push(json!({ "text": "<--", "callback_data":  carousel_prev.to_string()}));
-        }
-        if index < carousel.len() - 1 {
-            let carousel_next = json!({
-                "direction": format!("{}", true)
-            });
-            switch_buttons.push(json!({ "text": "-->", "callback_data": carousel_next.to_string() }));
-        }
-        inline_keyboard.push(switch_buttons);
+        let inline_keyboard: Vec<Vec<Value>> = carousel_card_buttons_to_keyboard(card, index, carousel.len());
 
         // Create the JSON body of the request based on the card's image URL
         let body = match card.image_url() {
@@ -545,13 +505,13 @@ impl Sender for TelegramSender{
 ///
 /// A vector of vectors containing the keyboard layout in JSON format.
 fn buttons_to_keyboard(buttons: &VoiceflowButtons) -> Vec<Vec<Value>>{
-    //println!("{:?}", buttons);
     // Map each button to a JSON value based on its action type
     buttons.iter().map(|b| {
         let callback_data = b.payload();
         match &b.action_type() {
             VoiceflowButtonActionType::OpenUrl(url) => {
                 let url = if url.is_empty(){
+                    // Use "empty" for buttons with no URL specified
                     "empty"
                 }
                 else{
@@ -562,4 +522,47 @@ fn buttons_to_keyboard(buttons: &VoiceflowButtons) -> Vec<Vec<Value>>{
             VoiceflowButtonActionType::Path => json!({ "text": b.name(), "callback_data": callback_data.to_string() }),
         }
     }).map(|key| vec![key]).collect()
+}
+
+/// Converts the buttons of a `VoiceflowCard` into a Telegram-compatible inline keyboard,
+/// adding navigation buttons for carousel movement.
+///
+/// This function generates an inline keyboard for a given `VoiceflowCard`, converting its
+/// buttons into a format suitable for use in Telegram's API. Additionally, it appends
+/// navigation buttons ("<--" and "-->") to allow users to move through a carousel of cards.
+/// The navigation buttons are conditionally added based on the card's position in the carousel
+/// and the total number of cards.
+///
+/// # Parameters
+///
+/// * `card` - A reference to the `VoiceflowCard` whose buttons will be converted.
+/// * `index` - The current position of the card within the carousel (0-based index).
+/// * `carousel_len` - The total number of cards in the carousel.
+///
+/// # Returns
+///
+/// A `Vec<Vec<Value>>` representing the inline keyboard structure for Telegram,
+/// including both the card's buttons and any applicable navigation buttons.
+fn carousel_card_buttons_to_keyboard(card: &VoiceflowCard, index: usize, carousel_len: usize) -> Vec<Vec<Value>>{
+    let mut inline_keyboard: Vec<Vec<Value>> = card.buttons().as_ref()
+        .map(|b| buttons_to_keyboard(b))
+        .unwrap_or_else(|| vec![]);
+
+    // Add navigation buttons for the carousel if there are multiple cards
+    let mut switch_buttons: Vec<Value> = Vec::new();
+    if index > 0 {
+        let carousel_prev = json!({
+                "direction": format!("{}", false)
+            });
+        switch_buttons.push(json!({ "text": "<--", "callback_data":  carousel_prev.to_string()}));
+    }
+    if index < carousel_len - 1 {
+        let carousel_next = json!({
+                "direction": format!("{}", true)
+            });
+        switch_buttons.push(json!({ "text": "-->", "callback_data": carousel_next.to_string() }));
+    }
+    inline_keyboard.push(switch_buttons);
+
+    inline_keyboard
 }

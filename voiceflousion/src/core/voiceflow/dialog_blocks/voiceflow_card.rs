@@ -124,8 +124,6 @@ impl VoiceflowCard {
     }
 }
 
-
-
 impl FromValue for VoiceflowCard{
     /// Attempts to convert a JSON `Value` into a `VoiceflowCard` instance.
     ///

@@ -7,7 +7,7 @@ use axum_core::response::IntoResponse;
 use axum_extra::headers::Origin;
 use serde_json::Value;
 use crate::core::base_structs::ClientsManager;
-use crate::core::traits::{Client, Update};
+use crate::core::traits::Update;
 use crate::server::subtypes::{AuthResult, QueryParams};
 use crate::server::traits::{BotHandler, ServerClient};
 

@@ -1,6 +1,5 @@
-use std::ops::Deref;
 use std::sync::Arc;
-use std::sync::atomic::{AtomicI64, AtomicU8, Ordering};
+use std::sync::atomic::{AtomicI64, AtomicUsize, Ordering};
 use chrono::Utc;
 use serde_json::Value;
 use crate::core::voiceflow::dialog_blocks::traits::FromValue;
@@ -18,7 +17,7 @@ pub struct VoiceflowCarousel {
     /// A flag indicating whether the carousel is full.
     is_full: bool,
 
-    selected_index: Arc<AtomicU8>,
+    selected_index: Arc<AtomicUsize>,
     selected_mark: Arc<AtomicI64>
 }
 
@@ -32,7 +31,7 @@ impl VoiceflowCarousel {
     ///
     /// # Returns
     ///
-    /// A new instance of `VoiceflowCarousel`.
+    /// A new instance of `VoiceflowCarousel` with the current timestamp and initial selected index set to 0.
     ///
     /// # Example
     ///
@@ -49,7 +48,7 @@ impl VoiceflowCarousel {
             cards,
             is_full,
             selected_mark: Arc::new(AtomicI64::new(timestamp)),
-            selected_index: Arc::new(AtomicU8::new(0u8))
+            selected_index: Arc::new(AtomicUsize::new(0usize))
         }
     }
 
@@ -73,6 +72,62 @@ impl VoiceflowCarousel {
         self.is_full
     }
 
+    /// Returns the number of cards in the carousel.
+    ///
+    /// # Returns
+    ///
+    /// A `usize` representing the number of cards in the carousel.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use voiceflousion::core::voiceflow::dialog_blocks::{VoiceflowCard, VoiceflowCarousel};
+    ///
+    /// let card = VoiceflowCard::new(Some("https://example.com/image.jpg".to_string()), Some("Title".to_string()), Some("Description".to_string()), None);
+    /// let cards = vec![card];
+    /// let carousel = VoiceflowCarousel::new(cards, true);
+    /// let length = carousel.len();
+    /// ```
+    pub fn len(&self) -> usize {
+        self.cards.len()
+    }
+
+    /// Returns whether the carousel contains any cards.
+    ///
+    /// # Returns
+    ///
+    /// A boolean indicating if the carousel is empty.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use voiceflousion::core::voiceflow::dialog_blocks::{VoiceflowCard, VoiceflowCarousel};
+    ///
+    /// let card = VoiceflowCard::new(Some("https://example.com/image.jpg".to_string()), Some("Title".to_string()), Some("Description".to_string()), None);
+    /// let cards = vec![card];
+    /// let carousel = VoiceflowCarousel::new(cards, true);
+    /// let is_empty = carousel.is_empty();
+    /// ```
+    pub fn is_empty(&self) -> bool {
+        self.cards.is_empty()
+    }
+
+    /// Returns the currently selected card and its index.
+    ///
+    /// # Returns
+    ///
+    /// A `VoiceflousionResult` containing a tuple with a reference to the selected `VoiceflowCard` and its index.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use voiceflousion::core::voiceflow::dialog_blocks::{VoiceflowCard, VoiceflowCarousel};
+    ///
+    /// let card = VoiceflowCard::new(Some("https://example.com/image.jpg".to_string()), Some("Title".to_string()), Some("Description".to_string()), None);
+    /// let cards = vec![card];
+    /// let carousel = VoiceflowCarousel::new(cards, true);
+    /// let (selected_card, index) = carousel.get_selected_card().unwrap();
+    /// ```
     pub fn get_selected_card(&self) -> VoiceflousionResult<(&VoiceflowCard, usize)>{
         let index = self.get_selected_index();
         let card = self.cards.get(index)
@@ -80,14 +135,69 @@ impl VoiceflowCarousel {
 
         Ok((card, index))
     }
-    pub fn get_selected_mark(&self) -> i64{
+
+    /// Returns the timestamp of when the current card was selected.
+    ///
+    /// # Returns
+    ///
+    /// An `i64` representing the timestamp of the selected card.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use voiceflousion::core::voiceflow::dialog_blocks::{VoiceflowCard, VoiceflowCarousel};
+    ///
+    /// let card = VoiceflowCard::new(Some("https://example.com/image.jpg".to_string()), Some("Title".to_string()), Some("Description".to_string()), None);
+    /// let cards = vec![card];
+    /// let carousel = VoiceflowCarousel::new(cards, true);
+    /// let timestamp = carousel.get_selected_mark();
+    /// ```
+    pub fn get_selected_mark(&self) -> i64 {
         self.selected_mark.load(Ordering::SeqCst)
     }
-    pub fn get_selected_index(&self) -> usize{
-        self.selected_index.load(Ordering::SeqCst) as usize
+
+    /// Returns the index of the currently selected card.
+    ///
+    /// # Returns
+    ///
+    /// A `usize` representing the index of the selected card.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use voiceflousion::core::voiceflow::dialog_blocks::{VoiceflowCard, VoiceflowCarousel};
+    ///
+    /// let card = VoiceflowCard::new(Some("https://example.com/image.jpg".to_string()), Some("Title".to_string()), Some("Description".to_string()), None);
+    /// let cards = vec![card];
+    /// let carousel = VoiceflowCarousel::new(cards, true);
+    /// let selected_index = carousel.get_selected_index();
+    /// ```
+    pub fn get_selected_index(&self) -> usize {
+        self.selected_index.load(Ordering::SeqCst)
     }
 
-    pub fn shift_and_get_card(&self, direction: bool) -> VoiceflousionResult<(&VoiceflowCard, usize)> {
+    /// Retrieves the next card in the carousel based on the provided direction.
+    ///
+    /// # Parameters
+    ///
+    /// * `direction` - A boolean indicating the direction of navigation. `true` for forward, `false` for backward.
+    ///
+    /// # Returns
+    ///
+    /// A `VoiceflousionResult` containing a tuple with a reference to the next `VoiceflowCard` and its index.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use voiceflousion::core::voiceflow::dialog_blocks::{VoiceflowCard, VoiceflowCarousel};
+    ///
+    /// let card1 = VoiceflowCard::new(Some("https://example.com/image1.jpg".to_string()), Some("Title1".to_string()), Some("Description1".to_string()), None);
+    /// let card2 = VoiceflowCard::new(Some("https://example.com/image2.jpg".to_string()), Some("Title2".to_string()), Some("Description2".to_string()), None);
+    /// let cards = vec![card1, card2];
+    /// let carousel = VoiceflowCarousel::new(cards, true);
+    /// let (next_card, index) = carousel.get_next_card(true).unwrap(); // Navigate forward
+    /// ```
+    pub fn get_next_card(&self, direction: bool) -> VoiceflousionResult<(&VoiceflowCard, usize)> {
         let current_index = self.get_selected_index();
         let new_index = if direction {
             if current_index < self.cards.len() - 1 {
@@ -107,17 +217,38 @@ impl VoiceflowCarousel {
         let card = self.cards.get(new_index)
             .ok_or_else(|| VoiceflousionError::ValidationError("VoiceflousionCarousel".to_string(), format!("Index {} out of bounds", new_index)))?;
 
-        self.selected_index.store(new_index as u8, Ordering::SeqCst);
-        self.selected_mark.store(Utc::now().timestamp(), Ordering::SeqCst);
-
         Ok((card, new_index))
     }
-}
-impl Deref for VoiceflowCarousel{
-    type Target = Vec<VoiceflowCard>;
 
-    fn deref(&self) -> &Self::Target {
-        &self.cards
+    /// Sets the selected card index and updates the timestamp of selection.
+    ///
+    /// # Parameters
+    ///
+    /// * `selected_index` - The index of the card to set as selected.
+    /// * `timestamp` - The timestamp to associate with the selection.
+    ///
+    /// # Panics
+    ///
+    /// This method will panic if `selected_index` is out of bounds.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use chrono::Utc;
+    /// use voiceflousion::core::voiceflow::dialog_blocks::{VoiceflowCard, VoiceflowCarousel};
+    ///
+    /// let card1 = VoiceflowCard::new(Some("https://example.com/image1.jpg".to_string()), Some("Title1".to_string()), Some("Description1".to_string()), None);
+    /// let card2 = VoiceflowCard::new(Some("https://example.com/image2.jpg".to_string()), Some("Title2".to_string()), Some("Description2".to_string()), None);
+    /// let cards = vec![card1, card2];
+    /// let carousel = VoiceflowCarousel::new(cards, true);
+    /// carousel.set_selected_card(1, Utc::now().timestamp());
+    /// ```
+    pub fn set_selected_card(&self, selected_index: usize, timestamp: i64) -> () {
+        if selected_index >= self.cards.len() {
+            panic!("Index {} is out of bounds", selected_index);
+        }
+        self.selected_index.store(selected_index, Ordering::SeqCst);
+        self.selected_mark.store(timestamp, Ordering::SeqCst);
     }
 }
 

@@ -1,7 +1,6 @@
 use std::ops::Deref;
 use async_trait::async_trait;
 use crate::core::base_structs::SenderBase;
-use crate::core::subtypes::HttpClient;
 use crate::core::traits::Responder;
 use crate::core::voiceflow::{VoiceflowBlock, VoiceflowMessage};
 use crate::core::voiceflow::dialog_blocks::{VoiceflowButtons, VoiceflowCard, VoiceflowCarousel, VoiceflowImage, VoiceflowText};
@@ -35,9 +34,6 @@ pub trait Sender: Deref<Target=SenderBase> + Send + Sync + Sized {
     ///
     /// A `VoiceflousionResult` containing a vector of `SenderResponder` or a `VoiceflousionError` if the request fails.
     async fn send_message(&self, client_id: &String, chat_id: &String, message: VoiceflowMessage) -> VoiceflousionResult<Vec<Self::SenderResponder>> {
-        // Obtain the HTTP client and API key
-        let sender_http_client = self.http_client();
-        let api_key = self.api_key();
         // Initialize a vector to store responses
         let mut responses = Vec::with_capacity(message.len());
 

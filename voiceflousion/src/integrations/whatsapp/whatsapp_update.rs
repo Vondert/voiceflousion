@@ -4,14 +4,11 @@ use crate::core::base_structs::UpdateBase;
 use crate::core::subtypes::InteractionType;
 use crate::core::traits::Update;
 use crate::errors::{VoiceflousionError, VoiceflousionResult};
-use crate::integrations::telegram::TelegramUpdate;
 
 #[derive(Debug)]
 pub struct WhatsAppUpdate{
     /// The base structure that provides core functionalities.
-    update_base: UpdateBase,
-    ///
-    interaction_mark: i64,
+    update_base: UpdateBase
 }
 
 impl Deref for WhatsAppUpdate {
@@ -24,14 +21,11 @@ impl Deref for WhatsAppUpdate {
 
 
 impl WhatsAppUpdate{
-    pub fn new(chat_id: String, interaction_time: i64, interaction_type: InteractionType, update_id: String, interaction_mark: i64) -> Self {
+    pub fn new(chat_id: String, interaction_time: i64, interaction_type: InteractionType, update_id: String) -> Self {
         Self {
-            update_base: UpdateBase::new(chat_id, interaction_time, interaction_type, update_id),
-            interaction_mark
+            update_base: UpdateBase::new(chat_id, interaction_time, interaction_type, update_id)
         }
     }
-
-    pub fn mark(&self) -> i64{ self.interaction_mark}
 }
 
 impl Update for WhatsAppUpdate{
@@ -41,11 +35,6 @@ impl Update for WhatsAppUpdate{
             .and_then(|entry_value| entry_value.as_array())
             .and_then(|entry_array| entry_array.first())
             .ok_or_else(|| VoiceflousionError::ClientUpdateConvertationError("WhatsAppUpdate entry".to_string(), body.clone()))?;
-
-        // let chat_id = entry.get("id")
-        //     .and_then(|id| id.as_str())
-        //     .map(|id| id.to_string())
-        //     .ok_or_else(|| VoiceflousionError::ClientUpdateConvertationError("WhatsAppUpdate entry id (chat id)".to_string(), entry.clone()))?;
 
         let value = entry["changes"][0].get("value")
             .ok_or_else(|| VoiceflousionError::ClientUpdateConvertationError("WhatsAppUpdate value".to_string(), entry.clone()))?;
@@ -60,7 +49,7 @@ impl Update for WhatsAppUpdate{
              .map(|from| from.to_string())
              .ok_or_else(|| VoiceflousionError::ClientUpdateConvertationError("WhatsAppUpdate message from (chat id)".to_string(), message.clone()))?;
 
-        let interaction_time = message.get("timestamp")
+        let mut interaction_time = message.get("timestamp")
             .and_then(|date| date.as_str())
             .and_then(|date_str| date_str.parse::<i64>().ok())
             .ok_or_else(|| VoiceflousionError::ClientUpdateConvertationError("WhatsAppUpdate interaction timestamp".to_string(), message.clone()))?;
@@ -77,7 +66,6 @@ impl Update for WhatsAppUpdate{
 
         let mut text: String = String::new();
         let mut callback_data = None;
-        let mut interaction_mark = interaction_time;
 
 
         if is_message{
@@ -110,7 +98,7 @@ impl Update for WhatsAppUpdate{
 
             if let Some(mut_data) = deserialized_data.as_object_mut(){
                 if let Some(mark) = mut_data.remove("mark").and_then(|value_mark| value_mark.as_i64()){
-                    interaction_mark = mark;
+                    interaction_time = mark;
                 }
             }
 
@@ -123,8 +111,7 @@ impl Update for WhatsAppUpdate{
             chat_id,
             interaction_time,
             interaction_type,
-            update_id,
-            interaction_mark
+            update_id
         ))
     }
 }

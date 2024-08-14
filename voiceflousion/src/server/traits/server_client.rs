@@ -1,7 +1,7 @@
 use axum::http::StatusCode;
 use axum::Json;
 use axum_core::response::{IntoResponse, Response};
-use serde_json::{json, Value};
+use serde_json::Value;
 use crate::core::subtypes::BotAuthToken;
 use crate::core::traits::Client;
 use crate::integrations::telegram::TelegramClient;

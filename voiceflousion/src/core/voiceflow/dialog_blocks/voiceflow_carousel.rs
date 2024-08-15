@@ -8,17 +8,29 @@ use crate::errors::{VoiceflousionError, VoiceflousionResult};
 
 /// Represents a carousel in a Voiceflow dialog.
 ///
-/// `VoiceflowCarousel` contains a list of `VoiceflowCard` instances and a flag indicating whether the carousel is full.
+/// `VoiceflowCarousel` contains a list of `VoiceflowCard` instances and a flag indicating whether the carousel has images.
+/// The carousel allows for easy navigation between cards and keeps track of the selected card's index and the timestamp when it was selected.
 #[derive(Debug, Clone)]
 pub struct VoiceflowCarousel {
     /// The list of cards in the carousel.
     cards: Vec<VoiceflowCard>,
 
-    /// A flag indicating whether the carousel is full.
-    is_full: bool,
+    /// A flag indicating whether the carousel has images.
+    ///
+    /// - `true`: All cards in the carousel have images.
+    /// - `false`: All cards in the carousel are text-only (no images).
+    /// Mixed carousels (some cards with images and others without) are not allowed and will trigger an error during initialization.
+    has_images: bool,
 
+    /// The index of the currently selected card in the carousel.
+    ///
+    /// This value is updated as the user navigates through the carousel.
     selected_index: Arc<AtomicUsize>,
-    selected_mark: Arc<AtomicI64>
+
+    /// The timestamp of when the currently selected card was accessed.
+    ///
+    /// This value helps track when the user last interacted with a specific card.
+    selected_mark: Arc<AtomicI64>,
 }
 
 impl VoiceflowCarousel {
@@ -27,7 +39,7 @@ impl VoiceflowCarousel {
     /// # Parameters
     ///
     /// * `cards` - A list of `VoiceflowCard` instances.
-    /// * `is_full` - A flag indicating whether the carousel is full.
+    /// * `has_images` - A flag indicating whether the carousel has images.
     ///
     /// # Returns
     ///
@@ -42,21 +54,21 @@ impl VoiceflowCarousel {
     /// let cards = vec![card];
     /// let carousel = VoiceflowCarousel::new(cards, true);
     /// ```
-    pub fn new(cards: Vec<VoiceflowCard>, is_full: bool) -> Self {
+    pub fn new(cards: Vec<VoiceflowCard>, has_images: bool) -> Self {
         let timestamp = Utc::now().timestamp();
         Self {
             cards,
-            is_full,
+            has_images,
             selected_mark: Arc::new(AtomicI64::new(timestamp)),
             selected_index: Arc::new(AtomicUsize::new(0usize))
         }
     }
 
-    /// Returns whether the carousel is full.
+    /// Returns whether the carousel has images.
     ///
     /// # Returns
     ///
-    /// `true` if the carousel is full, `false` otherwise.
+    /// `true` if the carousel has images, `false` otherwise.
     ///
     /// # Example
     ///
@@ -66,10 +78,10 @@ impl VoiceflowCarousel {
     /// let card = VoiceflowCard::new(Some("https://example.com/image.jpg".to_string()), Some("Title".to_string()), Some("Description".to_string()), None);
     /// let cards = vec![card];
     /// let carousel = VoiceflowCarousel::new(cards, true);
-    /// let is_full = carousel.is_full();
+    /// let has_images = carousel.has_images();
     /// ```
-    pub fn is_full(&self) -> bool {
-        self.is_full
+    pub fn has_images(&self) -> bool {
+        self.has_images
     }
 
     /// Returns the number of cards in the carousel.
@@ -279,7 +291,15 @@ impl FromValue for VoiceflowCarousel{
         if cards.is_empty(){
             return Ok(None)
         }
-        let is_full = cards.iter().all(|card| card.image_url().is_some());
-        Ok(Some(Self::new(cards, is_full)))
+
+        let has_images = cards.iter().all(|card| card.image_url().is_some());
+        let no_images = cards.iter().all(|card| card.image_url().is_none());
+
+        // Check for mixed types: some cards with images, some without
+        if !has_images && !no_images {
+            return Err(VoiceflousionError::VoiceflowBlockConvertationError(("VoiceflowCarousel cards value".to_string(), value.clone())))
+        }
+        Ok(Some(Self::new(cards, has_images)))
+
     }
 }

@@ -1,10 +1,8 @@
-use std::ops::Deref;
 use async_trait::async_trait;
 use crate::core::base_structs::ClientBase;
 use crate::core::ClientBuilder;
 use crate::core::session_wrappers::LockedSession;
 use crate::core::traits::{Client, Sender};
-use crate::core::voiceflow::State;
 use crate::errors::VoiceflousionResult;
 use crate::integrations::whatsapp::whatsapp_sender::WhatsAppSender;
 use crate::integrations::whatsapp::WhatsAppUpdate;

@@ -5,7 +5,7 @@ use crate::core::base_structs::ClientBase;
 use crate::core::session_wrappers::LockedSession;
 use crate::core::subtypes::{InteractionType, SentMessage};
 use crate::core::traits::{Responder, Sender, Update};
-use crate::core::voiceflow::{State, VoiceflowBlock};
+use crate::core::voiceflow::State;
 use crate::errors::{VoiceflousionError, VoiceflousionResult};
 
 /// The `Client` trait adds methods for launching dialogs, sending messages,

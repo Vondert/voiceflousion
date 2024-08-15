@@ -4,7 +4,7 @@ use crate::core::base_structs::ClientBase;
 use crate::core::ClientBuilder;
 use crate::core::session_wrappers::LockedSession;
 use crate::core::traits::{Client, Sender};
-use crate::core::voiceflow::{State, VoiceflowBlock};
+use crate::core::voiceflow::VoiceflowBlock;
 use crate::core::voiceflow::dialog_blocks::VoiceflowCarousel;
 use crate::errors::{VoiceflousionError, VoiceflousionResult};
 use crate::integrations::telegram::{TelegramResponder, TelegramSender, TelegramUpdate};

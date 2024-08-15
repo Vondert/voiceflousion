@@ -1,5 +1,5 @@
+use std::ops::Deref;
 use async_trait::async_trait;
-use serde_json::Value;
 use crate::core::base_structs::ClientBase;
 use crate::core::ClientBuilder;
 use crate::core::session_wrappers::LockedSession;
@@ -35,7 +35,13 @@ impl Client for WhatsAppClient {
         &self.client_base
     }
 
-    async fn handle_button_interaction(&self, locked_session: &LockedSession<'_>, interaction_time: i64, update_state: Option<State>, update: &Self::ClientUpdate<'_>, payload: &Value) -> VoiceflousionResult<Vec<<Self::ClientSender<'_> as Sender>::SenderResponder>> {
-        self.choose_button_in_voiceflow_dialog(locked_session, interaction_time, update_state, payload).await
+    async fn handle_button_interaction(&self, locked_session: &LockedSession<'_>, interaction_time: i64, update_state: Option<State>, update: &Self::ClientUpdate<'_>, button_index: i64) -> VoiceflousionResult<Vec<<Self::ClientSender<'_> as Sender>::SenderResponder>> {
+        let payload = {
+            let button_index = button_index as usize;
+            let binding = locked_session.previous_message().await;
+            let previous_message = binding.deref().as_ref().expect("No buttons to handle in previous message!");
+            previous_message.get_button_payload(button_index)?
+        };
+        self.choose_button_in_voiceflow_dialog(locked_session, interaction_time, update_state, payload.clone()).await
     }
 }

@@ -504,22 +504,20 @@ impl Sender for TelegramSender{
 /// # Returns
 ///
 /// A vector of vectors containing the keyboard layout in JSON format.
-fn buttons_to_keyboard(buttons: &VoiceflowButtons) -> Vec<Vec<Value>>{
-    // Map each button to a JSON value based on its action type
-    buttons.iter().map(|b| {
-        let callback_data = b.payload();
+fn buttons_to_keyboard(buttons: &VoiceflowButtons) -> Vec<Vec<Value>> {
+    buttons.iter().enumerate().map(|(index, b)| {
+        let callback_data = json!({ "index": index }).to_string();
         match &b.action_type() {
             VoiceflowButtonActionType::OpenUrl(url) => {
-                let url = if url.is_empty(){
+                let url = if url.is_empty() {
                     // Use "empty" for buttons with no URL specified
                     "empty"
-                }
-                else{
+                } else {
                     url
                 };
-                json!({ "text": b.name(), "url": url, "callback_data": callback_data.to_string() })
+                json!({ "text": b.name(), "url": url, "callback_data": callback_data })
             },
-            VoiceflowButtonActionType::Path => json!({ "text": b.name(), "callback_data": callback_data.to_string() }),
+            VoiceflowButtonActionType::Path => json!({ "text": b.name(), "callback_data": callback_data }),
         }
     }).map(|key| vec![key]).collect()
 }
@@ -552,13 +550,15 @@ fn carousel_card_buttons_to_keyboard(card: &VoiceflowCard, index: usize, carouse
     let mut switch_buttons: Vec<Value> = Vec::new();
     if index > 0 {
         let carousel_prev = json!({
-                "direction": format!("{}", false)
+                "direction": format!("{}", false),
+                "index": -1
             });
         switch_buttons.push(json!({ "text": "<--", "callback_data":  carousel_prev.to_string()}));
     }
     if index < carousel_len - 1 {
         let carousel_next = json!({
-                "direction": format!("{}", true)
+                "direction": format!("{}", true),
+                "index": -1
             });
         switch_buttons.push(json!({ "text": "-->", "callback_data": carousel_next.to_string() }));
     }

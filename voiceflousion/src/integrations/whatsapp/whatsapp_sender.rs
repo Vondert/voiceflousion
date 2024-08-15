@@ -1,6 +1,6 @@
 use std::ops::Deref;
 use async_trait::async_trait;
-use serde_json::{json, Map, Value};
+use serde_json::{json, Value};
 use crate::core::base_structs::SenderBase;
 use crate::core::traits::{Responder, Sender};
 use crate::core::voiceflow::dialog_blocks::{VoiceflowButtons, VoiceflowCard, VoiceflowCarousel, VoiceflowImage, VoiceflowText};
@@ -8,8 +8,6 @@ use crate::core::voiceflow::dialog_blocks::enums::{VoiceflowButtonActionType, Vo
 use crate::core::voiceflow::VoiceflowBlock;
 use crate::errors::{VoiceflousionError, VoiceflousionResult};
 use crate::integrations::whatsapp::whatsapp_responder::WhatsAppResponder;
-
-
 
 pub struct WhatsAppSender{
     /// The base structure that provides core functionalities.
@@ -271,9 +269,11 @@ impl Sender for WhatsAppSender{
 }
 
 fn buttons_to_list_rows(buttons: &VoiceflowButtons, buttons_mark: i64) -> Vec<Value> {
-    buttons.iter().map(|b| {
-        let mut callback_data = b.payload().as_object().cloned().unwrap_or_else(Map::new);
-        callback_data.insert("mark".to_string(), Value::from(buttons_mark));
+    buttons.iter().enumerate().map(|(index, b)| {
+        let callback_data = json!({
+            "index": index,
+            "mark": buttons_mark
+        });
 
         // Convert callback_data to a JSON string
         let callback_data_string = serde_json::to_string(&callback_data).unwrap_or_else(|_| "".to_string());

@@ -1,7 +1,5 @@
 use std::ops::Deref;
-
 use async_trait::async_trait;
-use serde_json::Value;
 use crate::core::base_structs::ClientBase;
 use crate::core::ClientBuilder;
 use crate::core::session_wrappers::LockedSession;
@@ -139,24 +137,32 @@ impl Client for TelegramClient{
         &self.client_base
     }
 
-    /// Handles button interaction by checking if the previous message is a carousel and switching cards if necessary.
+
+    /// Handles button interactions by checking if the previous message is a carousel and switching cards if necessary.
     /// Otherwise, processes the button press normally.
+    ///
+    /// This method determines if the interaction involves a carousel and switches the carousel
+    /// card accordingly. If not, it handles the button press as usual.
     ///
     /// # Parameters
     ///
     /// * `locked_session` - The locked session for the interaction.
-    /// * `interaction_time` - The interaction time.
-    /// * `message` - The text message associated with the button.
-    /// * `button_path` - The data associated with the button.
+    /// * `interaction_time` - The time of the interaction.
     /// * `update_state` - The optional state for updating the dialog.
     /// * `update` - The update from the Telegram client.
-    /// * `payload` - The payload associated with the button.
+    /// * `button_index` - The index of the button being interacted with.
     ///
     /// # Returns
     ///
-    /// A `VoiceflousionResult` containing a vector of `H::SenderResponder` or a `VoiceflousionError` if the request fails.
-    async fn handle_button_interaction(&self, locked_session: &LockedSession<'_>, interaction_time: i64, update_state: Option<State>, update: &Self::ClientUpdate<'_>, payload: &Value) -> VoiceflousionResult<Vec<<Self::ClientSender<'_> as Sender>::SenderResponder>> {
-        {
+    /// A `VoiceflousionResult` containing a vector of `SenderResponder` or a `VoiceflousionError` if the request fails.
+    async fn handle_button_interaction(&self, locked_session: &LockedSession<'_>, interaction_time: i64, update_state: Option<State>, update: &Self::ClientUpdate<'_>, button_index: i64) -> VoiceflousionResult<Vec<<Self::ClientSender<'_> as Sender>::SenderResponder>> {
+        let payload = if button_index >= 0{
+            let button_index = button_index as usize;
+            let binding = locked_session.previous_message().await;
+            let previous_message = binding.deref().as_ref().expect("No buttons to handle in previous message!");
+            previous_message.get_button_payload(button_index)?
+        }
+        else{
             let binding = locked_session.previous_message().await;
             let previous_message = binding.deref().as_ref().expect("No buttons to handle in previous message!");
             if let VoiceflowBlock::Carousel(carousel) = previous_message.block() {
@@ -164,7 +170,8 @@ impl Client for TelegramClient{
                     return Ok(vec![self.switch_carousel_card(locked_session, carousel, previous_message.id(), carousel_direction, interaction_time).await?]);
                 }
             }
-        }
+            panic!("Invalid direction buttons interaction")
+        };
         self.choose_button_in_voiceflow_dialog(locked_session, interaction_time, update_state, payload).await
     }
 }

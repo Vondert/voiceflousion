@@ -1,15 +1,15 @@
-use serde_json::Value;
-
 /// Represents different types of interactions in the integration.
 ///
-/// `InteractionType` can be a text message, a button interaction, or an undefined interaction.
+/// `InteractionType` can be a text message, a button interaction with an index, or an undefined interaction.
 #[derive(Debug)]
 pub enum InteractionType {
     /// Represents a text interaction.
     Text(String),
-    /// Represents a button interaction with the associated path and payload.
-    Button(Value),
-    /// Represents an undefined interaction.
+
+    /// Represents a button interaction with the associated index.
+    Button(i64),
+
+    /// Represents an undefined interaction with the associated data.
     Undefined(String),
 }
 
@@ -18,26 +18,25 @@ impl InteractionType {
     ///
     /// # Parameters
     ///
-    /// * `message` - The message associated with the interaction.
-    /// * `button_path` - An optional path for a button interaction.
-    /// * `button_payload` - An optional payload for a button interaction.
+    /// * `message` - The message associated with the interaction, used for text or undefined interactions.
+    /// * `button_index` - An optional index for a button interaction.
     ///
     /// # Returns
     ///
-    /// An instance of `InteractionType` representing the appropriate type of interaction.
+    /// An instance of `InteractionType` representing the appropriate type of interaction, either `Text`, `Button`, or `Undefined`.
     ///
     /// # Example
     ///
     /// ```
     /// use voiceflousion::core::subtypes::InteractionType;
     ///
-    /// let interaction = InteractionType::new("message".to_string(), Some(serde_json::json!({"key": "value"})));
-    /// let interaction = InteractionType::new("message".to_string(), None);
+    /// let interaction = InteractionType::new("Hello, world!".to_string(), Some(0)); // Button interaction
+    /// let interaction = InteractionType::new("Hello, world!".to_string(), None); // Text interaction
     /// ```
-    pub fn new(message: String, button_payload: Option<Value>) -> Self {
-        match button_payload {
-            Some(payload) => InteractionType::Button(payload),
-            _ => InteractionType::Text(message),
+    pub fn new(message: String, button_index: Option<i64>) -> Self {
+        match button_index {
+            Some(index) => InteractionType::Button(index),
+            None => InteractionType::Text(message),
         }
     }
 }

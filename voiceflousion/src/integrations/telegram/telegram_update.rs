@@ -184,19 +184,23 @@ impl Update for TelegramUpdate {
         };
 
         let mut carousel_direction = None;
+        let mut button_index = None;
 
-        // Extract the carousel card index and path from the callback data if present
+        // Extract the carousel card index and direction from the callback data if present
         if !is_message {
             let data = callback_data.as_mut().unwrap().as_object_mut();
             if let Some(mut_data) = data{
                 carousel_direction = mut_data.remove("direction")
                     .and_then(|value_index| value_index.as_str().map(|s| s.to_string()))
                     .and_then(|index| index.parse::<bool>().ok());
+                button_index = Some(mut_data.remove("index")
+                    .and_then(|value_index| value_index.as_i64())
+                    .ok_or_else(|| VoiceflousionError::ClientUpdateConvertationError("TelegramUpdate button index".to_string(), body.clone()))?);
             }
         }
 
-        // Create an InteractionType from the text, path and callback data
-        let interaction_type = InteractionType::new(text, callback_data);
+        // Create an InteractionType from the text, path and button index
+        let interaction_type = InteractionType::new(text, button_index);
 
         // Return the constructed TelegramUpdate
         Ok(TelegramUpdate::new(

@@ -65,8 +65,7 @@ impl Update for WhatsAppUpdate{
         let is_message = message_type != "interactive";
 
         let mut text: String = String::new();
-        let mut callback_data = None;
-
+        let mut button_index = None;
 
         if is_message{
             text = message["text"].get("body")
@@ -100,12 +99,13 @@ impl Update for WhatsAppUpdate{
                 if let Some(mark) = mut_data.remove("mark").and_then(|value_mark| value_mark.as_i64()){
                     interaction_time = mark;
                 }
+                button_index = Some(mut_data.remove("index")
+                    .and_then(|value_index| value_index.as_i64())
+                    .ok_or_else(|| VoiceflousionError::ClientUpdateConvertationError("WhatsAppUpdate button index".to_string(), body.clone()))?);
             }
-
-            callback_data = Some(deserialized_data);
         }
 
-        let interaction_type = InteractionType::new(text, callback_data);
+        let interaction_type = InteractionType::new(text, button_index);
 
         Ok(Self::new(
             chat_id,

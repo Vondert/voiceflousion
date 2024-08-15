@@ -99,13 +99,12 @@ impl Update for WhatsAppUpdate{
                 if let Some(mark) = mut_data.remove("mark").and_then(|value_mark| value_mark.as_i64()){
                     interaction_time = mark;
                 }
-                button_index = Some(mut_data.remove("index")
-                    .and_then(|value_index| value_index.as_i64())
-                    .ok_or_else(|| VoiceflousionError::ClientUpdateConvertationError("WhatsAppUpdate button index".to_string(), body.clone()))?);
+                button_index = mut_data.remove("index")
+                    .and_then(|value_index| value_index.as_i64().map(|index| index as usize));
             }
         }
 
-        let interaction_type = InteractionType::new(text, button_index);
+        let interaction_type = InteractionType::new(text, button_index, None);
 
         Ok(Self::new(
             chat_id,

@@ -550,15 +550,13 @@ fn carousel_card_buttons_to_keyboard(card: &VoiceflowCard, index: usize, carouse
     let mut switch_buttons: Vec<Value> = Vec::new();
     if index > 0 {
         let carousel_prev = json!({
-                "direction": format!("{}", false),
-                "index": -1
+                "direction": format!("{}", false)
             });
         switch_buttons.push(json!({ "text": "<--", "callback_data":  carousel_prev.to_string()}));
     }
     if index < carousel_len - 1 {
         let carousel_next = json!({
-                "direction": format!("{}", true),
-                "index": -1
+                "direction": format!("{}", true)
             });
         switch_buttons.push(json!({ "text": "-->", "callback_data": carousel_next.to_string() }));
     }

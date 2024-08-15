@@ -6,7 +6,7 @@ use crate::core::session_wrappers::LockedSession;
 use crate::core::traits::{Client, Sender};
 use crate::core::voiceflow::{State, VoiceflowBlock};
 use crate::core::voiceflow::dialog_blocks::VoiceflowCarousel;
-use crate::errors::VoiceflousionResult;
+use crate::errors::{VoiceflousionError, VoiceflousionResult};
 use crate::integrations::telegram::{TelegramResponder, TelegramSender, TelegramUpdate};
 
 /// Represents a client for Telegram integration with Voiceflow.
@@ -138,40 +138,31 @@ impl Client for TelegramClient{
     }
 
 
-    /// Handles button interactions by checking if the previous message is a carousel and switching cards if necessary.
-    /// Otherwise, processes the button press normally.
+    /// Handles carousel switch interactions in a Telegram session.
     ///
-    /// This method determines if the interaction involves a carousel and switches the carousel
-    /// card accordingly. If not, it handles the button press as usual.
+    /// This method checks if the previous message contains a carousel block and, if so,
+    /// switches the carousel card according to the specified direction. If the previous
+    /// message is not a carousel, it returns an error indicating that there is no carousel to switch.
     ///
     /// # Parameters
     ///
-    /// * `locked_session` - The locked session for the interaction.
-    /// * `interaction_time` - The time of the interaction.
-    /// * `update_state` - The optional state for updating the dialog.
-    /// * `update` - The update from the Telegram client.
-    /// * `button_index` - The index of the button being interacted with.
+    /// * `locked_session` - The locked session for the interaction, ensuring thread-safe access.
+    /// * `interaction_time` - The time of the interaction in seconds since the Unix epoch.
+    /// * `switch_direction` - The direction to switch the carousel (`true` for next, `false` for previous).
     ///
     /// # Returns
     ///
-    /// A `VoiceflousionResult` containing a vector of `SenderResponder` or a `VoiceflousionError` if the request fails.
-    async fn handle_button_interaction(&self, locked_session: &LockedSession<'_>, interaction_time: i64, update_state: Option<State>, update: &Self::ClientUpdate<'_>, button_index: i64) -> VoiceflousionResult<Vec<<Self::ClientSender<'_> as Sender>::SenderResponder>> {
-        let payload = if button_index >= 0{
-            let button_index = button_index as usize;
-            let binding = locked_session.previous_message().await;
-            let previous_message = binding.deref().as_ref().expect("No buttons to handle in previous message!");
-            previous_message.get_button_payload(button_index)?
+    /// A `VoiceflousionResult` containing a vector of `SenderResponder` if the switch was successful,
+    /// or a `VoiceflousionError` if the operation fails (e.g., no carousel to switch).
+    async fn handle_carousel_switch(&self, locked_session: &LockedSession<'_>, interaction_time: i64, switch_direction: bool) -> VoiceflousionResult<Vec<<Self::ClientSender<'_> as Sender>::SenderResponder>> {
+        let binding = locked_session.previous_message().await;
+        let previous_message = binding.deref().as_ref()
+            .ok_or_else(|| VoiceflousionError::ClientRequestError("TelegramClient".to_string(),"Carousel cannot be switched in start of the conversation".to_string()))?;
+        if let VoiceflowBlock::Carousel(carousel) = previous_message.block() {
+            Ok(vec![self.switch_carousel_card(locked_session, carousel, previous_message.id(), switch_direction, interaction_time).await?])
         }
         else{
-            let binding = locked_session.previous_message().await;
-            let previous_message = binding.deref().as_ref().expect("No buttons to handle in previous message!");
-            if let VoiceflowBlock::Carousel(carousel) = previous_message.block() {
-                if let Some(carousel_direction) = update.carousel_card_index() {
-                    return Ok(vec![self.switch_carousel_card(locked_session, carousel, previous_message.id(), carousel_direction, interaction_time).await?]);
-                }
-            }
-            panic!("Invalid direction buttons interaction")
-        };
-        self.choose_button_in_voiceflow_dialog(locked_session, interaction_time, update_state, payload).await
+            Err(VoiceflousionError::ValidationError("TelegramClient".to_string(),"There is no carousel to switch".to_string()))
+        }
     }
 }

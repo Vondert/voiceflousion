@@ -5,7 +5,7 @@ use crate::core::base_structs::ClientBase;
 use crate::core::session_wrappers::LockedSession;
 use crate::core::subtypes::{InteractionType, SentMessage};
 use crate::core::traits::{Responder, Sender, Update};
-use crate::core::voiceflow::State;
+use crate::core::voiceflow::{State, VoiceflowBlock};
 use crate::errors::{VoiceflousionError, VoiceflousionResult};
 
 /// The `Client` trait adds methods for launching dialogs, sending messages,
@@ -194,7 +194,7 @@ pub trait Client: Sync + Send {
 
     /// Interacts with the client based on the provided update.
     ///
-    /// This method determines the type of interaction (button press or text message),
+    /// This method determines the type of interaction (button press, text message or carousel switch),
     /// processes the interaction with the Voiceflow client, and updates the session state accordingly.
     ///
     /// **This method has a base implementation for sending messages. Modify it only if you
@@ -228,16 +228,28 @@ pub trait Client: Sync + Send {
 
             // Handle the interaction based on its type
             match update.interaction_type() {
-                // If it is a button press
+                // If it is a  regular button press
                 InteractionType::Button(button_index) => {
                     // Handle the button interaction
-                    self.handle_button_interaction(&locked_session, interaction_time, update_state, &update, button_index.clone()).await
+                    let payload = {
+                        let binding = locked_session.previous_message().await;
+                        let previous_message = binding.deref().as_ref()
+                            .ok_or_else(|| VoiceflousionError::ClientRequestError("Client".to_string(),"Button cannot be handled in the start of the conversation".to_string()))?;
+                        previous_message.get_button_payload(button_index.clone())?
+                    };
+                    self.choose_button_in_voiceflow_dialog(&locked_session, interaction_time, update_state, payload).await
                 },
-                // If it is a text message or an undefined interaction
-                InteractionType::Text(message) | InteractionType::Undefined(message) => {
+                // If it is a text message
+                InteractionType::Text(message) => {
                     // Handle the text message
                     self.send_message_to_voiceflow_dialog(&locked_session, interaction_time, message, update_state).await
+                },
+                // If it is a carousel switch button press
+                InteractionType::CarouselSwitch(switch_direction) => {
+                    // Handle carousel switch
+                    self.handle_carousel_switch(&locked_session, interaction_time, switch_direction.clone()).await
                 }
+
             }
         } else {
 
@@ -255,23 +267,21 @@ pub trait Client: Sync + Send {
     }
 
 
-    /// Handles button interactions on the client.
+    /// Handles carousel switch interactions on the client.
     ///
-    /// This method processes button interactions, sending the appropriate data to the Voiceflow client
+    /// This method processes carousel switch interactions, sending the appropriate data to the Voiceflow client
     /// and handling the response.
     ///
     /// # Parameters
     ///
     /// * `locked_session` - The locked session for the interaction.
     /// * `interaction_time` - The time of the interaction.
-    /// * `update_state` - The optional state for updating the dialog.
-    /// * `update` - The update from the client.
-    /// * `button_index` - The index of the button being interacted with.
+    /// * `switch_direction` - Direction of the carousel switch (true for next, false for previous).
     ///
     /// # Returns
     ///
     /// A `VoiceflousionResult` containing a vector of `SenderResponder` or a `VoiceflousionError` if the request fails.
-    async fn handle_button_interaction(&self, locked_session: &LockedSession<'_>, interaction_time: i64, update_state: Option<State>, update: &Self::ClientUpdate<'_>, button_index: i64) -> VoiceflousionResult<Vec<<Self::ClientSender<'_> as Sender>::SenderResponder>>;
+    async fn handle_carousel_switch(&self, locked_session: &LockedSession<'_>, interaction_time: i64, switch_direction: bool) -> VoiceflousionResult<Vec<<Self::ClientSender<'_> as Sender>::SenderResponder>>;
 }
 
 /// Retrieves the last sent message from the response.

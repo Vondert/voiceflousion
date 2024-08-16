@@ -65,6 +65,7 @@ impl Update for WhatsAppUpdate{
         let is_message = message_type != "interactive";
 
         let mut text: String = String::new();
+        let mut carousel_direction = None;
         let mut button_index = None;
 
         if is_message{
@@ -96,15 +97,17 @@ impl Update for WhatsAppUpdate{
                 .map_err(|_error| VoiceflousionError::ClientUpdateConvertationError("WhatsAppUpdate callback data must be a valid JSON string".to_string(), interactive_reply.clone()))?;
 
             if let Some(mut_data) = deserialized_data.as_object_mut(){
-                if let Some(mark) = mut_data.remove("mark").and_then(|value_mark| value_mark.as_i64()){
-                    interaction_time = mark;
-                }
+                interaction_time = mut_data.remove("mark").and_then(|value_mark| value_mark.as_i64())
+                    .ok_or_else(|| VoiceflousionError::ClientUpdateConvertationError("WhatsAppUpdate button timestamp mark".to_string(), interactive_reply.clone()))?;
+                carousel_direction = mut_data.remove("direction")
+                    .and_then(|value_index| value_index.as_str().map(|s| s.to_string()))
+                    .and_then(|index| index.parse::<bool>().ok());
                 button_index = mut_data.remove("index")
                     .and_then(|value_index| value_index.as_i64().map(|index| index as usize));
             }
         }
 
-        let interaction_type = InteractionType::new(text, button_index, None);
+        let interaction_type = InteractionType::new(text, button_index, carousel_direction);
 
         Ok(Self::new(
             chat_id,

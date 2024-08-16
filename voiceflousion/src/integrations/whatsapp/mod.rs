@@ -2,6 +2,7 @@ mod whatsapp_responder;
 mod whatsapp_sender;
 mod whatsapp_update;
 mod whatsapp_client;
+mod whatsapp_serializer;
 
 pub use whatsapp_responder::WhatsAppResponder;
 pub use whatsapp_sender::WhatsAppSender;

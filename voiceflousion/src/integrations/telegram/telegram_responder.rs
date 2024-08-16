@@ -15,8 +15,6 @@ use crate::errors::{VoiceflousionError, VoiceflousionResult};
 pub struct TelegramResponder {
     /// The ID of the bot that sent the message.
     bot_id: String,
-    /// The ID of the chat where the message was sent.
-    chat_id: String,
     /// The base structure that provides core functionalities.
     responder_base: ResponderBase
 }
@@ -66,14 +64,6 @@ impl TelegramResponder{
         &self.bot_id
     }
 
-    /// Returns a reference to the chat ID.
-    ///
-    /// # Returns
-    ///
-    /// A reference to the chat ID string.
-    pub fn chat_id(&self) -> &String{
-        &self.chat_id
-    }
 }
 
 impl Deref for TelegramResponder {
@@ -108,8 +98,7 @@ impl Responder for TelegramResponder {
 
         Ok(Self {
             bot_id: result.from.id.to_string(),
-            chat_id: result.chat.id.to_string(),
-            responder_base: ResponderBase::new(result.message_id.to_string(), content, result.date)
+            responder_base: ResponderBase::new(result.message_id.to_string(), content, result.chat.id.to_string(), result.date)
         })
     }
 }

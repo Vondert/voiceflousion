@@ -177,7 +177,7 @@ impl FromValue for VoiceflowCard{
         match (&title, &buttons, &description, &image_url){
             (None, None, None, None) => Ok(None),
             _ => {
-                if let (None, None, Some(_)) = (&title, &description, &buttons){
+                if let (None, None) = (&title, &description){
                     title = Some(String::from("Voiceflousion placeholder card's title"))
                 }
                 Ok(Some(Self::new(image_url, title, description, buttons)))

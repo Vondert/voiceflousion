@@ -11,8 +11,6 @@ use crate::errors::{VoiceflousionError, VoiceflousionResult};
 
 #[derive(Debug)]
 pub struct WhatsAppResponder{
-    ///
-    wa_id: String,
     /// The base structure that provides core functionalities.
     responder_base: ResponderBase
 }
@@ -40,6 +38,9 @@ impl Responder for WhatsAppResponder{
                     Utc::now().timestamp()
                 }
             },
+            VoiceflowBlock::Carousel(carousel) => {
+                carousel.get_selected_mark()
+            },
             _ => Utc::now().timestamp()
         };
 
@@ -55,8 +56,7 @@ impl Responder for WhatsAppResponder{
             .ok_or_else(|| VoiceflousionError::ClientResponseReadingError("WhatsAppResponder message_id".to_string(), json.to_string()))?;
 
         Ok(Self{
-            wa_id,
-            responder_base: ResponderBase::new(message_id, content, timestamp)
+            responder_base: ResponderBase::new(message_id, content, wa_id, timestamp)
         })
     }
 }

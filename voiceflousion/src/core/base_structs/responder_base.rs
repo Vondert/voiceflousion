@@ -6,6 +6,8 @@ use crate::core::voiceflow::VoiceflowBlock;
 /// and the content of the message.
 #[derive(Debug)]
 pub struct ResponderBase{
+    /// The chat ID in which the message was sent
+    chat_id: String,
     /// The ID of the message.
     message_id: String,
     /// The date when the message was sent.
@@ -34,10 +36,11 @@ impl ResponderBase{
     /// use voiceflousion::core::voiceflow::VoiceflowBlock;
     ///
     /// let block = VoiceflowBlock::Text(VoiceflowText::new("text".to_string()));
-    /// let responder_base = ResponderBase::new("message_id".to_string(), block, 1627554661);
+    /// let responder_base = ResponderBase::new("message_id".to_string(), block, "chat_id".to_string(), 1627554661);
     /// ```
-    pub fn new(message_id: String, message_content: VoiceflowBlock, date: i64) -> Self {
+    pub fn new(message_id: String, message_content: VoiceflowBlock, chat_id: String, date: i64) -> Self {
         Self {
+            chat_id,
             message_id,
             date,
             message_content,
@@ -58,7 +61,7 @@ impl ResponderBase{
     /// use voiceflousion::core::voiceflow::VoiceflowBlock;
     ///
     /// let block = VoiceflowBlock::Text(VoiceflowText::new("text".to_string()));
-    /// let responder_base = ResponderBase::new("message_id".to_string(), block, 1627554661);
+    /// let responder_base = ResponderBase::new("message_id".to_string(), block, "chat_id".to_string(), 1627554661);
     /// let message_id = responder_base.message_id();
     /// ```
     pub fn message_id(&self) -> &String {
@@ -79,11 +82,15 @@ impl ResponderBase{
     /// use voiceflousion::core::voiceflow::VoiceflowBlock;
     ///
     /// let block = VoiceflowBlock::Text(VoiceflowText::new("text".to_string()));
-    /// let responder_base = ResponderBase::new("message_id".to_string(), block, 1627554661);
+    /// let responder_base = ResponderBase::new("message_id".to_string(), block, "chat_id".to_string(), 1627554661);
     /// let content = responder_base.message_content();
     /// ```
     pub fn message_content(&self) -> &VoiceflowBlock {
         &self.message_content
+    }
+
+    pub fn chat_id(&self) -> &String{
+        &self.chat_id
     }
 
     /// Returns the date of the message.
@@ -100,7 +107,7 @@ impl ResponderBase{
     /// use voiceflousion::core::voiceflow::VoiceflowBlock;
     ///
     /// let block = VoiceflowBlock::Text(VoiceflowText::new("text".to_string()));
-    /// let responder_base = ResponderBase::new("message_id".to_string(), block, 1627554661);
+    /// let responder_base = ResponderBase::new("message_id".to_string(), block, "chat_id".to_string(), 1627554661);
     /// let date = responder_base.date();
     /// ```
     pub fn date(&self) -> i64 {

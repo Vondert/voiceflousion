@@ -242,7 +242,7 @@ impl WhatsAppSerializer {
         // Add a previous button if this is not the first card
         if index > 0 {
             let carousel_prev = json!({
-                "direction": false,
+                "direction": format!("{}", false),
                 "mark": mark
             });
             list_rows.push(json!({
@@ -255,7 +255,7 @@ impl WhatsAppSerializer {
         // Add a next button if this is not the last card
         if index < carousel_len - 1 {
             let carousel_next = json!({
-                "direction": true,
+                "direction": format!("{}", true),
                 "mark": mark
             });
             list_rows.push(json!({

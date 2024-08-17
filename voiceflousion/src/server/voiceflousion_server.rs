@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::net::SocketAddr;
 use std::sync::Arc;
 use axum::{Extension, Json, Router};
@@ -17,8 +18,8 @@ pub struct VoiceflousionServer<C: ServerClient + 'static> {
     base_url: String,
     /// Handler function for processing incoming webhook requests.
     handler: Arc<dyn BotHandler<C>>,
-    /// Allowed origins for CORS settings.
-    allowed_origins: Arc<Option<Vec<&'static str>>>,
+    /// Allowed origins for CORS settings stored in a HashMap for fast lookup.
+    allowed_origins: Arc<Option<HashMap<&'static str, ()>>>,
 }
 
 impl<C: ServerClient + 'static> VoiceflousionServer<C> {
@@ -120,7 +121,11 @@ impl<C: ServerClient + 'static> VoiceflousionServer<C> {
         self.allowed_origins = Arc::new(if origins.is_empty() {
             None
         } else {
-            Some(origins)
+            let mut origins_map = HashMap::new();
+            for origin in origins {
+                origins_map.insert(origin, ());
+            }
+            Some(origins_map)
         });
         self
     }
@@ -154,13 +159,12 @@ impl<C: ServerClient + 'static> VoiceflousionServer<C> {
     /// })
     /// .override_allow_origins(additional_origins);
     /// ```
-    pub fn override_allow_origins(mut self, mut origins: Vec<&'static str>) -> Self {
-        origins.extend(C::ORIGINS);
-        self.allowed_origins = Arc::new(if origins.is_empty() {
-            None
-        } else {
-            Some(origins)
-        });
+    pub fn override_allow_origins(mut self, origins: Vec<&'static str>) -> Self {
+        let mut origins_map = HashMap::new();
+        for origin in C::ORIGINS.iter().chain(origins.iter()) {
+            origins_map.insert(*origin, ());
+        }
+        self.allowed_origins = Arc::new(Some(origins_map));
         self
     }
 

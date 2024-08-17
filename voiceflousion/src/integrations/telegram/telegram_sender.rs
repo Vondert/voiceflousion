@@ -1,14 +1,15 @@
 use std::ops::Deref;
 use async_trait::async_trait;
 use chrono::Utc;
-use serde_json::{json, Value};
+use reqwest::Response;
+use serde_json::Value;
 use crate::core::base_structs::SenderBase;
 use crate::integrations::telegram::TelegramResponder;
 use crate::core::traits::{Responder, Sender};
 use crate::core::voiceflow::VoiceflowBlock;
 use crate::core::voiceflow::dialog_blocks::{VoiceflowButtons, VoiceflowCard, VoiceflowCarousel, VoiceflowImage, VoiceflowText};
-use crate::core::voiceflow::dialog_blocks::enums::{VoiceflowButtonActionType, VoiceflowButtonsOption};
 use crate::errors::{VoiceflousionError, VoiceflousionResult};
+use crate::integrations::telegram::utils::TelegramSerializer;
 
 /// Represents a sender for Telegram integration.
 ///
@@ -50,6 +51,26 @@ impl TelegramSender {
         }
     }
 
+    /// Sends a message to the Telegram API.
+    ///
+    /// # Parameters
+    ///
+    /// * `api_url` - The API endpoint URL.
+    /// * `body` - The JSON body of the message.
+    ///
+    /// # Returns
+    ///
+    /// A `VoiceflousionResult` containing a `Response` or a `VoiceflousionError` if the request fails.
+    async fn send_message(&self, api_url: &str, body: Value) -> VoiceflousionResult<Response> {
+        self.http_client()
+            .post(api_url)
+            .json(&body)
+            .send()
+            .await
+            .map_err(|e| VoiceflousionError::ClientRequestError("TelegramSender send_message".to_string(), e.to_string()))
+    }
+
+
     /// Updates a carousel message in a chat.
     ///
     /// # Parameters
@@ -83,68 +104,48 @@ impl TelegramSender {
     /// }
     /// ```
     pub async fn update_carousel(&self, carousel: &VoiceflowCarousel, direction: bool, chat_id: &String, message_id: &String) -> VoiceflousionResult<TelegramResponder> {
-
-        // Get the current timestamp to record when the card is selected
         let timestamp = Utc::now().timestamp();
 
-        // Retrieve the next card in the carousel based on the direction
+        let api_url = self.prepare_api_url(carousel.has_images(), "edit");
+
         let (card, index) = carousel.get_next_card(direction)?;
 
-        // Convert the buttons from the card to the inline keyboard format
-        let inline_keyboard: Vec<Vec<Value>> = carousel_card_buttons_to_keyboard(card, index, carousel.len());
+        let body = TelegramSerializer::build_carousel_update_card_body(chat_id, message_id, card, carousel.has_images(), index, carousel.len());
 
-        // Extract the title and description from the card
-        let title = card.title().clone().unwrap_or(String::new());
-        let description = card.description().clone().unwrap_or(String::new());
+        let telegram_response = self.send_message(&api_url, body).await?;
 
-        // Initialize the API URL for editing the message
-        let mut api_url = format!("{}{}/editMessageMedia", TelegramSender::TELEGRAM_API_URL, self.api_key());
-
-        // If the card has an image URL, create the JSON body for editing the media message
-        let body = if carousel.has_images() {
-            json!({
-                "chat_id": chat_id,
-                "message_id": message_id,
-                "media": {
-                    "type": "photo",
-                    "media": card.image_url().as_ref().unwrap().clone(),
-                    "caption": format!("{}\n\n{}", title, description),
-                },
-                "reply_markup": {
-                    "inline_keyboard": inline_keyboard,
-                }
-            })
-        }
-        // If there is no image URL, update the API URL and create the JSON body for editing the text message
-        else{
-            api_url = format!("{}{}/editMessageText", TelegramSender::TELEGRAM_API_URL, self.api_key());
-            json!({
-                "chat_id": chat_id,
-                "message_id": message_id,
-                "text": format!("{}\n\n{}", title, description),
-                "reply_markup": {
-                    "inline_keyboard": inline_keyboard,
-                }
-            })
-        };
-
-        // Send the POST request with the body to the Telegram API
-        let response = self.http_client().post(&api_url).json(&body).send()
-            .await.map_err(|e| VoiceflousionError::ClientRequestError("TelegramSender update_carousel".to_string(), e.to_string()))?;
-
-        // Check if the response status is successful
-        if response.status().is_success() {
-            // If the response is successful, update the carousel's selected card
-            // with the new index and timestamp to reflect the change
+        if telegram_response.status().is_success() {
             carousel.set_selected_card(index, timestamp);
-
-            // Convert the response to a TelegramResponder
-            TelegramResponder::from_response(response, VoiceflowBlock::Card(card.clone())).await
+            TelegramResponder::from_response(telegram_response, VoiceflowBlock::Card(card.clone())).await
         } else {
-            // Get the error text from the response and return an error
-            let error_text = response.text().await.unwrap_or_default();
+            let error_text = telegram_response.text().await.unwrap_or_default();
             Err(VoiceflousionError::ClientRequestError("TelegramSender update_carousel".to_string(), error_text))
         }
+    }
+
+    /// Prepares the appropriate API URL for sending a message based on its type.
+    ///
+    /// # Parameters
+    ///
+    /// * `has_image` - Whether the message includes an image.
+    /// * `action` - The type of action to perform (e.g., "sendMessage", "sendPhoto", "editMessageText", "editMessageMedia").
+    ///
+    /// # Returns
+    ///
+    /// A `String` containing the full API URL.
+    fn prepare_api_url(&self, has_image: bool, action: &str) -> String {
+        let action_type = if has_image {
+            match action {
+                "edit" => "editMessageMedia",
+                _ => "sendPhoto",
+            }
+        } else {
+            match action {
+                "edit" => "editMessageText",
+                _ => "sendMessage",
+            }
+        };
+        format!("{}{}/{}", TelegramSender::TELEGRAM_API_URL, self.api_key(), action_type)
     }
 }
 
@@ -196,26 +197,16 @@ impl Sender for TelegramSender{
     /// }
     /// ```
     async fn send_text(&self, _client_id: &String, text: VoiceflowText, chat_id: &String) -> VoiceflousionResult<Self::SenderResponder> {
-        // Form the API URL for sending the message via Telegram API
-        let api_url = format!("{}{}/sendMessage", TelegramSender::TELEGRAM_API_URL, self.api_key());
+        let api_url = self.prepare_api_url(false, "send");
 
-        // Create the JSON body of the request containing chat_id and message text
-        let body = json!({
-            "chat_id": chat_id,
-            "text": text.message(),
-        });
+        let body = TelegramSerializer::build_text_body(chat_id, text.message());
 
-        // Send the POST request with the body to the Telegram API
-        let response = self.http_client().post(&api_url).json(&body).send()
-            .await.map_err(|e| VoiceflousionError::ClientRequestError("TelegramSender send_text".to_string(), e.to_string()))?;
+        let telegram_response = self.send_message(&api_url, body).await?;
 
-        // Check if the response status is successful
-        if response.status().is_success() {
-            // Convert the response to a TelegramResponder
-            Self::SenderResponder::from_response(response, VoiceflowBlock::Text(text)).await
+        if telegram_response.status().is_success() {
+            Self::SenderResponder::from_response(telegram_response, VoiceflowBlock::Text(text)).await
         } else {
-            // Get the error text from the response and return an error
-            let error_text = response.text().await.unwrap_or_default();
+            let error_text = telegram_response.text().await.unwrap_or_default();
             Err(VoiceflousionError::ClientRequestError("TelegramSender send_text".to_string(), error_text))
         }
     }
@@ -252,26 +243,16 @@ impl Sender for TelegramSender{
     /// }
     /// ```
     async fn send_image(&self, _client_id: &String, image: VoiceflowImage, chat_id: &String) -> VoiceflousionResult<Self::SenderResponder> {
-        // Form the API URL for sending the image via Telegram API
-        let api_url = format!("{}{}/sendPhoto", TelegramSender::TELEGRAM_API_URL, self.api_key());
+        let api_url = self.prepare_api_url(true, "send");
 
-        // Create the JSON body of the request containing chat_id and image URL
-        let body = json!({
-            "chat_id": chat_id,
-            "photo": image.url(),
-        });
+        let body = TelegramSerializer::build_image_body(chat_id, image.url());
 
-        // Send the POST request with the body to the Telegram API
-        let response = self.http_client().post(&api_url).json(&body).send()
-            .await.map_err(|e| VoiceflousionError::ClientRequestError("TelegramSender send_image".to_string(), e.to_string()))?;
+        let telegram_response = self.send_message(&api_url, body).await?;
 
-        // Check if the response status is successful
-        if response.status().is_success() {
-            // Convert the response to a TelegramResponder
-            Self::SenderResponder::from_response(response, VoiceflowBlock::Image(image)).await
+        if telegram_response.status().is_success() {
+            Self::SenderResponder::from_response(telegram_response, VoiceflowBlock::Image(image)).await
         } else {
-            // Get the error text from the response and return an error
-            let error_text = response.text().await.unwrap_or_default();
+            let error_text = telegram_response.text().await.unwrap_or_default();
             Err(VoiceflousionError::ClientRequestError("TelegramSender send_image".to_string(), error_text))
         }
     }
@@ -296,7 +277,7 @@ impl Sender for TelegramSender{
     /// use voiceflousion::core::traits::Sender;
     /// use voiceflousion::core::voiceflow::dialog_blocks::enums::VoiceflowButtonActionType;
     /// use voiceflousion::core::voiceflow::dialog_blocks::{VoiceflowButton, VoiceflowButtons};
-    ///     use serde_json::Value;
+    /// use serde_json::Value;
     /// use tokio;
     ///
     /// #[tokio::main]
@@ -311,35 +292,16 @@ impl Sender for TelegramSender{
     /// }
     /// ```
     async fn send_buttons(&self, _client_id: &String, buttons: VoiceflowButtons, chat_id: &String) -> VoiceflousionResult<Self::SenderResponder> {
-        // Determine the API URL based on the button option (text or image)
-        let api_url = format!("{}{}/sendMessage", TelegramSender::TELEGRAM_API_URL, self.api_key());
+        let api_url = self.prepare_api_url(false, "send");
 
-        // Convert the buttons to the inline keyboard format for Telegram
-        let inline_keyboard: Vec<Vec<Value>> = buttons_to_keyboard(&buttons);
+        let body = TelegramSerializer::build_buttons_body(chat_id, &buttons);
 
-        // Create the JSON body of the request based on the button option
-        let body = match &buttons.option() {
-            VoiceflowButtonsOption::Text(text) => json!({
-                "chat_id": chat_id,
-                "text": text.message(),
-                "reply_markup": {
-                    "inline_keyboard": inline_keyboard,
-                }
-            }),
-            VoiceflowButtonsOption::Empty => panic!("Buttons with empty text field caught!"),
-        };
+        let telegram_response = self.send_message(&api_url, body).await?;
 
-        // Send the POST request with the body to the Telegram API
-        let response = self.http_client().post(&api_url).json(&body).send()
-            .await.map_err(|e| VoiceflousionError::ClientRequestError("TelegramSender send_buttons".to_string(), e.to_string()))?;
-
-        // Check if the response status is successful
-        if response.status().is_success() {
-            // Convert the response to a TelegramResponder
-            Self::SenderResponder::from_response(response, VoiceflowBlock::Buttons(buttons)).await
+        if telegram_response.status().is_success() {
+            Self::SenderResponder::from_response(telegram_response, VoiceflowBlock::Buttons(buttons)).await
         } else {
-            // Get the error text from the response and return an error
-            let error_text = response.text().await.unwrap_or_default();
+            let error_text = telegram_response.text().await.unwrap_or_default();
             Err(VoiceflousionError::ClientRequestError("TelegramSender send_buttons".to_string(), error_text))
         }
     }
@@ -378,53 +340,16 @@ impl Sender for TelegramSender{
     /// }
     /// ```
     async fn send_card(&self, _client_id: &String, card: VoiceflowCard, chat_id: &String) -> VoiceflousionResult<Self::SenderResponder> {
+        let api_url = self.prepare_api_url(card.image_url().is_some(), "send");
 
-        // Initialize the API URL and request body for sending a card
-        let mut api_url = format!("{}{}/sendPhoto", TelegramSender::TELEGRAM_API_URL, self.api_key());
+        let body = TelegramSerializer::build_card_body(chat_id, &card);
 
-        // Extract the title and description from the card
-        let title = card.title().clone().unwrap_or(String::new());
-        let description = card.description().clone().unwrap_or(String::new());
+        let telegram_response = self.send_message(&api_url, body).await?;
 
-        // Convert the buttons from the card to the inline keyboard format
-        let inline_keyboard: Vec<Vec<Value>> = card.buttons().as_ref()
-            .map(|b| buttons_to_keyboard(b))
-            .unwrap_or_else(|| vec![]);
-
-        // If the card has an image URL, update the API URL and request body for sending a photo
-        let body = if let Some(url) = card.image_url() {
-            json!({
-                "chat_id": chat_id,
-                "photo": url,
-                "caption": format!("{}\n\n{}", title, description),
-                "reply_markup": {
-                    "inline_keyboard": inline_keyboard,
-                }
-            })
-        }
-        // If there is no image URL, create the JSON body for sending the text message
-        else{
-            api_url = format!("{}{}/sendMessage", TelegramSender::TELEGRAM_API_URL, self.api_key());
-            json!({
-                "chat_id": chat_id,
-                "text": format!("{}\n\n{}", title, description),
-                "reply_markup": {
-                    "inline_keyboard": inline_keyboard,
-                }
-            })
-        };
-
-        // Send the POST request with the body to the Telegram API
-        let response = self.http_client().post(&api_url).json(&body).send()
-            .await.map_err(|e| VoiceflousionError::ClientRequestError("TelegramSender send_card".to_string(), e.to_string()))?;
-
-        // Check if the response status is successful
-        if response.status().is_success() {
-            // Convert the response to a TelegramResponder
-            Self::SenderResponder::from_response(response, VoiceflowBlock::Card(card)).await
+        if telegram_response.status().is_success() {
+            Self::SenderResponder::from_response(telegram_response, VoiceflowBlock::Card(card)).await
         } else {
-            // Get the error text from the response and return an error
-            let error_text = response.text().await.unwrap_or_default();
+            let error_text = telegram_response.text().await.unwrap_or_default();
             Err(VoiceflousionError::ClientRequestError("TelegramSender send_card".to_string(), error_text))
         }
     }
@@ -463,125 +388,19 @@ impl Sender for TelegramSender{
     /// }
     /// ```
     async fn send_carousel(&self, _client_id: &String, carousel: VoiceflowCarousel, chat_id: &String) -> VoiceflousionResult<Self::SenderResponder> {
+        let api_url = self.prepare_api_url(carousel.has_images(), "send");
 
-        // Form the API URL for sending the carousel via Telegram API
-        let mut api_url = format!("{}{}/sendPhoto", TelegramSender::TELEGRAM_API_URL, self.api_key());
-
-        // Get the first card and index from the carousel
         let (card, index) = carousel.get_selected_card()?;
 
-        // Extract the title and description from the card
-        let title = card.title().clone().unwrap_or(String::new());
-        let description = card.description().clone().unwrap_or(String::new());
+        let body = TelegramSerializer::build_carousel_card_body(chat_id, card, index, carousel.len());
 
-        // Convert the buttons from the card to the inline keyboard format
-        let inline_keyboard: Vec<Vec<Value>> = carousel_card_buttons_to_keyboard(card, index, carousel.len());
+        let telegram_response = self.send_message(&api_url, body).await?;
 
-        // If the card has an image URL, update the API URL and request body for sending a photo
-        let body = if carousel.has_images() {
-            json!({
-                "chat_id": chat_id,
-                "photo": card.image_url().as_ref().unwrap().clone(),
-                "caption": format!("{}\n\n{}", title, description),
-                "reply_markup": {
-                    "inline_keyboard": inline_keyboard,
-                }
-            })
-        }
-        // If there is no image URL, create the JSON body for sending the text message
-        else{
-            api_url = format!("{}{}/sendMessage", TelegramSender::TELEGRAM_API_URL, self.api_key());
-            json!({
-                "chat_id": chat_id,
-                "text": format!("{}\n\n{}", title, description),
-                "reply_markup": {
-                    "inline_keyboard": inline_keyboard,
-                }
-            })
-        };
-
-        // Send the POST request with the body to the Telegram API
-        let response = self.http_client().post(&api_url).json(&body).send()
-            .await.map_err(|e| VoiceflousionError::ClientRequestError("TelegramSender send_carousel".to_string(), e.to_string()))?;
-
-        // Check if the response status is successful
-        if response.status().is_success() {
-            // Convert the response to a TelegramResponder
-            Self::SenderResponder::from_response(response, VoiceflowBlock::Carousel(carousel)).await
+        if telegram_response.status().is_success() {
+            Self::SenderResponder::from_response(telegram_response, VoiceflowBlock::Carousel(carousel)).await
         } else {
-            // Get the error text from the response and return an error
-            let error_text = response.text().await.unwrap_or_default();
+            let error_text = telegram_response.text().await.unwrap_or_default();
             Err(VoiceflousionError::ClientRequestError("TelegramSender send_carousel".to_string(), error_text))
         }
     }
-}
-
-/// Converts `VoiceflowButtons` to a keyboard layout for Telegram inline keyboard.
-///
-/// # Parameters
-///
-/// * `buttons` - The `VoiceflowButtons` to convert.
-///
-/// # Returns
-///
-/// A vector of vectors containing the keyboard layout in JSON format.
-fn buttons_to_keyboard(buttons: &VoiceflowButtons) -> Vec<Vec<Value>> {
-    buttons.iter().enumerate().map(|(index, b)| {
-        let callback_data = json!({ "index": index }).to_string();
-        match &b.action_type() {
-            VoiceflowButtonActionType::OpenUrl(url) => {
-                let url = if url.is_empty() {
-                    // Use "empty" for buttons with no URL specified
-                    "empty"
-                } else {
-                    url
-                };
-                json!({ "text": b.name(), "url": url, "callback_data": callback_data })
-            },
-            VoiceflowButtonActionType::Path => json!({ "text": b.name(), "callback_data": callback_data }),
-        }
-    }).map(|key| vec![key]).collect()
-}
-
-/// Converts the buttons of a `VoiceflowCard` into a Telegram-compatible inline keyboard,
-/// adding navigation buttons for carousel movement.
-///
-/// This function generates an inline keyboard for a given `VoiceflowCard`, converting its
-/// buttons into a format suitable for use in Telegram's API. Additionally, it appends
-/// navigation buttons ("<--" and "-->") to allow users to move through a carousel of cards.
-/// The navigation buttons are conditionally added based on the card's position in the carousel
-/// and the total number of cards.
-///
-/// # Parameters
-///
-/// * `card` - A reference to the `VoiceflowCard` whose buttons will be converted.
-/// * `index` - The current position of the card within the carousel (0-based index).
-/// * `carousel_len` - The total number of cards in the carousel.
-///
-/// # Returns
-///
-/// A `Vec<Vec<Value>>` representing the inline keyboard structure for Telegram,
-/// including both the card's buttons and any applicable navigation buttons.
-fn carousel_card_buttons_to_keyboard(card: &VoiceflowCard, index: usize, carousel_len: usize) -> Vec<Vec<Value>>{
-    let mut inline_keyboard: Vec<Vec<Value>> = card.buttons().as_ref()
-        .map(|b| buttons_to_keyboard(b))
-        .unwrap_or_else(|| vec![]);
-
-    // Add navigation buttons for the carousel if there are multiple cards
-    let mut switch_buttons: Vec<Value> = Vec::new();
-    if index > 0 {
-        let carousel_prev = json!({
-            "direction": format!("{}", false)
-        });
-        switch_buttons.push(json!({ "text": "<--", "callback_data":  carousel_prev.to_string()}));
-    }
-    if index < carousel_len - 1 {
-        let carousel_next = json!({
-            "direction": format!("{}", true)
-        });
-        switch_buttons.push(json!({ "text": "-->", "callback_data": carousel_next.to_string() }));
-    }
-    inline_keyboard.push(switch_buttons);
-
-    inline_keyboard
 }

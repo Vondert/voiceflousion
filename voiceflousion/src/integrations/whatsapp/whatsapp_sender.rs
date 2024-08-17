@@ -6,11 +6,10 @@ use serde_json::Value;
 use crate::core::base_structs::SenderBase;
 use crate::core::traits::{Responder, Sender};
 use crate::core::voiceflow::dialog_blocks::{VoiceflowButtons, VoiceflowCard, VoiceflowCarousel, VoiceflowImage, VoiceflowText};
-use crate::core::voiceflow::dialog_blocks::enums::VoiceflowButtonsOption;
 use crate::core::voiceflow::VoiceflowBlock;
 use crate::errors::{VoiceflousionError, VoiceflousionResult};
 use crate::integrations::whatsapp::whatsapp_responder::WhatsAppResponder;
-use crate::integrations::whatsapp::whatsapp_serializer::WhatsAppSerializer;
+use crate::integrations::whatsapp::utils::WhatsAppSerializer;
 
 
 /// Represents a sender for WhatsApp integration.
@@ -113,20 +112,31 @@ impl WhatsAppSender {
     /// # Example
     ///
     /// ```
-    /// let response = whatsapp_sender.update_carousel(&carousel, true, &client_id, &chat_id).await?;
+    /// use voiceflousion::integrations::whatsapp::WhatsAppSender;
+    /// use voiceflousion::core::voiceflow::dialog_blocks::{VoiceflowCard, VoiceflowCarousel};
+    /// use voiceflousion::core::traits::Sender;
+    /// use tokio;
+    ///
+    /// #[tokio::main]
+    /// async fn main() -> () {
+    ///     let cards = vec![VoiceflowCard::new(Some("https://example.com/image.jpg".to_string()), Some("Title".to_string()), Some("Description".to_string()), None)];
+    ///     let carousel = VoiceflowCarousel::new(cards, true);
+    ///     let sender = WhatsAppSender::new(10, "api_key".to_string(), None);
+    ///     let chat_id = String::new();
+    ///     let message_id = String::new();
+    ///     let response = sender.update_carousel(&carousel, true, &chat_id, &message_id).await;
+    ///     println!("{:?}", response);
+    /// }
     /// ```
     pub async fn update_carousel(&self, carousel: &VoiceflowCarousel, direction: bool, client_id: &String, chat_id: &String) -> VoiceflousionResult<WhatsAppResponder> {
         let api_url = Self::prepare_api_url(client_id);
         let timestamp = Utc::now().timestamp();
         let (card, index) = carousel.get_next_card(direction)?;
-        let mut interactive_rows = WhatsAppSerializer::carousel_card_buttons_to_list_rows(card, timestamp, index, carousel.len());
 
-        interactive_rows.truncate(10);
-
-        let card_parts = WhatsAppSerializer::prepare_card_parts(carousel.has_images(), card, &interactive_rows, chat_id);
-        let response = self.send_card_parts(&api_url, card_parts).await?;
+        let carousel_card_parts = WhatsAppSerializer::build_carousel_card_parts(card, chat_id, timestamp, index, carousel.len());
+        let whatsapp_response = self.send_card_parts(&api_url, carousel_card_parts).await?;
         carousel.set_selected_card(index, timestamp);
-        WhatsAppResponder::from_response(response, VoiceflowBlock::Carousel(carousel.clone())).await
+        WhatsAppResponder::from_response(whatsapp_response, VoiceflowBlock::Carousel(carousel.clone())).await
     }
 
     /// Prepares the API URL for sending messages.
@@ -162,17 +172,34 @@ impl Sender for WhatsAppSender {
     /// # Example
     ///
     /// ```
-    /// let response = whatsapp_sender.send_text(&client_id, text, &chat_id).await?;
+    /// use voiceflousion::integrations::whatsapp::WhatsAppSender;
+    /// use voiceflousion::core::voiceflow::dialog_blocks::{VoiceflowCard, VoiceflowCarousel};
+    /// use voiceflousion::core::voiceflow::dialog_blocks::VoiceflowText;
+    /// use voiceflousion::core::traits::Sender;
+    /// use tokio;
+    ///
+    /// #[tokio::main]
+    /// async fn main() -> () {
+    ///
+    ///     let cards = vec![VoiceflowCard::new(Some("https://example.com/image.jpg".to_string()), Some("Title".to_string()), Some("Description".to_string()), None)];
+    ///     let carousel = VoiceflowCarousel::new(cards, true);
+    ///     let sender = WhatsAppSender::new(10, "api_key".to_string(), None);
+    ///     let chat_id = String::new();
+    ///     let client_id = String::new();
+    ///     let text = VoiceflowText::new("Hello, World!".to_string());
+    ///     let response = sender.send_text(&client_id, text, &chat_id).await;
+    ///     println!("{:?}", response);
+    /// }
     /// ```
     async fn send_text(&self, client_id: &String, text: VoiceflowText, chat_id: &String) -> VoiceflousionResult<Self::SenderResponder> {
         let api_url = Self::prepare_api_url(client_id);
-        let body = WhatsAppSerializer::prepare_text_body(chat_id, text.message());
-        let response = self.send_message(&api_url, body).await?;
+        let body = WhatsAppSerializer::build_text_body(chat_id, text.message());
+        let whatsapp_response = self.send_message(&api_url, body).await?;
 
-        if response.status().is_success() {
-            Self::SenderResponder::from_response(response, VoiceflowBlock::Text(text)).await
+        if whatsapp_response.status().is_success() {
+            Self::SenderResponder::from_response(whatsapp_response, VoiceflowBlock::Text(text)).await
         } else {
-            let error_text = response.text().await.unwrap_or_default();
+            let error_text = whatsapp_response.text().await.unwrap_or_default();
             Err(VoiceflousionError::ClientRequestError("WhatsAppSender send_text".to_string(), error_text))
         }
     }
@@ -192,17 +219,30 @@ impl Sender for WhatsAppSender {
     /// # Example
     ///
     /// ```
-    /// let response = whatsapp_sender.send_image(&client_id, image, &chat_id).await?;
+    /// use voiceflousion::integrations::whatsapp::WhatsAppSender;
+    /// use voiceflousion::core::traits::Sender;
+    /// use voiceflousion::core::voiceflow::dialog_blocks::VoiceflowImage;
+    /// use tokio;
+    ///
+    /// #[tokio::main]
+    /// async fn main() -> () {
+    ///     let sender = WhatsAppSender::new(10, "api_key".to_string(), None);
+    ///     let chat_id = String::new();
+    ///     let client_id = String::new();
+    ///     let image = VoiceflowImage::new("https://example.com/image.jpg".to_string(), Some(100), Some(200));
+    ///     let response = sender.send_image(&client_id, image, &chat_id).await;
+    ///     println!("{:?}", response);
+    /// }
     /// ```
     async fn send_image(&self, client_id: &String, image: VoiceflowImage, chat_id: &String) -> VoiceflousionResult<Self::SenderResponder> {
         let api_url = Self::prepare_api_url(client_id);
-        let body = WhatsAppSerializer::prepare_image_body(chat_id, image.url());
-        let response = self.send_message(&api_url, body).await?;
+        let body = WhatsAppSerializer::build_image_body(chat_id, image.url());
+        let whatsapp_response = self.send_message(&api_url, body).await?;
 
-        if response.status().is_success() {
-            Self::SenderResponder::from_response(response, VoiceflowBlock::Image(image)).await
+        if whatsapp_response.status().is_success() {
+            Self::SenderResponder::from_response(whatsapp_response, VoiceflowBlock::Image(image)).await
         } else {
-            let error_text = response.text().await.unwrap_or_default();
+            let error_text = whatsapp_response.text().await.unwrap_or_default();
             Err(VoiceflousionError::ClientRequestError("WhatsAppSender send_image".to_string(), error_text))
         }
     }
@@ -212,7 +252,7 @@ impl Sender for WhatsAppSender {
     /// # Parameters
     ///
     /// * `client_id` - The client ID for the WhatsApp API.
-    /// * `buttons` - The `VoiceflowButtons` object containing the buttons configuration.
+    /// * `buttons` - The `VoiceflowButtons` object containing the buttons' configuration.
     /// * `chat_id` - The chat ID of the recipient.
     ///
     /// # Returns
@@ -222,22 +262,34 @@ impl Sender for WhatsAppSender {
     /// # Example
     ///
     /// ```
-    /// let response = whatsapp_sender.send_buttons(&client_id, buttons, &chat_id).await?;
+    /// use voiceflousion::integrations::whatsapp::WhatsAppSender;
+    /// use voiceflousion::core::traits::Sender;
+    /// use voiceflousion::core::voiceflow::dialog_blocks::enums::VoiceflowButtonActionType;
+    /// use voiceflousion::core::voiceflow::dialog_blocks::{VoiceflowButton, VoiceflowButtons};
+    /// use serde_json::Value;
+    /// use tokio;
+    ///
+    /// #[tokio::main]
+    /// async fn main() -> () {
+    ///     let sender = WhatsAppSender::new(10, "api_key".to_string(), None);
+    ///     let chat_id = String::new();
+    ///     let client_id = String::new();
+    ///     let buttons = vec![VoiceflowButton::new("Click me".to_string(), VoiceflowButtonActionType::Path, Value::Null)];
+    ///     let voiceflow_buttons = VoiceflowButtons::new(buttons);
+    ///     let response = sender.send_buttons(&client_id, voiceflow_buttons, &chat_id).await;
+    ///     println!("{:?}", response);
+    /// }
     /// ```
     async fn send_buttons(&self, client_id: &String, buttons: VoiceflowButtons, chat_id: &String) -> VoiceflousionResult<Self::SenderResponder> {
         let api_url = Self::prepare_api_url(client_id);
-        let interactive_rows = WhatsAppSerializer::buttons_to_list_rows(&buttons, buttons.mark());
-        let text = match &buttons.option() {
-            VoiceflowButtonsOption::Text(text) => text.message(),
-            VoiceflowButtonsOption::Empty => panic!("Buttons with empty text field caught!"),
-        };
-        let body = WhatsAppSerializer::prepare_interactive_body(chat_id, text, interactive_rows);
-        let response = self.send_message(&api_url, body).await?;
+        let body = WhatsAppSerializer::build_buttons_body(chat_id, &buttons);
 
-        if response.status().is_success() {
-            Self::SenderResponder::from_response(response, VoiceflowBlock::Buttons(buttons)).await
+        let whatsapp_response = self.send_message(&api_url, body).await?;
+
+        if whatsapp_response.status().is_success() {
+            Self::SenderResponder::from_response(whatsapp_response, VoiceflowBlock::Buttons(buttons)).await
         } else {
-            let error_text = response.text().await.unwrap_or_default();
+            let error_text = whatsapp_response.text().await.unwrap_or_default();
             Err(VoiceflousionError::ClientRequestError("WhatsAppSender send_buttons".to_string(), error_text))
         }
     }
@@ -257,20 +309,29 @@ impl Sender for WhatsAppSender {
     /// # Example
     ///
     /// ```
-    /// let response = whatsapp_sender.send_card(&client_id, card, &chat_id).await?;
+    /// use voiceflousion::integrations::whatsapp::WhatsAppSender;
+    /// use voiceflousion::core::voiceflow::dialog_blocks::VoiceflowCard;
+    /// use voiceflousion::core::traits::Sender;
+    /// use tokio;
+    ///
+    /// #[tokio::main]
+    /// async fn main() -> () {
+    ///     let card = VoiceflowCard::new(Some("https://example.com/image.jpg".to_string()), Some("Title".to_string()), Some("Description".to_string()), None);
+    ///     let sender = WhatsAppSender::new(10, "api_key".to_string(), None);
+    ///     let chat_id = String::new();
+    ///     let client_id = String::new();
+    ///     let message_id = String::new();
+    ///     let response = sender.send_card(&client_id, card, &chat_id).await;
+    ///     println!("{:?}", response);
+    /// }
     /// ```
     async fn send_card(&self, client_id: &String, card: VoiceflowCard, chat_id: &String) -> VoiceflousionResult<Self::SenderResponder> {
         let api_url = Self::prepare_api_url(client_id);
-        let interactive_rows = if let Some(buttons) = card.buttons() {
-            WhatsAppSerializer::buttons_to_list_rows(buttons, buttons.mark())
-        } else {
-            vec![]
-        };
 
-        let card_parts = WhatsAppSerializer::prepare_card_parts(card.image_url().is_some(), &card, &interactive_rows, chat_id);
-        let response = self.send_card_parts(&api_url, card_parts).await?;
+        let card_parts = WhatsAppSerializer::build_card_parts(&card, chat_id);
+        let whatsapp_response = self.send_card_parts(&api_url, card_parts).await?;
 
-        Self::SenderResponder::from_response(response, VoiceflowBlock::Card(card)).await
+        Self::SenderResponder::from_response(whatsapp_response, VoiceflowBlock::Card(card)).await
     }
 
     /// Sends a carousel message via WhatsApp.
@@ -288,16 +349,31 @@ impl Sender for WhatsAppSender {
     /// # Example
     ///
     /// ```
-    /// let response = whatsapp_sender.send_carousel(&client_id, carousel, &chat_id).await?;
+    /// use voiceflousion::integrations::whatsapp::WhatsAppSender;
+    /// use voiceflousion::core::voiceflow::dialog_blocks::{VoiceflowCard, VoiceflowCarousel};
+    /// use voiceflousion::core::traits::Sender;
+    /// use tokio;
+    ///
+    /// #[tokio::main]
+    /// async fn main() -> () {
+    ///     let cards = vec![VoiceflowCard::new(Some("https://example.com/image.jpg".to_string()), Some("Title".to_string()), Some("Description".to_string()), None)];
+    ///     let carousel = VoiceflowCarousel::new(cards, true);
+    ///     let sender = WhatsAppSender::new(10, "api_key".to_string(), None);
+    ///     let chat_id = String::new();
+    ///     let client_id = String::new();
+    ///     let message_id = String::new();
+    ///     let response = sender.send_carousel(&client_id, carousel, &chat_id).await;
+    ///     println!("{:?}", response);
+    /// }
     /// ```
     async fn send_carousel(&self, client_id: &String, carousel: VoiceflowCarousel, chat_id: &String) -> VoiceflousionResult<Self::SenderResponder> {
         let api_url = Self::prepare_api_url(client_id);
         let (card, index) = carousel.get_selected_card()?;
         let mark = carousel.get_selected_mark();
-        let mut interactive_rows = WhatsAppSerializer::carousel_card_buttons_to_list_rows(card, mark, index, carousel.len());
-        interactive_rows.truncate(10);
-        let card_parts = WhatsAppSerializer::prepare_card_parts(carousel.has_images(), card, &interactive_rows, chat_id);
-        let response = self.send_card_parts(&api_url, card_parts).await?;
-        WhatsAppResponder::from_response(response, VoiceflowBlock::Carousel(carousel.clone())).await
+
+        let carousel_card_parts = WhatsAppSerializer::build_carousel_card_parts(card, chat_id, mark, index, carousel.len());
+
+        let whatsapp_response = self.send_card_parts(&api_url, carousel_card_parts).await?;
+        WhatsAppResponder::from_response(whatsapp_response, VoiceflowBlock::Carousel(carousel.clone())).await
     }
 }

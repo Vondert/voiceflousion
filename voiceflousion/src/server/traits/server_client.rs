@@ -44,6 +44,7 @@ pub trait ServerClient: Client {
 ///
 /// This implementation overrides the `authenticate_webhook` method to provide specific
 /// authentication logic for WhatsApp webhook requests.
+#[cfg(feature = "whatsapp")]
 impl ServerClient for WhatsAppClient{
     fn authenticate_webhook(params: &mut QueryParams, value: Option<&Value>, bot_auth_token: Option<BotAuthToken>) -> Option<Response>{
         // Check if the incoming webhook update is of type "service" and reject it

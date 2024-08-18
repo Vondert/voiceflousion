@@ -1,5 +1,4 @@
 use std::fmt::Debug;
-use std::ops::{Deref, DerefMut};
 use std::vec::IntoIter;
 use crate::core::voiceflow::dialog_blocks::enums::VoiceflowButtonsOption;
 use crate::core::voiceflow::response_structures::{VoiceflowResponseBlock, VoiceflowResponseBlockProcessor};
@@ -49,13 +48,22 @@ impl VoiceflowMessage{
     /// let trimmed = message.trim_end_block();
     /// ```
     pub fn trim_end_block(&mut self) -> bool{
-        if let Some(VoiceflowBlock::End) = &self.last() {
-            let _ = &self.pop();
+        if let Some(VoiceflowBlock::End) = &self.content.last() {
+            let _ = &self.content.pop();
             true
         }
         else{
             false
         }
+    }
+    pub fn shift_block(&mut self, block: VoiceflowBlock) -> (){
+        self.content.insert(0, block)
+    }
+    pub fn push(&mut self, block: VoiceflowBlock) -> (){
+        self.content.push(block);
+    }
+    pub fn len(&self) -> usize{
+        self.content.len()
     }
 }
 impl Default for VoiceflowMessage{
@@ -63,18 +71,6 @@ impl Default for VoiceflowMessage{
         Self{
             content: Vec::new()
         }
-    }
-}
-impl Deref for VoiceflowMessage{
-    type Target = Vec<VoiceflowBlock>;
-
-    fn deref(&self) -> &Self::Target {
-        &self.content
-    }
-}
-impl DerefMut for VoiceflowMessage{
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.content
     }
 }
 impl IntoIterator for VoiceflowMessage {

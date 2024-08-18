@@ -5,16 +5,7 @@
 #[derive(Debug, Clone)]
 pub enum VoiceflowButtonActionType {
     /// An action to open a URL.
-    OpenUrl(String),
+    Url(String),
     /// An action to follow a path within the Voiceflow dialog.
     Path
-}
-
-impl VoiceflowButtonActionType{
-    pub fn is_url(&self) -> bool{
-        match &self {
-            VoiceflowButtonActionType::OpenUrl(_) => true,
-            VoiceflowButtonActionType::Path => false
-        }
-    }
 }

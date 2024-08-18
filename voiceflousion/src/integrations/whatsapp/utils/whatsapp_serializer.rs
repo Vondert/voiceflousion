@@ -1,6 +1,6 @@
 use serde_json::{json, Value};
 use crate::core::voiceflow::dialog_blocks::{VoiceflowButtons, VoiceflowCard};
-use crate::core::voiceflow::dialog_blocks::enums::{VoiceflowButtonActionType, VoiceflowButtonsOption};
+use crate::core::voiceflow::dialog_blocks::enums::VoiceflowButtonsOption;
 
 /// Serializer for constructing WhatsApp message bodies.
 ///
@@ -156,7 +156,7 @@ impl WhatsAppSerializer {
         card_parts
     }
 
-    /// Builds the parts of a WhatsApp carousel card to be sent, based on the presence of images and buttons.
+    /// Builds the parts of a WhatsApp carousel card to be sent, based on the presence of image.
     ///
     /// # Parameters
     ///
@@ -179,12 +179,7 @@ impl WhatsAppSerializer {
         if let Some(url) = card.image_url() {
             card_parts.push(Self::build_image_body(chat_id, url));
         }
-
-        if let Some(_buttons) = card.buttons() {
-            card_parts.push(Self::build_carousel_buttons_body(chat_id, card, text, mark, index, carousel_len));
-        } else {
-            card_parts.push(Self::build_text_body(chat_id, &text));
-        }
+        card_parts.push(Self::build_carousel_buttons_body(chat_id, card, text, mark, index, carousel_len));
 
         card_parts
     }
@@ -201,11 +196,10 @@ impl WhatsAppSerializer {
     /// A vector of `Value` representing the list rows.
     fn build_buttons_vec(buttons: &VoiceflowButtons, buttons_mark: i64) -> Vec<Value> {
         buttons.iter().enumerate().map(|(index, b)| {
-            let is_url = b.action_type().is_url().to_string();
+
             let callback_data = json!({
                 "index": index,
-                "mark": buttons_mark,
-                "is_url": is_url
+                "mark": buttons_mark
             });
 
             let callback_data_string = serde_json::to_string(&callback_data).unwrap_or_else(|_| "".to_string());
@@ -234,7 +228,7 @@ impl WhatsAppSerializer {
         let mut list_rows: Vec<Value> = card.buttons().as_ref()
             .map(|b| Self::build_buttons_vec(b, mark))
             .unwrap_or_else(Vec::new);
-
+        println!("length: {}, index: {}", carousel_len, index);
         // Add a previous button if this is not the first card
         if index > 0 {
             let carousel_prev = json!({

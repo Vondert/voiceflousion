@@ -1,6 +1,7 @@
 use serde_json::{json, Map, Value};
 use crate::core::voiceflow::dialog_blocks::enums::VoiceflowButtonActionType;
 use crate::core::voiceflow::dialog_blocks::traits::FromValue;
+use crate::core::voiceflow::dialog_blocks::VoiceflowText;
 use crate::errors::{VoiceflousionError, VoiceflousionResult};
 
 /// Represents a button in a Voiceflow dialog.
@@ -95,6 +96,15 @@ impl VoiceflowButton {
     pub fn payload(&self) -> &Value{
         &self.payload
     }
+    pub fn get_url_text(&self) -> Option<VoiceflowText>{
+        match &self.action_type{
+            VoiceflowButtonActionType::Url(url) => {
+                let url_text = VoiceflowText::new(url.clone());
+                Some(url_text)
+            },
+            _ => None
+        }
+    }
 }
 impl FromValue for VoiceflowButton{
     /// Attempts to convert a JSON `Value` into a `VoiceflowButton` instance.
@@ -163,7 +173,7 @@ impl FromValue for VoiceflowButton{
                     .ok_or_else(|| VoiceflousionError::VoiceflowBlockConvertationError(("VoiceflowButton button url".to_string(), value.clone())))?
                     .to_string();
 
-                action_type = VoiceflowButtonActionType::OpenUrl(url)
+                action_type = VoiceflowButtonActionType::Url(url)
             }
         }
 

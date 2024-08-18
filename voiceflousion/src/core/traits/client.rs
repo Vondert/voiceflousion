@@ -1,11 +1,10 @@
 use std::ops::Deref;
 use async_trait::async_trait;
-use serde_json::Value;
 use crate::core::base_structs::ClientBase;
 use crate::core::session_wrappers::LockedSession;
 use crate::core::subtypes::{InteractionType, SentMessage};
 use crate::core::traits::{Responder, Sender, Update};
-use crate::core::voiceflow::State;
+use crate::core::voiceflow::{State, VoiceflowBlock};
 use crate::errors::{VoiceflousionError, VoiceflousionResult};
 
 /// The `Client` trait adds methods for launching dialogs, sending messages,
@@ -162,20 +161,34 @@ pub trait Client: Sync + Send {
     /// # Returns
     ///
     /// A `VoiceflousionResult` containing a vector of `SenderResponder` or a `VoiceflousionError` if the request fails.
-    async fn choose_button_in_voiceflow_dialog(&self, locked_session: &LockedSession,  interaction_time: i64, state: Option<State>, payload: Value) -> VoiceflousionResult<Vec<<Self::ClientSender<'_> as Sender>::SenderResponder>> {
+    async fn choose_button_in_voiceflow_dialog(&self, locked_session: &LockedSession,  interaction_time: i64, state: Option<State>, button_index: usize) -> VoiceflousionResult<Vec<<Self::ClientSender<'_> as Sender>::SenderResponder>> {
         // Set the last interaction time for the session
         locked_session.set_last_interaction(Some(interaction_time));
 
         // Get the Voiceflow session associated with the locked session
         let voiceflow_session = locked_session.voiceflow_session();
 
-        // Send the button data to the Voiceflow client
-        let mut voiceflow_message = self.client_base().voiceflow_client().choose_button(voiceflow_session, state, payload).await;
+        let voiceflow_message = {
+            let binding = locked_session.previous_message().await;
+            let previous_message = binding.deref().as_ref()
+                .ok_or_else(|| VoiceflousionError::ClientRequestError("Client".to_string(),"Button cannot be handled in the start of the conversation".to_string()))?;
+            let voiceflow_button = previous_message.get_button(button_index.clone())?;
 
-        // If the Voiceflow message indicates the end of the block, clear the last interaction time to make session invalid
-        if voiceflow_message.trim_end_block() {
-            locked_session.set_last_interaction(None);
-        }
+            let payload = voiceflow_button.payload().clone();
+
+            // Send the button data to the Voiceflow client
+            let mut voiceflow_message = self.client_base().voiceflow_client().choose_button(voiceflow_session, state, payload).await;
+
+            if let Some(url_text) = voiceflow_button.get_url_text(){
+                voiceflow_message.shift_block(VoiceflowBlock::Text(url_text));
+            }
+
+            // If the Voiceflow message indicates the end of the block, clear the last interaction time to make session invalid
+            if voiceflow_message.trim_end_block() {
+                locked_session.set_last_interaction(None);
+            }
+            voiceflow_message
+        };
 
         let client_id = self.client_base().client_id();
 
@@ -229,15 +242,9 @@ pub trait Client: Sync + Send {
             // Handle the interaction based on its type
             match update.interaction_type() {
                 // If it is a  regular button press
-                InteractionType::Button(button_index, _) => {
+                InteractionType::Button(button_index) => {
                     // Handle the button interaction
-                    let payload = {
-                        let binding = locked_session.previous_message().await;
-                        let previous_message = binding.deref().as_ref()
-                            .ok_or_else(|| VoiceflousionError::ClientRequestError("Client".to_string(),"Button cannot be handled in the start of the conversation".to_string()))?;
-                        previous_message.get_button_payload(button_index.clone())?
-                    };
-                    self.choose_button_in_voiceflow_dialog(&locked_session, interaction_time, update_state, payload).await
+                    self.choose_button_in_voiceflow_dialog(&locked_session, interaction_time, update_state, button_index.clone()).await
                 },
                 // If it is a text message
                 InteractionType::Text(message) => {

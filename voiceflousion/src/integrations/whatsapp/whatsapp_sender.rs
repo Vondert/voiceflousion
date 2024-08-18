@@ -1,8 +1,10 @@
 use std::ops::Deref;
+use std::time::Duration;
 use async_trait::async_trait;
 use chrono::Utc;
 use reqwest::Response;
 use serde_json::Value;
+use tokio::time::sleep;
 use crate::core::base_structs::SenderBase;
 use crate::core::traits::{Responder, Sender};
 use crate::core::voiceflow::dialog_blocks::{VoiceflowButtons, VoiceflowCard, VoiceflowCarousel, VoiceflowImage, VoiceflowText};
@@ -83,12 +85,15 @@ impl WhatsAppSender {
     /// A `VoiceflousionResult` containing a `Response` or a `VoiceflousionError` if the request fails.
     async fn send_card_parts(&self, api_url: &str, card_parts: Vec<Value>) -> VoiceflousionResult<Response> {
         let mut last_response = None;
-
-        for body in card_parts {
-            let response = self.send_message(api_url, body).await?;
+        for (index, body) in card_parts.iter().enumerate() {
+            let response = self.send_message(api_url, body.clone()).await?;
             if !response.status().is_success() {
                 let error_text = response.text().await.unwrap_or_default();
                 return Err(VoiceflousionError::ClientRequestError("WhatsAppSender send_card_parts".to_string(), error_text));
+            }
+            // Add a delay if it's not the last part
+            if index < card_parts.len() - 1 {
+                sleep(Duration::from_millis(1000)).await;
             }
             last_response = Some(response);
         }

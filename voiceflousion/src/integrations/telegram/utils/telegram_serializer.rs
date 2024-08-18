@@ -1,5 +1,5 @@
 use serde_json::{json, Value};
-use crate::core::voiceflow::dialog_blocks::enums::{VoiceflowButtonActionType, VoiceflowButtonsOption};
+use crate::core::voiceflow::dialog_blocks::enums::VoiceflowButtonsOption;
 use crate::core::voiceflow::dialog_blocks::{VoiceflowButtons, VoiceflowCard};
 
 pub(crate) struct TelegramSerializer;
@@ -206,10 +206,8 @@ impl TelegramSerializer {
     /// A vector of vectors containing the keyboard layout in JSON format.
     fn build_buttons_vec(buttons: &VoiceflowButtons) -> Vec<Vec<Value>> {
         buttons.iter().enumerate().map(|(index, b)| {
-            let is_url = b.action_type().is_url().to_string();
             let callback_data = json!({
-                "index": index,
-                "is_url": is_url
+                "index": index
             }).to_string();
 
             json!({ "text": b.name(), "callback_data": callback_data })

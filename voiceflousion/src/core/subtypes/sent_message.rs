@@ -1,4 +1,4 @@
-use serde_json::Value;
+use crate::core::voiceflow::dialog_blocks::VoiceflowButton;
 use crate::core::voiceflow::VoiceflowBlock;
 use crate::errors::{VoiceflousionError, VoiceflousionResult};
 
@@ -141,24 +141,24 @@ impl SentMessage {
     /// let block = VoiceflowBlock::Buttons(buttons);
     /// let sent_message = SentMessage::new(block, "message_id".to_string(), 1627554661);
     ///
-    /// let payload = sent_message.get_button_payload(0).unwrap();
+    /// let payload = sent_message.get_button(0).unwrap();
     /// ```
-    pub fn get_button_payload(&self, button_index: usize) -> VoiceflousionResult<Value> {
+    pub fn get_button(&self, button_index: usize) -> VoiceflousionResult<&VoiceflowButton> {
         match &self.block {
             VoiceflowBlock::Buttons(buttons) => {
                 let button = buttons.get_button(button_index)?;
-                Ok(button.payload().clone())
+                Ok(button)
             },
             VoiceflowBlock::Card(card) => {
                 let buttons = card.buttons().as_ref().unwrap();
                 let button = buttons.get_button(button_index)?;
-                Ok(button.payload().clone())
+                Ok(button)
             },
             VoiceflowBlock::Carousel(carousel) => {
                 let (card, _index) = carousel.get_selected_card()?;
                 let buttons = card.buttons().as_ref().unwrap();
                 let button = buttons.get_button(button_index)?;
-                Ok(button.payload().clone())
+                Ok(button)
             },
             _ => Err(VoiceflousionError::ValidationError("SentMessage content".to_string(), "There are no buttons in the previous message!".to_string()))
         }

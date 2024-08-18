@@ -66,7 +66,7 @@ impl Update for WhatsAppUpdate{
 
         let mut text: String = String::new();
         let mut carousel_direction = None;
-        let mut button_options = None;
+        let mut button_index = None;
 
         if is_message{
             text = message["text"].get("body")
@@ -100,22 +100,12 @@ impl Update for WhatsAppUpdate{
                 carousel_direction = mut_data.remove("direction")
                     .and_then(|value_index| value_index.as_str().map(|s| s.to_string()))
                     .and_then(|index| index.parse::<bool>().ok());
-                let button_index = mut_data.remove("index")
+                button_index = mut_data.remove("index")
                     .and_then(|value_index| value_index.as_i64().map(|index| index as usize));
-                let is_url = mut_data.remove("is_url")
-                    .and_then(|value_is_url| value_is_url.as_str().map(|s| s.to_string()))
-                    .and_then(|is_url| is_url.parse::<bool>().ok());
-
-                match (button_index, is_url) {
-                    (Some(index), Some(is_url)) => {
-                        button_options = Some((index, is_url));
-                    },
-                    _ => {}
-                }
             }
         }
 
-        let interaction_type = InteractionType::new(text, button_options, carousel_direction);
+        let interaction_type = InteractionType::new(text, button_index, carousel_direction);
 
         Ok(Self::new(
             chat_id,

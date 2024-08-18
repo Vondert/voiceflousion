@@ -8,8 +8,7 @@ use crate::errors::{VoiceflousionError, VoiceflousionResult};
 #[derive(Debug)]
 pub struct WhatsAppUpdate{
     /// The base structure that provides core functionalities.
-    update_base: UpdateBase,
-    is_url: bool
+    update_base: UpdateBase
 }
 
 impl Deref for WhatsAppUpdate {
@@ -22,10 +21,9 @@ impl Deref for WhatsAppUpdate {
 
 
 impl WhatsAppUpdate{
-    pub fn new(chat_id: String, interaction_time: i64, interaction_type: InteractionType, update_id: String, is_url: bool) -> Self {
+    pub fn new(chat_id: String, interaction_time: i64, interaction_type: InteractionType, update_id: String) -> Self {
         Self {
-            update_base: UpdateBase::new(chat_id, interaction_time, interaction_type, update_id),
-            is_url
+            update_base: UpdateBase::new(chat_id, interaction_time, interaction_type, update_id)
         }
     }
 }
@@ -68,8 +66,7 @@ impl Update for WhatsAppUpdate{
 
         let mut text: String = String::new();
         let mut carousel_direction = None;
-        let mut button_index = None;
-        let mut is_url = None;
+        let mut button_options = None;
 
         if is_message{
             text = message["text"].get("body")
@@ -103,23 +100,28 @@ impl Update for WhatsAppUpdate{
                 carousel_direction = mut_data.remove("direction")
                     .and_then(|value_index| value_index.as_str().map(|s| s.to_string()))
                     .and_then(|index| index.parse::<bool>().ok());
-                button_index = mut_data.remove("index")
+                let button_index = mut_data.remove("index")
                     .and_then(|value_index| value_index.as_i64().map(|index| index as usize));
-                is_url = Some(mut_data.remove("is_url")
+                let is_url = mut_data.remove("is_url")
                     .and_then(|value_is_url| value_is_url.as_str().map(|s| s.to_string()))
-                    .and_then(|is_url| is_url.parse::<bool>().ok())
-                    .ok_or_else(|| VoiceflousionError::ClientUpdateConvertationError("WhatsAppUpdate button is url".to_string(), interactive_reply.clone()))?);
+                    .and_then(|is_url| is_url.parse::<bool>().ok());
+
+                match (button_index, is_url) {
+                    (Some(index), Some(is_url)) => {
+                        button_options = Some((index, is_url));
+                    },
+                    _ => {}
+                }
             }
         }
 
-        let interaction_type = InteractionType::new(text, button_index, carousel_direction);
+        let interaction_type = InteractionType::new(text, button_options, carousel_direction);
 
         Ok(Self::new(
             chat_id,
             interaction_time,
             interaction_type,
-            update_id,
-            is_url.unwrap()
+            update_id
         ))
 
     }

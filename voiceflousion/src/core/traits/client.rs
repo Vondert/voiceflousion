@@ -229,7 +229,7 @@ pub trait Client: Sync + Send {
             // Handle the interaction based on its type
             match update.interaction_type() {
                 // If it is a  regular button press
-                InteractionType::Button(button_index) => {
+                InteractionType::Button(button_index, _) => {
                     // Handle the button interaction
                     let payload = {
                         let binding = locked_session.previous_message().await;

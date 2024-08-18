@@ -239,8 +239,7 @@ impl WhatsAppSerializer {
         if index > 0 {
             let carousel_prev = json!({
                 "direction": format!("{}", false),
-                "mark": mark,
-                "is_url": format!("{}", false)
+                "mark": mark
             });
             list_rows.push(json!({
                 "id": carousel_prev.to_string(),
@@ -253,8 +252,7 @@ impl WhatsAppSerializer {
         if index < carousel_len - 1 {
             let carousel_next = json!({
                 "direction": format!("{}", true),
-                "mark": mark,
-                "is_url": format!("{}", false)
+                "mark": mark
             });
             list_rows.push(json!({
                 "id": carousel_next.to_string(),

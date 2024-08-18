@@ -206,18 +206,13 @@ impl TelegramSerializer {
     /// A vector of vectors containing the keyboard layout in JSON format.
     fn build_buttons_vec(buttons: &VoiceflowButtons) -> Vec<Vec<Value>> {
         buttons.iter().enumerate().map(|(index, b)| {
-            let callback_data = json!({ "index": index }).to_string();
-            match &b.action_type() {
-                VoiceflowButtonActionType::OpenUrl(url) => {
-                    let url = if url.is_empty() {
-                        "empty"
-                    } else {
-                        url
-                    };
-                    json!({ "text": b.name(), "url": url, "callback_data": callback_data })
-                },
-                VoiceflowButtonActionType::Path => json!({ "text": b.name(), "callback_data": callback_data }),
-            }
+            let is_url = b.action_type().is_url().to_string();
+            let callback_data = json!({
+                "index": index,
+                "is_url": is_url
+            }).to_string();
+
+            json!({ "text": b.name(), "callback_data": callback_data })
         }).map(|key| vec![key]).collect()
     }
 

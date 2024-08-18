@@ -278,8 +278,7 @@ impl FromValue for VoiceflowCarousel{
     /// succeeds, or a `VoiceflousionError` if the conversion fails. If the conversion
     /// succeeds but there is no meaningful value, `None` can be returned.
     fn from_value(value: &Value) -> VoiceflousionResult<Option<Self>> {
-        let payload = value.get("trace")
-            .and_then(|trace| trace.get("payload"))
+        let payload = value["trace"].get("payload")
             .ok_or_else(|| VoiceflousionError::VoiceflowBlockConvertationError(("VoiceflowCarousel carousel payload".to_string(), value.clone())))?;
 
         let cards_value = payload.get("cards").and_then(|cards| cards.as_array())

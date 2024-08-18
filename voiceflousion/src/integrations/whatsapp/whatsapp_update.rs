@@ -8,7 +8,8 @@ use crate::errors::{VoiceflousionError, VoiceflousionResult};
 #[derive(Debug)]
 pub struct WhatsAppUpdate{
     /// The base structure that provides core functionalities.
-    update_base: UpdateBase
+    update_base: UpdateBase,
+    is_url: bool
 }
 
 impl Deref for WhatsAppUpdate {
@@ -21,9 +22,10 @@ impl Deref for WhatsAppUpdate {
 
 
 impl WhatsAppUpdate{
-    pub fn new(chat_id: String, interaction_time: i64, interaction_type: InteractionType, update_id: String) -> Self {
+    pub fn new(chat_id: String, interaction_time: i64, interaction_type: InteractionType, update_id: String, is_url: bool) -> Self {
         Self {
-            update_base: UpdateBase::new(chat_id, interaction_time, interaction_type, update_id)
+            update_base: UpdateBase::new(chat_id, interaction_time, interaction_type, update_id),
+            is_url
         }
     }
 }
@@ -67,6 +69,7 @@ impl Update for WhatsAppUpdate{
         let mut text: String = String::new();
         let mut carousel_direction = None;
         let mut button_index = None;
+        let mut is_url = None;
 
         if is_message{
             text = message["text"].get("body")
@@ -74,14 +77,12 @@ impl Update for WhatsAppUpdate{
                 .map(|text_str| text_str.to_string())
                 .ok_or_else(|| VoiceflousionError::ClientUpdateConvertationError("WhatsAppUpdate update message text".to_string(), message.clone()))?;
         }
-        else{
-            let interactive_reply =  if let Some(list_reply) = message["interactive"].get("list_reply"){
+        else {
+            let interactive_reply = if let Some(list_reply) = message["interactive"].get("list_reply") {
                 list_reply
-            }
-            else if let Some(button_reply) = message["interactive"].get("button_reply"){
+            } else if let Some(button_reply) = message["interactive"].get("button_reply") {
                 button_reply
-            }
-            else{
+            } else {
                 return Err(VoiceflousionError::ClientUpdateConvertationError("WhatsAppUpdate update interactive reply".to_string(), message.clone()))
             };
 
@@ -96,7 +97,7 @@ impl Update for WhatsAppUpdate{
             let mut deserialized_data: Value = serde_json::from_str(data)
                 .map_err(|_error| VoiceflousionError::ClientUpdateConvertationError("WhatsAppUpdate callback data must be a valid JSON string".to_string(), interactive_reply.clone()))?;
 
-            if let Some(mut_data) = deserialized_data.as_object_mut(){
+            if let Some(mut_data) = deserialized_data.as_object_mut() {
                 interaction_time = mut_data.remove("mark").and_then(|value_mark| value_mark.as_i64())
                     .ok_or_else(|| VoiceflousionError::ClientUpdateConvertationError("WhatsAppUpdate button timestamp mark".to_string(), interactive_reply.clone()))?;
                 carousel_direction = mut_data.remove("direction")
@@ -104,6 +105,10 @@ impl Update for WhatsAppUpdate{
                     .and_then(|index| index.parse::<bool>().ok());
                 button_index = mut_data.remove("index")
                     .and_then(|value_index| value_index.as_i64().map(|index| index as usize));
+                is_url = Some(mut_data.remove("is_url")
+                    .and_then(|value_is_url| value_is_url.as_str().map(|s| s.to_string()))
+                    .and_then(|is_url| is_url.parse::<bool>().ok())
+                    .ok_or_else(|| VoiceflousionError::ClientUpdateConvertationError("WhatsAppUpdate button is url".to_string(), interactive_reply.clone()))?);
             }
         }
 
@@ -113,7 +118,9 @@ impl Update for WhatsAppUpdate{
             chat_id,
             interaction_time,
             interaction_type,
-            update_id
+            update_id,
+            is_url.unwrap()
         ))
+
     }
 }

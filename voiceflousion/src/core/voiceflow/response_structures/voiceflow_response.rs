@@ -120,10 +120,7 @@ fn parse_sse(lines: Lines) -> Vec<String> {
 ///
 /// The `VoiceflowResponseBlockType` corresponding to the JSON data.
 fn get_response_type (json: &Value) -> VoiceflowResponseBlockType {
-    if let Some(payload_type) = json.get("trace")
-        .and_then(|trace| trace.get("type"))
-        .and_then(|t| t.as_str())
-    {
+    if let Some(payload_type) = json["trace"].get("type").and_then(|t| t.as_str()) {
         return VoiceflowResponseBlockType::new(payload_type)
     }
     VoiceflowResponseBlockType::new("")

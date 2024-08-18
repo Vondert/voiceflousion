@@ -57,9 +57,7 @@ impl VoiceflowText{
 
 impl FromValue for VoiceflowText{
     fn from_value(value: &Value) -> VoiceflousionResult<Option<Self>> {
-        let message = value.get("trace")
-            .and_then(|trace| trace.get("payload"))
-            .and_then(|payload| payload.get("message"))
+        let message = value["trace"]["payload"].get("message")
             .ok_or_else(|| VoiceflousionError::VoiceflowBlockConvertationError(("VoiceflowText text message".to_string(), value.clone())))?
             .as_str()
             .map(|s| s.trim_matches('"').to_string())

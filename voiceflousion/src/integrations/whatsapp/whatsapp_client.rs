@@ -47,7 +47,6 @@ impl Client for WhatsAppClient {
             let previous_message = binding.deref().as_ref()
                 .ok_or_else(|| VoiceflousionError::ClientRequestError("WhatsAppClient".to_string(),"Carousel cannot be switched in start of the conversation".to_string()))?;
             if let VoiceflowBlock::Carousel(carousel) = previous_message.block() {
-
                 vec![self.switch_carousel_card(locked_session, carousel, switch_direction, interaction_time).await?]
             }
             else{

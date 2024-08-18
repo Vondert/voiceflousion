@@ -138,8 +138,7 @@ impl Update for TelegramUpdate {
             .ok_or_else(|| VoiceflousionError::ClientUpdateConvertationError("TelegramUpdate message".to_string(), body.clone()))?;
 
         // Extract the chat ID from the update data
-        let chat_id = update_data.get("chat")
-            .and_then(|chat| chat.get("id"))
+        let chat_id = update_data["chat"].get("id")
             .and_then(|id| id.as_i64())
             .map(|id| id.to_string())
             .ok_or_else(|| VoiceflousionError::ClientUpdateConvertationError("TelegramUpdate chat id".to_string(), update_data.clone()))?;
@@ -171,8 +170,7 @@ impl Update for TelegramUpdate {
 
         // Extract the callback data if present
         let mut callback_data: Option<Value>  = if !is_message {
-            let data = body.get("callback_query")
-                .and_then(|q| q.get("data"))
+            let data = body["callback_query"].get("data")
                 .and_then(|data| data.as_str())
                 .ok_or_else(|| VoiceflousionError::ClientUpdateConvertationError("TelegramUpdate callback data".to_string(), body.clone()))?;
 

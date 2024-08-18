@@ -201,23 +201,19 @@ impl WhatsAppSerializer {
     /// A vector of `Value` representing the list rows.
     fn build_buttons_vec(buttons: &VoiceflowButtons, buttons_mark: i64) -> Vec<Value> {
         buttons.iter().enumerate().map(|(index, b)| {
+            let is_url = b.action_type().is_url().to_string();
             let callback_data = json!({
                 "index": index,
-                "mark": buttons_mark
+                "mark": buttons_mark,
+                "is_url": is_url
             });
 
             let callback_data_string = serde_json::to_string(&callback_data).unwrap_or_else(|_| "".to_string());
 
-            let description = if let VoiceflowButtonActionType::OpenUrl(url) = &b.action_type() {
-                url.clone()
-            } else {
-                String::new()
-            };
-
             json!({
                 "id": callback_data_string,
                 "title": b.name(),
-                "description": description
+                "description": ""
             })
         }).collect()
     }
@@ -243,7 +239,8 @@ impl WhatsAppSerializer {
         if index > 0 {
             let carousel_prev = json!({
                 "direction": format!("{}", false),
-                "mark": mark
+                "mark": mark,
+                "is_url": format!("{}", false)
             });
             list_rows.push(json!({
                 "id": carousel_prev.to_string(),
@@ -256,7 +253,8 @@ impl WhatsAppSerializer {
         if index < carousel_len - 1 {
             let carousel_next = json!({
                 "direction": format!("{}", true),
-                "mark": mark
+                "mark": mark,
+                "is_url": format!("{}", false)
             });
             list_rows.push(json!({
                 "id": carousel_next.to_string(),

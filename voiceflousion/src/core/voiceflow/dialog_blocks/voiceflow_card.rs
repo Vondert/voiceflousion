@@ -137,12 +137,10 @@ impl FromValue for VoiceflowCard{
     /// succeeds, or a `VoiceflousionError` if the conversion fails. If the conversion
     /// succeeds but there is no meaningful value, `None` can be returned.
     fn from_value(value: &Value) -> VoiceflousionResult<Option<Self>> {
-        let payload = value.get("trace").and_then(|trace| trace.get("payload")).unwrap_or_else(|| value);
+        let payload = value["trace"].get("payload").unwrap_or_else(|| value);
         let buttons: Option<VoiceflowButtons> = VoiceflowButtons::from_value(value)?;
 
-        let description = payload.get("description")
-            .and_then(|description| description.get("text"))
-            .and_then(|text| text.as_str())
+        let description = payload["description"].get("text").and_then(|text| text.as_str())
             .ok_or_else(|| VoiceflousionError::VoiceflowBlockConvertationError(("VoiceflowCard card description".to_string(), value.clone())))?
             .to_string();
         let description = if description.is_empty(){

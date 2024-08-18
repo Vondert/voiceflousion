@@ -165,8 +165,7 @@ impl FromValue for VoiceflowButtons{
     /// succeeds but there are no buttons, `None` can be returned.
     fn from_value(value: &Value) -> VoiceflousionResult<Option<Self>> {
 
-        let buttons_value = match value.get("trace").and_then(|trace| trace.get("payload"))
-            .and_then(|payload| payload.get("buttons")){
+        let buttons_value = match value["trace"]["payload"].get("buttons"){
             None => value.get("buttons").and_then(|buttons| buttons.as_array()),
             Some(buttons) => buttons.as_array()
         }.ok_or_else(|| VoiceflousionError::VoiceflowBlockConvertationError(("VoiceflowButtons buttons value".to_string(), value.clone())))?;

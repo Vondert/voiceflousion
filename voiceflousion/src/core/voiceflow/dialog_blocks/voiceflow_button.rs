@@ -17,6 +17,9 @@ pub struct VoiceflowButton {
 }
 
 impl VoiceflowButton {
+
+    const ALLOWED_NAME_LENGTH: usize = 24;
+
     /// Creates a new `VoiceflowButton` instance.
     ///
     /// # Parameters
@@ -111,6 +114,13 @@ impl FromValue for VoiceflowButton{
             .and_then(|name| name.as_str())
             .ok_or_else(|| VoiceflousionError::VoiceflowBlockConvertationError(("VoiceflowButton button name".to_string(), value.clone())))?
             .to_string();
+
+        if name.len() > Self::ALLOWED_NAME_LENGTH {
+            return Err(VoiceflousionError::VoiceflowBlockConvertationError((
+                format!("VoiceflowButton button name length is {}. Allowed name length - {}", name.len(), Self::ALLOWED_NAME_LENGTH),
+                value.clone())
+            ))
+        }
 
         let request = value.get("request")
             .ok_or_else(|| VoiceflousionError::VoiceflowBlockConvertationError(("VoiceflowButton button request".to_string(), value.clone())))?;

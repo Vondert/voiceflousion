@@ -114,8 +114,7 @@ impl FromValue for VoiceflowImage{
     /// succeeds, or a `VoiceflousionError` if the conversion fails. If the conversion
     /// succeeds but there is no meaningful value, `None` can be returned.
     fn from_value(value: &Value) -> VoiceflousionResult<Option<Self>> {
-        let payload = value.get("trace")
-            .and_then(|trace| trace.get("payload"))
+        let payload = value["trace"].get("payload")
             .ok_or_else(|| VoiceflousionError::VoiceflowBlockConvertationError(("VoiceflowImage image payload".to_string(), value.clone())))?;
 
         let url = payload.get("image")
@@ -123,12 +122,10 @@ impl FromValue for VoiceflowImage{
             .ok_or_else(|| VoiceflousionError::VoiceflowBlockConvertationError(("VoiceflowImage image url".to_string(), value.clone())))?
             .to_string();
 
-        let height = payload.get("dimensions")
-            .and_then(|dimensions| dimensions.get("height"))
+        let height = payload["dimensions"].get("height")
             .and_then(|height| height.as_u64());
 
-        let width = payload.get("dimensions")
-            .and_then(|dimensions| dimensions.get("width"))
+        let width = payload["dimensions"].get("width")
             .and_then(|width| width.as_u64());
         if url.is_empty() {
             return Ok(None)

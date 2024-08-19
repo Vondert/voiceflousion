@@ -19,8 +19,6 @@ pub struct VoiceflowButton {
 
 impl VoiceflowButton {
 
-    const ALLOWED_NAME_LENGTH: usize = 24;
-
     /// Creates a new `VoiceflowButton` instance.
     ///
     /// # Parameters
@@ -43,33 +41,18 @@ impl VoiceflowButton {
     ///
     /// let button = VoiceflowButton::new("Button 1".to_string(), VoiceflowButtonActionType::Path, Value::Null);
     /// ```
-    pub fn new(name: String, action_type: VoiceflowButtonActionType, payload: Value) -> Self {
+    pub fn new(name: String,payload: Value, option_url: Option<String>) -> Self {
+        let action_type = if let Some(url) = option_url{
+            VoiceflowButtonActionType::Url(url)
+        }
+        else{
+            VoiceflowButtonActionType::Path
+        };
         Self {
             name,
             action_type,
             payload
         }
-    }
-
-    /// Returns a reference to the action type of the button.
-    ///
-    /// # Returns
-    ///
-    /// A reference to the `VoiceflowButtonActionType`.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// use serde_json::Value;
-    /// use voiceflousion::core::voiceflow::dialog_blocks::enums::VoiceflowButtonActionType;
-    /// use voiceflousion::core::voiceflow::dialog_blocks::VoiceflowButton;
-    ///
-    /// let button = VoiceflowButton::new("Button 1".to_string(), VoiceflowButtonActionType::Path, Value::Null);
-    ///
-    /// let action_type = button.action_type();
-    /// ```
-    pub fn action_type(&self) -> &VoiceflowButtonActionType {
-        &self.action_type
     }
 
     /// Returns a reference to the name of the button.
@@ -125,13 +108,6 @@ impl FromValue for VoiceflowButton{
             .ok_or_else(|| VoiceflousionError::VoiceflowBlockConvertationError(("VoiceflowButton button name".to_string(), value.clone())))?
             .to_string();
 
-        if name.len() > Self::ALLOWED_NAME_LENGTH {
-            return Err(VoiceflousionError::VoiceflowBlockConvertationError((
-                format!("VoiceflowButton button name length is {}. Allowed name length - {}", name.len(), Self::ALLOWED_NAME_LENGTH),
-                value.clone())
-            ))
-        }
-
         let request = value.get("request")
             .ok_or_else(|| VoiceflousionError::VoiceflowBlockConvertationError(("VoiceflowButton button request".to_string(), value.clone())))?;
 
@@ -147,39 +123,24 @@ impl FromValue for VoiceflowButton{
 
         payload.as_object_mut().unwrap().insert("path".to_string(), json!(path));
 
+        let mut option_url = None;
 
-        let option_actions = match request_payload.get("actions"){
-            Some(actions) => {
-                Some(actions.as_array().ok_or_else(|| VoiceflousionError::VoiceflowBlockConvertationError(("VoiceflowButton button actions".to_string(), value.clone())))?)
-            },
-            None =>{
-               None
-            }
-        };
+        if let Some(actions_value) = request_payload.get("actions"){
+            let actions = actions_value.as_array().ok_or_else(|| VoiceflousionError::VoiceflowBlockConvertationError(("VoiceflowButton button actions".to_string(), value.clone())))?;
 
-        let mut action_type = VoiceflowButtonActionType::Path;
-
-        if let Some(actions) = option_actions{
             if let Some(action) = actions.iter().find(|action| {
                 action.get("type")
                     .and_then(|action_type| action_type.as_str())
                     .map(|action_type| action_type == "open_url")
                     .unwrap_or(false)
             }) {
-                let url = action
-                    .get("payload")
-                    .and_then(|payload| payload.get("url"))
-                    .and_then(|url| url.as_str())
+                option_url = Some(action["payload"].get("url").and_then(|url| url.as_str())
                     .ok_or_else(|| VoiceflousionError::VoiceflowBlockConvertationError(("VoiceflowButton button url".to_string(), value.clone())))?
-                    .to_string();
-
-                action_type = VoiceflowButtonActionType::Url(url)
+                    .to_string());
             }
         }
 
-
-
-        Ok(Some(Self::new(name, action_type, payload)))
+        Ok(Some(Self::new(name, payload, option_url)))
     }
 }
 

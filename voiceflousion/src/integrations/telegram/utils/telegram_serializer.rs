@@ -1,6 +1,7 @@
 use serde_json::{json, Value};
 use crate::core::voiceflow::dialog_blocks::enums::VoiceflowButtonsOption;
 use crate::core::voiceflow::dialog_blocks::{VoiceflowButtons, VoiceflowCard};
+use crate::integrations::utils::ButtonCallbackDataBuilder;
 
 pub(crate) struct TelegramSerializer;
 
@@ -206,9 +207,7 @@ impl TelegramSerializer {
     /// A vector of vectors containing the keyboard layout in JSON format.
     fn build_buttons_vec(buttons: &VoiceflowButtons) -> Vec<Vec<Value>> {
         buttons.iter().enumerate().map(|(index, b)| {
-            let callback_data = json!({
-                "index": index
-            }).to_string();
+            let callback_data =ButtonCallbackDataBuilder::new().index(index).build().to_json_string();
 
             json!({ "text": b.name(), "callback_data": callback_data })
         }).map(|key| vec![key]).collect()
@@ -241,17 +240,13 @@ impl TelegramSerializer {
         let mut switch_buttons: Vec<Value> = Vec::new();
         // Add a previous button if this is not the first card
         if index > 0 {
-            let carousel_prev = json!({
-                "direction": format!("{}", false)
-            });
-            switch_buttons.push(json!({ "text": "<--", "callback_data": carousel_prev.to_string()}));
+            let carousel_prev= ButtonCallbackDataBuilder::new().direction(false).build().to_json_string();
+            switch_buttons.push(json!({ "text": "<--", "callback_data": carousel_prev}));
         }
         // Add a next button if this is not the last card
         if index < carousel_len - 1 {
-            let carousel_next = json!({
-                "direction": format!("{}", true)
-            });
-            switch_buttons.push(json!({ "text": "-->", "callback_data": carousel_next.to_string() }));
+            let carousel_next= ButtonCallbackDataBuilder::new().direction(true).build().to_json_string();
+            switch_buttons.push(json!({ "text": "-->", "callback_data": carousel_next }));
         }
         inline_keyboard.push(switch_buttons);
 

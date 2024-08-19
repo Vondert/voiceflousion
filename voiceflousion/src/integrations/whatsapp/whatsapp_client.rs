@@ -33,7 +33,6 @@ impl WhatsAppClient {
 
 #[async_trait]
 impl Client for WhatsAppClient {
-    const ORIGINS: &'static [&'static str] = &[];
     type ClientUpdate<'async_trait> = WhatsAppUpdate;
     type ClientSender<'async_trait> = WhatsAppSender;
 

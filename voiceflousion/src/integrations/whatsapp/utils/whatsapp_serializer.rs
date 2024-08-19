@@ -1,6 +1,7 @@
 use serde_json::{json, Value};
 use crate::core::voiceflow::dialog_blocks::{VoiceflowButtons, VoiceflowCard};
 use crate::core::voiceflow::dialog_blocks::enums::VoiceflowButtonsOption;
+use crate::integrations::utils::ButtonCallbackDataBuilder;
 
 /// Serializer for constructing WhatsApp message bodies.
 ///
@@ -9,6 +10,8 @@ use crate::core::voiceflow::dialog_blocks::enums::VoiceflowButtonsOption;
 pub(crate) struct WhatsAppSerializer {}
 
 impl WhatsAppSerializer {
+
+    const ALLOWED_BUTTON_TITLE: usize = 24;
 
     /// Builds a JSON body for a text message to be sent via WhatsApp.
     ///
@@ -57,7 +60,7 @@ impl WhatsAppSerializer {
     /// # Parameters
     ///
     /// * `chat_id` - The recipient's chat ID.
-    /// * `buttons` - The `VoiceflowButtons` object containing the buttons data.
+    /// * `buttons` - The `VoiceflowButtons` object containing the buttons' data.
     ///
     /// # Returns
     ///
@@ -197,16 +200,18 @@ impl WhatsAppSerializer {
     fn build_buttons_vec(buttons: &VoiceflowButtons, buttons_mark: i64) -> Vec<Value> {
         buttons.iter().enumerate().map(|(index, b)| {
 
-            let callback_data = json!({
-                "index": index,
-                "mark": buttons_mark
-            });
+            let button_name = if b.name().len() > Self::ALLOWED_BUTTON_TITLE {
+               b.name()[..Self::ALLOWED_BUTTON_TITLE].to_string()
+            }
+            else{
+                b.name().clone()
+            };
 
-            let callback_data_string = serde_json::to_string(&callback_data).unwrap_or_else(|_| "".to_string());
+            let callback_data_string =ButtonCallbackDataBuilder::new().index(index).timestamp_mark(buttons_mark).build().to_json_string();
 
             json!({
                 "id": callback_data_string,
-                "title": b.name(),
+                "title": button_name,
                 "description": ""
             })
         }).collect()
@@ -228,15 +233,12 @@ impl WhatsAppSerializer {
         let mut list_rows: Vec<Value> = card.buttons().as_ref()
             .map(|b| Self::build_buttons_vec(b, mark))
             .unwrap_or_else(Vec::new);
-        println!("length: {}, index: {}", carousel_len, index);
+
         // Add a previous button if this is not the first card
         if index > 0 {
-            let carousel_prev = json!({
-                "direction": format!("{}", false),
-                "mark": mark
-            });
+            let carousel_prev= ButtonCallbackDataBuilder::new().direction(false).timestamp_mark(mark).build().to_json_string();
             list_rows.push(json!({
-                "id": carousel_prev.to_string(),
+                "id": carousel_prev,
                 "title": "<--",
                 "description": ""
             }));
@@ -244,12 +246,9 @@ impl WhatsAppSerializer {
 
         // Add a next button if this is not the last card
         if index < carousel_len - 1 {
-            let carousel_next = json!({
-                "direction": format!("{}", true),
-                "mark": mark
-            });
+            let carousel_next= ButtonCallbackDataBuilder::new().direction(true).timestamp_mark(mark).build().to_json_string();
             list_rows.push(json!({
-                "id": carousel_next.to_string(),
+                "id": carousel_next,
                 "title": "-->",
                 "description": ""
             }));

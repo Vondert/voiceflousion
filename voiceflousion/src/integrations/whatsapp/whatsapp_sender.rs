@@ -35,7 +35,7 @@ impl WhatsAppSender {
 
     /// The base URL for WhatsApp API.
     const WHATSAPP_API_URL: &'static str = "https://graph.facebook.com/v20.0/";
-
+    const DELAY_AFTER_CARD_IMAGE: u64 = 1000;
     /// Creates a new instance of `WhatsAppSender`.
     ///
     /// # Parameters
@@ -93,7 +93,7 @@ impl WhatsAppSender {
             }
             // Add a delay if it's not the last part
             if index < card_parts.len() - 1 {
-                sleep(Duration::from_millis(1000)).await;
+                sleep(Duration::from_millis(Self::DELAY_AFTER_CARD_IMAGE)).await;
             }
             last_response = Some(response);
         }

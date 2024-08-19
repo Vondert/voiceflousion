@@ -76,55 +76,6 @@ impl TelegramClient {
 #[async_trait]
 impl Client for TelegramClient{
 
-    /// An array of allowed origins for CORS specific to the Telegram client.
-    const ORIGINS: &'static [&'static str] = &[
-        "http://149.154.160.0",
-        "http://149.154.160.1",
-        "http://149.154.160.2",
-        "http://149.154.160.3",
-        "http://149.154.160.4",
-        "http://149.154.160.5",
-        "http://149.154.160.6",
-        "http://149.154.160.7",
-        "http://149.154.160.8",
-        "http://149.154.160.9",
-        "http://149.154.160.10",
-        "http://149.154.160.11",
-        "http://149.154.160.12",
-        "http://149.154.160.13",
-        "http://149.154.160.14",
-        "http://149.154.160.15",
-        "http://149.154.160.16",
-        "http://149.154.160.17",
-        "http://149.154.160.18",
-        "http://149.154.160.19",
-        "http://149.154.160.20",
-
-        "http://91.108.4.0",
-        "http://91.108.4.1",
-        "http://91.108.4.2",
-        "http://91.108.4.3",
-        "http://91.108.4.4",
-        "http://91.108.4.5",
-        "http://91.108.4.6",
-        "http://91.108.4.7",
-        "http://91.108.4.8",
-        "http://91.108.4.9",
-        "http://91.108.4.10",
-        "http://91.108.4.11",
-        "http://91.108.4.12",
-        "http://91.108.4.13",
-        "http://91.108.4.14",
-        "http://91.108.4.15",
-        "http://91.108.4.16",
-        "http://91.108.4.17",
-        "http://91.108.4.18",
-        "http://91.108.4.19",
-        "http://91.108.4.20",
-        "http://91.108.4.21",
-        "http://91.108.4.22"
-    ];
-
     type ClientUpdate<'async_trait> = TelegramUpdate;
     type ClientSender<'async_trait> = TelegramSender;
 

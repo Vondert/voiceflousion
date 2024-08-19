@@ -4,6 +4,7 @@ use crate::core::base_structs::UpdateBase;
 use crate::core::subtypes::InteractionType;
 use crate::core::traits::Update;
 use crate::errors::{VoiceflousionError, VoiceflousionResult};
+use crate::integrations::utils::ButtonCallbackData;
 
 /// Represents an update received from Telegram.
 ///
@@ -168,33 +169,20 @@ impl Update for TelegramUpdate {
             .map(|id| id.to_string())
             .ok_or_else(|| VoiceflousionError::ClientUpdateConvertationError("TelegramUpdate update id".to_string(), body.clone()))?;
 
-        // Extract the callback data if present
-        let mut callback_data: Option<Value>  = if !is_message {
+        let mut carousel_direction = None;
+        let mut button_index = None;
+
+        // Extract the carousel card index and direction if button interaction
+        if !is_message {
             let data = body["callback_query"].get("data")
                 .and_then(|data| data.as_str())
                 .ok_or_else(|| VoiceflousionError::ClientUpdateConvertationError("TelegramUpdate callback data".to_string(), body.clone()))?;
 
-            Some(serde_json::from_str(data)
-                .map_err(|_error| VoiceflousionError::ClientUpdateConvertationError("TelegramUpdate callback data must be a valid JSON string".to_string(), body.clone()))?)
+            let callback_data: ButtonCallbackData = serde_json::from_str(data)
+                .map_err(|_error| VoiceflousionError::ClientUpdateConvertationError("TelegramUpdate callback data must be a valid JSON string".to_string(), body.clone()))?;
 
-        } else {
-            None
-        };
-
-        let mut carousel_direction = None;
-        let mut button_index = None;
-
-        // Extract the carousel card index and direction from the callback data if present
-        if !is_message {
-            let data = callback_data.as_mut().unwrap().as_object_mut();
-            if let Some(mut_data) = data{
-                carousel_direction = mut_data.remove("direction")
-                    .and_then(|value_index| value_index.as_str().map(|s| s.to_string()))
-                    .and_then(|index| index.parse::<bool>().ok());
-                button_index = mut_data.remove("index")
-                    .and_then(|value_index| value_index.as_i64().map(|index| index as usize));
-
-            }
+            carousel_direction = callback_data.direction();
+            button_index = callback_data.index();
         }
 
         // Create an InteractionType from the text, path and button index

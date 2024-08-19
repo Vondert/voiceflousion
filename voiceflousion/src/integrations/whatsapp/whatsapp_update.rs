@@ -4,6 +4,7 @@ use crate::core::base_structs::UpdateBase;
 use crate::core::subtypes::InteractionType;
 use crate::core::traits::Update;
 use crate::errors::{VoiceflousionError, VoiceflousionResult};
+use crate::integrations::utils::ButtonCallbackData;
 
 #[derive(Debug)]
 pub struct WhatsAppUpdate{
@@ -91,18 +92,12 @@ impl Update for WhatsAppUpdate{
                 .and_then(|data| data.as_str())
                 .ok_or_else(|| VoiceflousionError::ClientUpdateConvertationError("WhatsAppUpdate callback data".to_string(), interactive_reply.clone()))?;
 
-            let mut deserialized_data: Value = serde_json::from_str(data)
+            let callback_data: ButtonCallbackData = serde_json::from_str(data)
                 .map_err(|_error| VoiceflousionError::ClientUpdateConvertationError("WhatsAppUpdate callback data must be a valid JSON string".to_string(), interactive_reply.clone()))?;
 
-            if let Some(mut_data) = deserialized_data.as_object_mut() {
-                interaction_time = mut_data.remove("mark").and_then(|value_mark| value_mark.as_i64())
-                    .ok_or_else(|| VoiceflousionError::ClientUpdateConvertationError("WhatsAppUpdate button timestamp mark".to_string(), interactive_reply.clone()))?;
-                carousel_direction = mut_data.remove("direction")
-                    .and_then(|value_index| value_index.as_str().map(|s| s.to_string()))
-                    .and_then(|index| index.parse::<bool>().ok());
-                button_index = mut_data.remove("index")
-                    .and_then(|value_index| value_index.as_i64().map(|index| index as usize));
-            }
+            interaction_time = callback_data.timestamp_mark().ok_or_else(|| VoiceflousionError::ClientUpdateConvertationError("WhatsAppUpdate button timestamp mark".to_string(), interactive_reply.clone()))?;
+            carousel_direction = callback_data.direction();
+            button_index = callback_data.index();
         }
 
         let interaction_type = InteractionType::new(text, button_index, carousel_direction);

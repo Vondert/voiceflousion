@@ -13,26 +13,6 @@ use crate::errors::{VoiceflousionError, VoiceflousionResult};
 #[async_trait]
 pub trait Client: Sync + Send {
 
-    /// A list of allowed origins for CORS.
-    ///
-    /// This constant defines an array of static string slices representing the origins
-    /// that are allowed to make cross-origin requests to client's server. These origins are
-    /// used to configure the CORS settings of the server, ensuring that only requests
-    /// from specified origins are permitted.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// const ORIGINS: &'static [&'static str] = &[
-    ///     "http://149.154.160.1",
-    ///     "http://149.154.160.2",
-    ///     "http://91.108.4.1",
-    ///     "http://91.108.4.2",
-    ///     "http://voiceflow.com"
-    /// ];
-    /// ```
-    const ORIGINS: &'static [&'static str];
-
     /// The associated update type that must implement the `Update` trait and be valid for the `'async_trait` lifetime.
     type ClientUpdate<'async_trait>: Update + 'async_trait;
 

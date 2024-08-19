@@ -115,7 +115,7 @@ impl Client for TelegramClient {
         })?;
 
         if let VoiceflowBlock::Carousel(carousel) = previous_message.block() {
-            Ok(vec![self.switch_carousel_card(locked_session, carousel, previous_message.id(), switch_direction, interaction_time, ).await?])
+            Ok(vec![self.switch_carousel_card(locked_session, carousel, previous_message.id(), switch_direction, interaction_time).await?])
         } else {
             Err(VoiceflousionError::ValidationError(
                 "TelegramClient".to_string(),

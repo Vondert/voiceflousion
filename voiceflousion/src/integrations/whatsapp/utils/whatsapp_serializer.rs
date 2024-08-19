@@ -235,22 +235,22 @@ impl WhatsAppSerializer {
             .map(|b| Self::build_buttons_vec(b, mark))
             .unwrap_or_else(Vec::new);
 
-        // Add a previous button if this is not the first card
-        if index > 0 {
-            let carousel_prev= ButtonCallbackDataBuilder::new().direction(false).timestamp_mark(mark).build().to_json_string();
-            list_rows.push(json!({
-                "id": carousel_prev,
-                "title": "<--",
-                "description": ""
-            }));
-        }
-
         // Add a next button if this is not the last card
         if index < carousel_len - 1 {
             let carousel_next= ButtonCallbackDataBuilder::new().direction(true).timestamp_mark(mark).build().to_json_string();
             list_rows.push(json!({
                 "id": carousel_next,
                 "title": "-->",
+                "description": ""
+            }));
+        }
+
+        // Add a previous button if this is not the first card
+        if index > 0 {
+            let carousel_prev= ButtonCallbackDataBuilder::new().direction(false).timestamp_mark(mark).build().to_json_string();
+            list_rows.push(json!({
+                "id": carousel_prev,
+                "title": "<--",
                 "description": ""
             }));
         }

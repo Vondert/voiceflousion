@@ -10,8 +10,8 @@ use serde_json::Value;
 pub enum VoiceflousionError {
     /// Error occurred while converting a Voiceflow block.
     ///
-    /// Contains a tuple with a string description and the JSON value that failed to convert.
-    VoiceflowBlockConvertationError((String, Value)),
+    /// Contains a string description and the JSON value that failed to convert.
+    VoiceflowBlockConvertationError(String, Value),
 
     /// Error occurred while making a request to Voiceflow.
     ///
@@ -51,7 +51,12 @@ pub enum VoiceflousionError {
     /// Error occurred due to a deprecated update.
     ///
     /// Contains the chat ID and update ID of the deprecated update.
-    DeprecatedError(String, String)
+    DeprecatedError(String, String),
+
+    /// Error occurred due to invalid update.
+    ///
+    /// Contains the update and error message.
+    ValidationError(String, String)
 }
 
 /// Type alias for `Result` with a `VoiceflousionError` error type.
@@ -64,8 +69,8 @@ pub type VoiceflousionResult<T> = Result<T, VoiceflousionError>;
 impl Display for VoiceflousionError {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), std::fmt::Error>{
         match self {
-            VoiceflousionError::VoiceflowBlockConvertationError(block) => {
-                write!(f, "Failed to convert voiceflow block: {}\n{:?}", block.0, block.1)
+            VoiceflousionError::VoiceflowBlockConvertationError(error, block) => {
+                write!(f, "Failed to convert voiceflow block: {}\n{:?}", error, block)
             },
             VoiceflousionError::VoiceflowResponseReadingError(error) => {
                 write!(f, "Voiceflow response reading: {}", error)
@@ -90,6 +95,9 @@ impl Display for VoiceflousionError {
             }
             VoiceflousionError::DeprecatedError(chat_id, update_id) =>{
                 write!(f, "Update {} from chat {} is deprecated", update_id, chat_id)
+            },
+            VoiceflousionError::ValidationError(validated, error) =>{
+                write!(f, "Validation failure of {}. {}", validated, error)
             }
         }
     }

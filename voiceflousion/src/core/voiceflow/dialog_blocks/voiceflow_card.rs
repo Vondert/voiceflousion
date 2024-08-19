@@ -124,10 +124,11 @@ impl VoiceflowCard {
     }
 }
 
-
-
-impl FromValue for VoiceflowCard{
+impl FromValue for VoiceflowCard {
     /// Attempts to convert a JSON `Value` into a `VoiceflowCard` instance.
+    ///
+    /// This method extracts various fields such as `imageUrl`, `title`, `description`, and `buttons`
+    /// from the JSON value to construct a `VoiceflowCard` instance.
     ///
     /// # Parameters
     ///
@@ -135,51 +136,56 @@ impl FromValue for VoiceflowCard{
     ///
     /// # Returns
     ///
-    /// A `Result` containing an `Option` with the `VoiceflowCard` instance if the conversion
+    /// A `VoiceflousionResult` containing an `Option` with the `VoiceflowCard` instance if the conversion
     /// succeeds, or a `VoiceflousionError` if the conversion fails. If the conversion
     /// succeeds but there is no meaningful value, `None` can be returned.
     fn from_value(value: &Value) -> VoiceflousionResult<Option<Self>> {
-        let payload = value.get("trace").and_then(|trace| trace.get("payload")).unwrap_or_else(|| value);
+        // Extract the "payload" field from the "trace" object in the JSON value, or use the value itself.
+        let payload = value["trace"].get("payload").unwrap_or_else(|| value);
+
+        // Attempt to extract the buttons field and convert it into a VoiceflowButtons instance.
         let buttons: Option<VoiceflowButtons> = VoiceflowButtons::from_value(value)?;
 
-        let description = payload.get("description")
-            .and_then(|description| description.get("text"))
+        // Extract the description from the payload, ensuring it is a non-empty string.
+        let description = payload["description"].get("text")
             .and_then(|text| text.as_str())
-            .ok_or_else(|| VoiceflousionError::VoiceflowBlockConvertationError(("VoiceflowCard card description".to_string(), value.clone())))?
+            .ok_or_else(|| VoiceflousionError::VoiceflowBlockConvertationError(
+                "VoiceflowCard card description".to_string(),
+                value.clone()
+            ))?
             .to_string();
-        let description = if description.is_empty(){
-            None
-        }
-        else{
-            Some(description)
-        };
+        let description = if description.is_empty() { None } else { Some(description) };
 
+        // Extract the image URL from the payload, ensuring it is a non-empty string.
         let image_url = payload.get("imageUrl")
             .and_then(|url| url.as_str())
-            .ok_or_else(|| VoiceflousionError::VoiceflowBlockConvertationError(("VoiceflowCard card image url".to_string(), value.clone())))?
+            .ok_or_else(|| VoiceflousionError::VoiceflowBlockConvertationError(
+                "VoiceflowCard card image url".to_string(),
+                value.clone()
+            ))?
             .to_string();
-        let image_url = if image_url.is_empty(){
-            None
-        }
-        else{
-            Some(image_url)
-        };
+        let image_url = if image_url.is_empty() { None } else { Some(image_url) };
 
+        // Extract the title from the payload, ensuring it is a non-empty string.
         let title = payload.get("title")
             .and_then(|title| title.as_str())
-            .ok_or_else(|| VoiceflousionError::VoiceflowBlockConvertationError(("VoiceflowCard card title".to_string(), value.clone())))?
+            .ok_or_else(|| VoiceflousionError::VoiceflowBlockConvertationError(
+                "VoiceflowCard card title".to_string(),
+                value.clone()
+            ))?
             .to_string();
-        let title = if  title.is_empty(){
-            None
-        }
-        else{
-          Some(title)
-        };
-        match (&image_url, &title, &description){
-            (None, None, None) => {
-                Ok(None)
-            },
-            _ =>  Ok(Some(Self::new(image_url, title, description, buttons)))
+        let mut title = if title.is_empty() { None } else { Some(title) };
+
+        // Check if the card has meaningful content (title, buttons, description, image_url).
+        match (&title, &buttons, &description, &image_url) {
+            (None, None, None, None) => Ok(None),  // Return None if all fields are empty
+            _ => {
+                // Provide a default title if both title and description are missing
+                if title.is_none() && description.is_none() {
+                    title = Some(String::from("Voiceflousion placeholder card's title"));
+                }
+                Ok(Some(Self::new(image_url, title, description, buttons)))
+            }
         }
     }
 }

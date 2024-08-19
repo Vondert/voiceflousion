@@ -5,7 +5,6 @@ use reqwest::Client;
 /// A client for handling HTTP requests with session management.
 ///
 /// `HttpClient` wraps around the `reqwest::Client` to provide additional configurations
-
 pub struct HttpClient {
     /// The HTTP client for making requests.
     client: Client,

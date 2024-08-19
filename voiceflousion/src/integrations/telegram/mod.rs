@@ -2,6 +2,7 @@ mod telegram_update;
 mod telegram_client;
 mod telegram_sender;
 mod telegram_responder;
+mod utils;
 
 #[cfg(feature = "advanced")]
 pub use self::{

@@ -4,6 +4,7 @@ use crate::core::base_structs::UpdateBase;
 use crate::core::subtypes::InteractionType;
 use crate::core::traits::Update;
 use crate::errors::{VoiceflousionError, VoiceflousionResult};
+use crate::integrations::utils::ButtonCallbackData;
 
 /// Represents an update received from Telegram.
 ///
@@ -14,8 +15,8 @@ pub struct TelegramUpdate {
     update_base: UpdateBase,
     /// The message ID.
     message_id: String,
-    /// The optional carousel card index.
-    carousel_card_index: Option<usize>,
+    /// The optional carousel switch direction.
+    carousel_direction: Option<bool>,
 }
 
 impl TelegramUpdate {
@@ -41,14 +42,15 @@ impl TelegramUpdate {
     /// use voiceflousion::core::traits::Update;
     /// use voiceflousion::integrations::telegram::TelegramUpdate;
     ///
-    /// let interaction_type = InteractionType::new("message".to_string(), Some("path".to_string()), None);
-    /// let update = TelegramUpdate::new("chat_id".to_string(), "message_id".to_string(), 1627554661, interaction_type, "update_id".to_string(), Some(0));
+    /// let button_index = 0usize;
+    /// let interaction_type = InteractionType::new("message".to_string(), Some(button_index), None);
+    /// let update = TelegramUpdate::new("chat_id".to_string(), "message_id".to_string(), 1627554661, interaction_type, "update_id".to_string(), Some(true));
     /// ```
-    pub fn new(chat_id: String, message_id: String, interaction_time: i64, interaction_type: InteractionType, update_id: String, carousel_card_index: Option<usize>) -> Self {
+    pub fn new(chat_id: String, message_id: String, interaction_time: i64, interaction_type: InteractionType, update_id: String, carousel_direction: Option<bool>) -> Self {
         Self {
             update_base: UpdateBase::new(chat_id, interaction_time, interaction_type, update_id),
             message_id,
-            carousel_card_index,
+            carousel_direction,
         }
     }
 
@@ -65,12 +67,13 @@ impl TelegramUpdate {
     /// use voiceflousion::core::traits::Update;
     /// use voiceflousion::integrations::telegram::TelegramUpdate;
     ///
-    /// let interaction_type = InteractionType::new("message".to_string(), Some("path".to_string()), None);
-    /// let update = TelegramUpdate::new("chat_id".to_string(), "message_id".to_string(), 1627554661, interaction_type, "update_id".to_string(), Some(0));
+    /// let button_index = 0usize;
+    /// let interaction_type = InteractionType::new("message".to_string(), Some(button_index), None);
+    /// let update = TelegramUpdate::new("chat_id".to_string(), "message_id".to_string(), 1627554661, interaction_type, "update_id".to_string(), Some(true));
     /// let index = update.carousel_card_index();
     /// ```
-    pub fn carousel_card_index(&self) -> Option<usize> {
-        self.carousel_card_index
+    pub fn carousel_card_index(&self) -> Option<bool> {
+        self.carousel_direction
     }
 
     /// Returns the message ID.
@@ -86,8 +89,9 @@ impl TelegramUpdate {
     /// use voiceflousion::core::traits::Update;
     /// use voiceflousion::integrations::telegram::TelegramUpdate;
     ///
-    /// let interaction_type = InteractionType::new("message".to_string(), Some("path".to_string()), None);
-    /// let update = TelegramUpdate::new("chat_id".to_string(), "message_id".to_string(), 1627554661, interaction_type, "update_id".to_string(), Some(0));
+    /// let button_index = 0usize;
+    /// let interaction_type = InteractionType::new("message".to_string(), Some(button_index), None);
+    /// let update = TelegramUpdate::new("chat_id".to_string(), "message_id".to_string(), 1627554661, interaction_type, "update_id".to_string(), Some(true));
     /// let message_id = update.message_id();
     /// ```
     pub fn message_id(&self) -> &String {
@@ -114,20 +118,7 @@ impl Update for TelegramUpdate {
     /// # Returns
     ///
     /// A `VoiceflousionResult` containing the `TelegramUpdate` or a `VoiceflousionError` if the conversion fails.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// use serde_json::json;
-    /// use voiceflousion::core::traits::Update;
-    /// use voiceflousion::integrations::telegram::TelegramUpdate;
-    ///
-    /// let body = json!({});
-    ///
-    /// let update = TelegramUpdate::from_request_body(body);
-    /// ```
     fn from_request_body(body: Value) -> VoiceflousionResult<Self> {
-
         // Check if the update contains a message or a callback query
         let is_message = body.get("message").is_some();
         // Extract the message or callback query data
@@ -139,8 +130,7 @@ impl Update for TelegramUpdate {
             .ok_or_else(|| VoiceflousionError::ClientUpdateConvertationError("TelegramUpdate message".to_string(), body.clone()))?;
 
         // Extract the chat ID from the update data
-        let chat_id = update_data.get("chat")
-            .and_then(|chat| chat.get("id"))
+        let chat_id = update_data["chat"].get("id")
             .and_then(|id| id.as_i64())
             .map(|id| id.to_string())
             .ok_or_else(|| VoiceflousionError::ClientUpdateConvertationError("TelegramUpdate chat id".to_string(), update_data.clone()))?;
@@ -166,42 +156,28 @@ impl Update for TelegramUpdate {
 
         // Extract the update ID from the request body
         let update_id = body.get("update_id")
-            .and_then(|id| id.as_i64())
+            .and_then(|id| id.as_u64())
             .map(|id| id.to_string())
             .ok_or_else(|| VoiceflousionError::ClientUpdateConvertationError("TelegramUpdate update id".to_string(), body.clone()))?;
 
-        // Extract the callback data if present
-        let mut callback_data: Option<Value>  = if !is_message {
-            let data = body.get("callback_query")
-                .and_then(|q| q.get("data"))
+        let mut carousel_direction = None;
+        let mut button_index = None;
+
+        // Extract the carousel card index and direction if button interaction
+        if !is_message {
+            let data = body["callback_query"].get("data")
                 .and_then(|data| data.as_str())
-                .map(|s| s)
                 .ok_or_else(|| VoiceflousionError::ClientUpdateConvertationError("TelegramUpdate callback data".to_string(), body.clone()))?;
 
-            Some(serde_json::from_str(data)
-                .map_err(|_error| VoiceflousionError::ClientUpdateConvertationError("TelegramUpdate callback data must be a valid JSON string".to_string(), body.clone()))?)
+            let callback_data: ButtonCallbackData = serde_json::from_str(data)
+                .map_err(|_error| VoiceflousionError::ClientUpdateConvertationError("TelegramUpdate callback data must be a valid JSON string".to_string(), body.clone()))?;
 
-        } else {
-            None
-        };
-
-        let mut path = None;
-        let mut carousel_card_index = None;
-
-        // Extract the carousel card index and path from the callback data if present
-        if !is_message {
-            let data = callback_data.as_mut().unwrap().as_object_mut();
-            if let Some(mut_data) = data{
-                carousel_card_index = mut_data.remove("telegram_carousel_card_index")
-                    .and_then(|value_index| value_index.as_str().map(|s| s.to_string()))
-                    .and_then(|index| index.parse::<usize>().ok());
-                path = mut_data.remove("path")
-                    .and_then(|value_path| value_path.as_str().map(|s| s.to_string()));
-            }
+            carousel_direction = callback_data.direction();
+            button_index = callback_data.index();
         }
 
-        // Create an InteractionType from the text, path and callback data
-        let interaction_type = InteractionType::new(text, path, callback_data);
+        // Create an InteractionType from the text, path and button index
+        let interaction_type = InteractionType::new(text, button_index, carousel_direction);
 
         // Return the constructed TelegramUpdate
         Ok(TelegramUpdate::new(
@@ -210,7 +186,7 @@ impl Update for TelegramUpdate {
             interaction_time,
             interaction_type,
             update_id,
-            carousel_card_index,
+            carousel_direction,
         ))
     }
 }

@@ -100,8 +100,7 @@ impl VoiceflowImage {
     }
 }
 
-
-impl FromValue for VoiceflowImage{
+impl FromValue for VoiceflowImage {
     /// Attempts to convert a JSON `Value` into a `VoiceflowImage` instance.
     ///
     /// # Parameters
@@ -110,29 +109,40 @@ impl FromValue for VoiceflowImage{
     ///
     /// # Returns
     ///
-    /// A `Result` containing an `Option` with the `VoiceflowImage` instance if the conversion
+    /// A `VoiceflousionResult` containing an `Option` with the `VoiceflowImage` instance if the conversion
     /// succeeds, or a `VoiceflousionError` if the conversion fails. If the conversion
     /// succeeds but there is no meaningful value, `None` can be returned.
     fn from_value(value: &Value) -> VoiceflousionResult<Option<Self>> {
-        let payload = value.get("trace")
-            .and_then(|trace| trace.get("payload"))
-            .ok_or_else(|| VoiceflousionError::VoiceflowBlockConvertationError(("VoiceflowImage image payload".to_string(), value.clone())))?;
+        // Extract the "payload" field from the "trace" object in the JSON value.
+        let payload = value["trace"].get("payload")
+            .ok_or_else(|| VoiceflousionError::VoiceflowBlockConvertationError(
+                "VoiceflowImage image payload".to_string(),
+                value.clone()
+            ))?;
 
+        // Extract the URL of the image from the "image" field.
         let url = payload.get("image")
             .and_then(|image| image.as_str())
-            .ok_or_else(|| VoiceflousionError::VoiceflowBlockConvertationError(("VoiceflowImage image url".to_string(), value.clone())))?
+            .ok_or_else(|| VoiceflousionError::VoiceflowBlockConvertationError(
+                "VoiceflowImage image url".to_string(),
+                value.clone()
+            ))?
             .to_string();
 
-        let height = payload.get("dimensions")
-            .and_then(|dimensions| dimensions.get("height"))
+        // Extract the height of the image from the "height" field within "dimensions".
+        let height = payload["dimensions"].get("height")
             .and_then(|height| height.as_u64());
 
-        let width = payload.get("dimensions")
-            .and_then(|dimensions| dimensions.get("width"))
+        // Extract the width of the image from the "width" field within "dimensions".
+        let width = payload["dimensions"].get("width")
             .and_then(|width| width.as_u64());
+
+        // If the URL is empty, return None, indicating no valid image was found.
         if url.is_empty() {
-            return Ok(None)
+            return Ok(None);
         }
+
+        // Return the constructed `VoiceflowImage` instance.
         Ok(Some(Self::new(url, height, width)))
     }
 }

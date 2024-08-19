@@ -1,27 +1,28 @@
+use std::collections::HashMap;
 use std::net::SocketAddr;
 use std::sync::Arc;
-use axum::{Extension, Router};
+use axum::{Extension, Json, Router};
 use axum::routing::post;
+use serde_json::Value;
 use crate::core::base_structs::ClientsManager;
-use crate::core::traits::{Client};
-use crate::server::BotHandler;
-use crate::server::endpoints::main_endpoint_function;
+use crate::server::endpoints::{get_auth_endpoint, main_endpoint};
+use crate::server::traits::{BotHandler, ServerClient};
 
 /// VoiceflousionServer is responsible for handling HTTP requests to bots and routing them to the appropriate handlers.
 ///
 /// This struct contains bots clients manager, base part of the server's HTTP endpoint URL, and the handler function for processing incoming webhook requests.
-pub struct VoiceflousionServer<C: Client + 'static> {
+pub struct VoiceflousionServer<C: ServerClient + 'static> {
     /// Manager for handling multiple bots clients.
-    clients: Option<Arc<ClientsManager<C>>>,
+    clients: Option<Arc<ClientsManager<C >>>,
     /// Base part of the server's HTTP endpoint URL.
     base_url: String,
     /// Handler function for processing incoming webhook requests.
     handler: Arc<dyn BotHandler<C>>,
-    /// Allowed origins for CORS settings.
-    allowed_origins: Arc<Option<Vec<&'static str>>>,
+    /// Allowed origins for CORS settings stored in a HashMap for fast lookup.
+    allowed_origins: Arc<Option<HashMap<&'static str, ()>>>,
 }
 
-impl<C: Client + 'static> VoiceflousionServer<C> {
+impl<C: ServerClient + 'static> VoiceflousionServer<C> {
     /// Creates a new instance of `VoiceflousionServer`.
     ///
     /// # Parameters
@@ -120,7 +121,11 @@ impl<C: Client + 'static> VoiceflousionServer<C> {
         self.allowed_origins = Arc::new(if origins.is_empty() {
             None
         } else {
-            Some(origins)
+            let mut origins_map = HashMap::new();
+            for origin in origins {
+                origins_map.insert(origin, ());
+            }
+            Some(origins_map)
         });
         self
     }
@@ -154,13 +159,12 @@ impl<C: Client + 'static> VoiceflousionServer<C> {
     /// })
     /// .override_allow_origins(additional_origins);
     /// ```
-    pub fn override_allow_origins(mut self, mut origins: Vec<&'static str>) -> Self {
-        origins.extend(C::ORIGINS);
-        self.allowed_origins = Arc::new(if origins.is_empty() {
-            None
-        } else {
-            Some(origins)
-        });
+    pub fn override_allow_origins(mut self, origins: Vec<&'static str>) -> Self {
+        let mut origins_map = HashMap::new();
+        for origin in C::ORIGINS.iter().chain(origins.iter()) {
+            origins_map.insert(*origin, ());
+        }
+        self.allowed_origins = Arc::new(Some(origins_map));
         self
     }
 
@@ -237,18 +241,31 @@ impl<C: Client + 'static> VoiceflousionServer<C> {
                        let clients = clients.clone();
                        let optional_allowed_origins = optional_allowed_origins.clone();
                        let handler = handler.clone();
-                       move |origin_header, path, params, json| {
-                           main_endpoint_function(
+                       move |origin_header, path, params, json: Json<Value>| {
+                           main_endpoint(
                                path,
                                params,
                                json,
                                Extension(clients),
                                Extension(optional_allowed_origins),
                                Extension(handler),
-                               origin_header,
+                               origin_header
                            )
                        }
+                   })
+                   .get({
+                       let clients = clients.clone();
+                       let optional_allowed_origins = optional_allowed_origins.clone();
+                       move |origin_header, path, params| {
+                            get_auth_endpoint(
+                                path,
+                                params,
+                                Extension(clients),
+                                Extension(optional_allowed_origins),
+                                origin_header
+                            )
+                       }
                    }),
-        )
+            )
     }
 }

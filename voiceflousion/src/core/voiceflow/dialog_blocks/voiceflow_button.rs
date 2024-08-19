@@ -1,21 +1,20 @@
-use serde_json::{Map, Value};
+use serde_json::{json, Map, Value};
 use crate::core::voiceflow::dialog_blocks::enums::VoiceflowButtonActionType;
 use crate::core::voiceflow::dialog_blocks::traits::FromValue;
+use crate::core::voiceflow::dialog_blocks::VoiceflowText;
 use crate::errors::{VoiceflousionError, VoiceflousionResult};
 
 /// Represents a button in a Voiceflow dialog.
 ///
-/// `VoiceflowButton` contains the name, path, action type, and payload of the button.
+/// `VoiceflowButton` contains the name, action type, and payload of the button.
 #[derive(Debug, Clone)]
 pub struct VoiceflowButton {
     /// The action type of the button.
     action_type: VoiceflowButtonActionType,
-    /// The path associated with the button.
-    path: String,
     /// The name of the button.
     name: String,
     /// The payload associated with the button.
-    payload: Value
+    payload: Value,
 }
 
 impl VoiceflowButton {
@@ -24,9 +23,8 @@ impl VoiceflowButton {
     /// # Parameters
     ///
     /// * `name` - The name of the button.
-    /// * `path` - The path associated with the button.
-    /// * `action_type` - The action type of the button.
     /// * `payload` - The payload associated with the button.
+    /// * `option_url` - An optional URL associated with the button, if the action type is a URL.
     ///
     /// # Returns
     ///
@@ -35,40 +33,22 @@ impl VoiceflowButton {
     /// # Example
     ///
     /// ```
-    /// use serde_json::Value;
-    /// use voiceflousion::core::voiceflow::dialog_blocks::enums::VoiceflowButtonActionType;
+    /// use serde_json::{json, Value};
     /// use voiceflousion::core::voiceflow::dialog_blocks::VoiceflowButton;
     ///
-    /// let button = VoiceflowButton::new("Button 1".to_string(), "/path".to_string(), VoiceflowButtonActionType::Path, Value::Null);
+    /// let button = VoiceflowButton::new("Click me".to_string(), json!("payload"), None);
     /// ```
-    pub fn new(name: String, path: String, action_type: VoiceflowButtonActionType, payload: Value) -> Self {
+    pub fn new(name: String, payload: Value, option_url: Option<String>) -> Self {
+        let action_type = if let Some(url) = option_url {
+            VoiceflowButtonActionType::Url(url)
+        } else {
+            VoiceflowButtonActionType::Path
+        };
         Self {
             name,
-            path,
             action_type,
-            payload
+            payload,
         }
-    }
-
-    /// Returns a reference to the action type of the button.
-    ///
-    /// # Returns
-    ///
-    /// A reference to the `VoiceflowButtonActionType`.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// use serde_json::Value;
-    /// use voiceflousion::core::voiceflow::dialog_blocks::enums::VoiceflowButtonActionType;
-    /// use voiceflousion::core::voiceflow::dialog_blocks::VoiceflowButton;
-    ///
-    /// let button = VoiceflowButton::new("Button 1".to_string(), "/path".to_string(), VoiceflowButtonActionType::Path, Value::Null);
-    ///
-    /// let action_type = button.action_type();
-    /// ```
-    pub fn action_type(&self) -> &VoiceflowButtonActionType {
-        &self.action_type
     }
 
     /// Returns a reference to the name of the button.
@@ -80,11 +60,10 @@ impl VoiceflowButton {
     /// # Example
     ///
     /// ```
-    /// use serde_json::Value;
-    /// use voiceflousion::core::voiceflow::dialog_blocks::enums::VoiceflowButtonActionType;
+    /// use serde_json::{json, Value};
     /// use voiceflousion::core::voiceflow::dialog_blocks::VoiceflowButton;
     ///
-    /// let button = VoiceflowButton::new("Button 1".to_string(), "/path".to_string(), VoiceflowButtonActionType::Path, Value::Null);
+    /// let button = VoiceflowButton::new("Click me".to_string(), json!("payload"), None);
     ///
     /// let name = button.name();
     /// ```
@@ -92,33 +71,32 @@ impl VoiceflowButton {
         &self.name
     }
 
-    /// Returns a reference to the path of the button.
+    /// Returns a reference to the payload associated with the button.
     ///
     /// # Returns
     ///
-    /// A reference to the path string.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// use serde_json::Value;
-    /// use voiceflousion::core::voiceflow::dialog_blocks::enums::VoiceflowButtonActionType;
-    /// use voiceflousion::core::voiceflow::dialog_blocks::VoiceflowButton;
-    ///
-    /// let button = VoiceflowButton::new("Button 1".to_string(), "/path".to_string(), VoiceflowButtonActionType::Path, Value::Null);
-    ///
-    /// let path = button.path();
-    /// ```
-    pub fn path(&self) -> &String {
-        &self.path
-    }
-
-    pub fn payload(&self) -> &Value{
+    /// A reference to the JSON `Value` representing the payload.
+    pub fn payload(&self) -> &Value {
         &self.payload
     }
+
+    /// Returns an optional `VoiceflowText` instance if the button action is a URL.
+    ///
+    /// # Returns
+    ///
+    /// An `Option` containing a `VoiceflowText` if the button's action type is a URL, or `None` otherwise.
+    pub fn get_url_text(&self) -> Option<VoiceflowText> {
+        match &self.action_type {
+            VoiceflowButtonActionType::Url(url) => Some(VoiceflowText::new(url.clone())),
+            _ => None,
+        }
+    }
 }
-impl FromValue for VoiceflowButton{
+
+impl FromValue for VoiceflowButton {
     /// Attempts to convert a JSON `Value` into a `VoiceflowButton` instance.
+    ///
+    /// This method processes the JSON to extract the button's name, action type, and payload.
     ///
     /// # Parameters
     ///
@@ -126,60 +104,76 @@ impl FromValue for VoiceflowButton{
     ///
     /// # Returns
     ///
-    /// A `Result` containing an `Option` with the `VoiceflowButton` instance if the conversion
-    /// succeeds, or a `VoiceflousionError` if the conversion fails. If the conversion
-    /// succeeds but there is no meaningful value, `None` can be returned.
+    /// A `VoiceflousionResult` containing an `Option` with the `VoiceflowButton` instance if the conversion
+    /// succeeds, or a `VoiceflousionError` if the conversion fails.
     fn from_value(value: &Value) -> VoiceflousionResult<Option<Self>> {
-
+        // Extract the button's name from the JSON value
         let name = value.get("name")
             .and_then(|name| name.as_str())
-            .ok_or_else(|| VoiceflousionError::VoiceflowBlockConvertationError(("VoiceflowButton button name".to_string(), value.clone())))?
+            .ok_or_else(|| VoiceflousionError::VoiceflowBlockConvertationError(
+                "VoiceflowButton button name".to_string(),
+                value.clone()
+            ))?
             .to_string();
 
+        // Extract the request section from the JSON value
         let request = value.get("request")
-            .ok_or_else(|| VoiceflousionError::VoiceflowBlockConvertationError(("VoiceflowButton button request".to_string(), value.clone())))?;
+            .ok_or_else(|| VoiceflousionError::VoiceflowBlockConvertationError(
+                "VoiceflowButton button request".to_string(),
+                value.clone()
+            ))?;
 
+        // Extract the path type from the request
         let path = request.get("type")
-            .and_then(|path|  path.as_str())
-            .ok_or_else(|| VoiceflousionError::VoiceflowBlockConvertationError(("VoiceflowButton button path".to_string(), value.clone())))?
+            .and_then(|path| path.as_str())
+            .ok_or_else(|| VoiceflousionError::VoiceflowBlockConvertationError(
+                "VoiceflowButton button path".to_string(),
+                value.clone()
+            ))?
             .to_string();
 
+        // Extract the payload from the request
         let request_payload = request.get("payload")
-            .ok_or_else(|| VoiceflousionError::VoiceflowBlockConvertationError(("VoiceflowButton button payload".to_string(), value.clone())))?;
+            .ok_or_else(|| VoiceflousionError::VoiceflowBlockConvertationError(
+                "VoiceflowButton button payload".to_string(),
+                value.clone()
+            ))?;
 
-        let payload = extract_payload(request_payload);
+        // Extract and clean up the payload by removing specific keys
+        let mut payload = extract_payload(request_payload);
 
+        // Insert the path into the payload
+        payload.as_object_mut().unwrap().insert("path".to_string(), json!(path));
 
-        let option_actions = match request_payload.get("actions"){
-            Some(actions) => {
-                Some(actions.as_array().ok_or_else(|| VoiceflousionError::VoiceflowBlockConvertationError(("VoiceflowButton button actions".to_string(), value.clone())))?)
-            },
-            None =>{
-               None
-            }
-        };
+        // Initialize an optional URL to None
+        let mut option_url = None;
 
-        let mut action_type = VoiceflowButtonActionType::Path;
+        // Check for actions and extract the URL if present
+        if let Some(actions_value) = request_payload.get("actions") {
+            let actions = actions_value.as_array().ok_or_else(|| VoiceflousionError::VoiceflowBlockConvertationError(
+                "VoiceflowButton button actions".to_string(),
+                value.clone()
+            ))?;
 
-        if let Some(actions) = option_actions{
+            // Find an action of type "open_url" and extract the URL
             if let Some(action) = actions.iter().find(|action| {
                 action.get("type")
                     .and_then(|action_type| action_type.as_str())
                     .map(|action_type| action_type == "open_url")
                     .unwrap_or(false)
             }) {
-                let url = action
-                    .get("payload")
-                    .and_then(|payload| payload.get("url"))
+                option_url = Some(action["payload"].get("url")
                     .and_then(|url| url.as_str())
-                    .ok_or_else(|| VoiceflousionError::VoiceflowBlockConvertationError(("VoiceflowButton button url".to_string(), value.clone())))?
-                    .to_string();
-
-                action_type = VoiceflowButtonActionType::OpenUrl(url)
+                    .ok_or_else(|| VoiceflousionError::VoiceflowBlockConvertationError(
+                        "VoiceflowButton button url".to_string(),
+                        value.clone()
+                    ))?
+                    .to_string());
             }
         }
 
-        Ok(Some(Self::new(name, path, action_type, payload)))
+        // Return the constructed `VoiceflowButton` instance
+        Ok(Some(Self::new(name, payload, option_url)))
     }
 }
 
@@ -196,8 +190,9 @@ fn extract_payload(payload: &Value) -> Value {
     if let Some(obj) = payload.as_object() {
         let mut new_obj = Map::new();
 
+        // Iterate over the payload keys and filter out "actions" and "label"
         for (key, value) in obj {
-            if key != "actions" && key != "label"{
+            if key != "actions" && key != "label" {
                 new_obj.insert(key.clone(), value.clone());
             }
         }

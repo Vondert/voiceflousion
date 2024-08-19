@@ -1,11 +1,10 @@
 use std::ops::Deref;
 use async_trait::async_trait;
-use serde_json::Value;
 use crate::core::base_structs::ClientBase;
 use crate::core::session_wrappers::LockedSession;
 use crate::core::subtypes::{InteractionType, SentMessage};
 use crate::core::traits::{Responder, Sender, Update};
-use crate::core::voiceflow::State;
+use crate::core::voiceflow::{State, VoiceflowBlock};
 use crate::errors::{VoiceflousionError, VoiceflousionResult};
 
 /// The `Client` trait adds methods for launching dialogs, sending messages,
@@ -13,26 +12,6 @@ use crate::errors::{VoiceflousionError, VoiceflousionResult};
 /// for interacting with the Voiceflow API and managing session states.
 #[async_trait]
 pub trait Client: Sync + Send {
-
-    /// A list of allowed origins for CORS.
-    ///
-    /// This constant defines an array of static string slices representing the origins
-    /// that are allowed to make cross-origin requests to client's server. These origins are
-    /// used to configure the CORS settings of the server, ensuring that only requests
-    /// from specified origins are permitted.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// const ORIGINS: &'static [&'static str] = &[
-    ///     "http://149.154.160.1",
-    ///     "http://149.154.160.2",
-    ///     "http://91.108.4.1",
-    ///     "http://91.108.4.2",
-    ///     "http://voiceflow.com"
-    /// ];
-    /// ```
-    const ORIGINS: &'static [&'static str];
 
     /// The associated update type that must implement the `Update` trait and be valid for the `'async_trait` lifetime.
     type ClientUpdate<'async_trait>: Update + 'async_trait;
@@ -79,8 +58,10 @@ pub trait Client: Sync + Send {
             locked_session.set_last_interaction(None);
         }
 
+        let client_id = self.client_base().client_id();
+
         // Send the Voiceflow message to the client and get the response
-        let response = self.client_base().sender().send_message(locked_session.get_chat_id(), voiceflow_message).await?;
+        let response = self.client_base().sender().send_message(client_id, locked_session.get_chat_id(), voiceflow_message).await?;
 
         // Retrieve the last message sent by the bot from the response
         let bot_last_message = get_last_sent_message(&response);
@@ -125,8 +106,10 @@ pub trait Client: Sync + Send {
             locked_session.set_last_interaction(None);
         }
 
+        let client_id = self.client_base().client_id();
+
         // Send the Voiceflow message to the client and get the response
-        let response = self.client_base().sender().send_message(locked_session.get_chat_id(), voiceflow_message).await?;
+        let response = self.client_base().sender().send_message(client_id, locked_session.get_chat_id(), voiceflow_message).await?;
 
         // Retrieve the last message sent by the bot from the response
         let bot_last_message = get_last_sent_message(&response);
@@ -150,31 +133,45 @@ pub trait Client: Sync + Send {
     ///
     /// * `locked_session` - The locked session for the interaction.
     /// * `interaction_time` - The interaction time.
-    /// * `message` - The text message associated with the button.
-    /// * `button_data` - The data associated with the button.
+    /// * `button_index` - The index of the button in the previous message.
     /// * `state` - The optional state for updating the dialog.
-    /// * `payload` - The payload associated with the button.
     ///
     /// # Returns
     ///
     /// A `VoiceflousionResult` containing a vector of `SenderResponder` or a `VoiceflousionError` if the request fails.
-    async fn choose_button_in_voiceflow_dialog(&self, locked_session: &LockedSession,  interaction_time: i64, button_path: &String, state: Option<State>, payload: &Value) -> VoiceflousionResult<Vec<<Self::ClientSender<'_> as Sender>::SenderResponder>> {
+    async fn choose_button_in_voiceflow_dialog(&self, locked_session: &LockedSession,  interaction_time: i64, state: Option<State>, button_index: usize) -> VoiceflousionResult<Vec<<Self::ClientSender<'_> as Sender>::SenderResponder>> {
         // Set the last interaction time for the session
         locked_session.set_last_interaction(Some(interaction_time));
 
         // Get the Voiceflow session associated with the locked session
         let voiceflow_session = locked_session.voiceflow_session();
 
-        // Send the button data to the Voiceflow client
-        let mut voiceflow_message = self.client_base().voiceflow_client().choose_button(voiceflow_session, state, button_path, payload.clone()).await;
+        let voiceflow_message = {
+            let binding = locked_session.previous_message().await;
+            let previous_message = binding.deref().as_ref()
+                .ok_or_else(|| VoiceflousionError::ClientRequestError("Client".to_string(),"Button cannot be handled in the start of the conversation".to_string()))?;
+            let voiceflow_button = previous_message.get_button(button_index.clone())?;
 
-        // If the Voiceflow message indicates the end of the block, clear the last interaction time to make session invalid
-        if voiceflow_message.trim_end_block() {
-            locked_session.set_last_interaction(None);
-        }
+            let payload = voiceflow_button.payload().clone();
+
+            // Send the button data to the Voiceflow client
+            let mut voiceflow_message = self.client_base().voiceflow_client().choose_button(voiceflow_session, state, payload).await;
+
+            if let Some(url_text) = voiceflow_button.get_url_text(){
+                voiceflow_message.shift_block(VoiceflowBlock::Text(url_text));
+            }
+
+            // If the Voiceflow message indicates the end of the block, clear the last interaction time to make session invalid
+            if voiceflow_message.trim_end_block() {
+                locked_session.set_last_interaction(None);
+            }
+            voiceflow_message
+        };
+
+        let client_id = self.client_base().client_id();
 
         // Send the Voiceflow message to the client and get the response
-        let response = self.client_base().sender().send_message(locked_session.get_chat_id(), voiceflow_message).await?;
+        let response = self.client_base().sender().send_message(client_id, locked_session.get_chat_id(), voiceflow_message).await?;
 
         // Retrieve the last message sent by the bot from the response
         let bot_last_message = get_last_sent_message(&response);
@@ -188,7 +185,7 @@ pub trait Client: Sync + Send {
 
     /// Interacts with the client based on the provided update.
     ///
-    /// This method determines the type of interaction (button press or text message),
+    /// This method determines the type of interaction (button press, text message or carousel switch),
     /// processes the interaction with the Voiceflow client, and updates the session state accordingly.
     ///
     /// **This method has a base implementation for sending messages. Modify it only if you
@@ -222,16 +219,22 @@ pub trait Client: Sync + Send {
 
             // Handle the interaction based on its type
             match update.interaction_type() {
-                // If it is a button press
-                InteractionType::Button(button_path, payload) => {
+                // If it is a  regular button press
+                InteractionType::Button(button_index) => {
                     // Handle the button interaction
-                    self.handle_button_interaction(&locked_session, interaction_time, button_path, update_state, &update, payload).await
+                    self.choose_button_in_voiceflow_dialog(&locked_session, interaction_time, update_state, button_index.clone()).await
                 },
-                // If it is a text message or an undefined interaction
-                InteractionType::Text(message) | InteractionType::Undefined(message) => {
+                // If it is a text message
+                InteractionType::Text(message) => {
                     // Handle the text message
                     self.send_message_to_voiceflow_dialog(&locked_session, interaction_time, message, update_state).await
+                },
+                // If it is a carousel switch button press
+                InteractionType::CarouselSwitch(switch_direction) => {
+                    // Handle carousel switch
+                    self.handle_carousel_switch(&locked_session, interaction_time, switch_direction.clone()).await
                 }
+
             }
         } else {
 
@@ -248,25 +251,22 @@ pub trait Client: Sync + Send {
         }
     }
 
-    /// Handles button presses on the client.
+
+    /// Handles carousel switch interactions on the client.
     ///
-    /// This method processes button interactions, sending the appropriate data to the Voiceflow client
+    /// This method processes carousel switch interactions, sending the appropriate data to the Voiceflow client
     /// and handling the response.
     ///
     /// # Parameters
     ///
     /// * `locked_session` - The locked session for the interaction.
-    /// * `interaction_time` - The interaction time.
-    /// * `message` - The text message associated with the button.
-    /// * `button_path` - The data associated with the button.
-    /// * `update_state` - The optional state for updating the dialog.
-    /// * `update` - The update from the client.
-    /// * `payload` - The payload associated with the button.
+    /// * `interaction_time` - The time of the interaction.
+    /// * `switch_direction` - Direction of the carousel switch (true for next, false for previous).
     ///
     /// # Returns
     ///
     /// A `VoiceflousionResult` containing a vector of `SenderResponder` or a `VoiceflousionError` if the request fails.
-    async fn handle_button_interaction(&self, locked_session: &LockedSession<'_>, interaction_time: i64, button_path: &String, update_state: Option<State>, update: &Self::ClientUpdate<'_>, payload: &Value) -> VoiceflousionResult<Vec<<Self::ClientSender<'_> as Sender>::SenderResponder>>;
+    async fn handle_carousel_switch(&self, locked_session: &LockedSession<'_>, interaction_time: i64, switch_direction: bool) -> VoiceflousionResult<Vec<<Self::ClientSender<'_> as Sender>::SenderResponder>>;
 }
 
 /// Retrieves the last sent message from the response.
@@ -279,10 +279,10 @@ pub trait Client: Sync + Send {
 ///
 /// An `Option` containing the last `SentMessage` if available.
 pub fn get_last_sent_message<R: Responder>(response: &[R]) -> Option<SentMessage>{
-    return if let Some(responder) = response.last(){
+    if let Some(responder) = response.last(){
         Some(responder.create_sent_message())
     }
     else{
         None
-    };
+    }
 }

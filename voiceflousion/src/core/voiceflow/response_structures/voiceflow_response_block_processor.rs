@@ -41,7 +41,8 @@ impl VoiceflowResponseBlockProcessor {
                 VoiceflowButtonsOption::Empty
             },
             VoiceflowResponseBlockType::Visual => {
-                self.extract_image(block)
+                self.extract_image(message, block);
+                VoiceflowButtonsOption::Empty
             },
             VoiceflowResponseBlockType::Carousel => {
                 self.extract_carousel(message, block);
@@ -135,27 +136,22 @@ impl VoiceflowResponseBlockProcessor {
         }
     }
 
-    /// Extracts an image from a block.
+    /// Extracts an image from a block and adds it to the message.
     ///
     /// # Parameters
     ///
+    /// * `message` - The message to update.
     /// * `block` - The block to extract the image from.
-    ///
-    /// # Returns
-    ///
-    /// An updated VoiceflowButtonsOption.
-    fn extract_image(&self, block: VoiceflowResponseBlock) -> VoiceflowButtonsOption {
+    fn extract_image(&self, message: &mut VoiceflowMessage, block: VoiceflowResponseBlock) {
         match VoiceflowImage::from_value(block.json()) {
             Ok(optional_image) => {
-                if let Some(image) = optional_image{
-                    VoiceflowButtonsOption::Image(image)
-                } else {
-                    VoiceflowButtonsOption::Empty
+                if let Some(image) = optional_image {
+                    message.push(VoiceflowBlock::Image(image));
                 }
             }
             Err(error) => {
                 println!("{:?}", error);
-                VoiceflowButtonsOption::Text(VoiceflowText::error_default("Invalid voiceflow image format"))
+                self.add_error_text_to_message(message, "Invalid voiceflow image format");
             }
         }
     }
@@ -222,7 +218,6 @@ impl VoiceflowResponseBlockProcessor {
     pub fn add_buttons_options_to_message(&self, message: &mut VoiceflowMessage, buttons_options: VoiceflowButtonsOption) {
         match buttons_options {
             VoiceflowButtonsOption::Text(text) => message.push(VoiceflowBlock::Text(text)),
-            VoiceflowButtonsOption::Image(image) => message.push(VoiceflowBlock::Image(image)),
             _ => {},
         }
     }

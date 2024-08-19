@@ -74,12 +74,25 @@ impl<C: Client> ClientsManager<C>{
     /// # Returns
     ///
     /// An `Option` containing an `Arc` to the client if found, or `None` if not.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use std::sync::Arc;
+    /// use tokio::sync::RwLock;
+    /// use voiceflousion::core::base_structs::ClientsManager;
+    /// use voiceflousion::integrations::telegram::TelegramClient;
+    ///
+    /// #[tokio::main]
+    /// async fn main() {
+    ///     let clients_manager: ClientsManager<TelegramClient> = ClientsManager::new();
+    ///     let client_id = String::from("client_123");
+    ///     let client = clients_manager.get_client(&client_id).await;
+    /// }
+    /// ```
     pub async fn get_client(&self, client_id: &String) -> Option<Arc<C>> {
         let read_lock = self.clients.read().await;
-        if let Some(client) = read_lock.get(client_id) {
-            return Some(client.clone());
-        }
-        None
+        read_lock.get(client_id).cloned()
     }
 
     /// Retrieves all clients.
@@ -87,13 +100,30 @@ impl<C: Client> ClientsManager<C>{
     /// # Returns
     ///
     /// A vector of `Arc` containing all clients.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use std::sync::Arc;
+    /// use tokio::sync::RwLock;
+    /// use voiceflousion::core::base_structs::ClientsManager;
+    /// use voiceflousion::integrations::telegram::TelegramClient;
+    ///
+    /// #[tokio::main]
+    /// async fn main() {
+    ///     let clients_manager: ClientsManager<TelegramClient> = ClientsManager::new();
+    ///     let clients = clients_manager.get_all_clients().await;
+    ///     println!("Number of clients: {}", clients.len());
+    /// }
+    /// ```
     pub async fn get_all_clients(&self) -> Vec<Arc<C>> {
         let read_lock = self.clients.read().await;
-        let clients = read_lock.values().cloned().collect();
-        clients
+        read_lock.values().cloned().collect()
     }
 
     /// Adds a client to the manager.
+    ///
+    /// If a client with the same ID already exists, it will not be replaced.
     ///
     /// # Parameters
     ///
@@ -102,19 +132,56 @@ impl<C: Client> ClientsManager<C>{
     /// # Returns
     ///
     /// An `Arc` containing the added client.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use std::sync::Arc;
+    /// use tokio::sync::RwLock;
+    /// use voiceflousion::core::base_structs::ClientsManager;
+    /// use voiceflousion::integrations::telegram::TelegramClient;
+    /// use voiceflousion::core::ClientBuilder;
+    /// use voiceflousion::core::voiceflow::VoiceflowClient;
+    ///
+    /// #[tokio::main]
+    /// async fn main() {
+    ///     let clients_manager: ClientsManager<TelegramClient> = ClientsManager::new();
+    ///     let voiceflow_client = Arc::new(VoiceflowClient::new("vf_api_key".to_string(), "bot_id".to_string(), "version_id".to_string(), 10, Some(120)));
+    ///     let builder = ClientBuilder::new("client_id".to_string(), "api_key".to_string(), voiceflow_client, 10);
+    ///     let client = TelegramClient::new(builder);
+    ///     clients_manager.add_client(client).await;
+    /// }
+    /// ```
     pub async fn add_client(&self, client: C) -> Arc<C> {
         let mut write_lock = self.clients.write().await;
-        let client = write_lock.entry(client.client_base().client_id().clone())
+        write_lock.entry(client.client_base().client_id().clone())
             .or_insert_with(|| Arc::new(client))
-            .clone();
-        client
+            .clone()
     }
 
     /// Deletes a client by its ID.
     ///
+    /// If the client ID does not exist, no action is taken.
+    ///
     /// # Parameters
     ///
     /// * `client_id` - The ID of the client to delete.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use std::sync::Arc;
+    /// use tokio::sync::RwLock;
+    /// use voiceflousion::core::base_structs::ClientsManager;
+    /// use voiceflousion::integrations::telegram::TelegramClient;
+    ///
+    /// #[tokio::main]
+    /// async fn main() {
+    ///     let clients_manager: ClientsManager<TelegramClient> = ClientsManager::new();
+    ///     let client_id = String::from("client_123");
+    ///     clients_manager.delete_client(&client_id).await;
+    /// }
+    /// ```
     pub async fn delete_client(&self, client_id: &String) {
         let mut write_lock = self.clients.write().await;
         write_lock.remove(client_id);

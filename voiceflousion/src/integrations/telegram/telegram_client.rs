@@ -1,33 +1,31 @@
 use std::ops::Deref;
-
 use async_trait::async_trait;
-use serde_json::Value;
 use crate::core::base_structs::ClientBase;
 use crate::core::ClientBuilder;
 use crate::core::session_wrappers::LockedSession;
 use crate::core::traits::{Client, Sender};
-use crate::core::voiceflow::{State, VoiceflowBlock};
+use crate::core::voiceflow::VoiceflowBlock;
 use crate::core::voiceflow::dialog_blocks::VoiceflowCarousel;
-use crate::errors::VoiceflousionResult;
+use crate::errors::{VoiceflousionError, VoiceflousionResult};
 use crate::integrations::telegram::{TelegramResponder, TelegramSender, TelegramUpdate};
 
 /// Represents a client for Telegram integration with Voiceflow.
 ///
-/// `TelegramClient` manages the sessions and interactions with the Voiceflow API and Telegram.
+/// `TelegramClient` manages sessions and interactions with the Voiceflow API and Telegram.
 pub struct TelegramClient {
     /// The base structure that provides core functionalities.
-    client_base: ClientBase<TelegramSender>
+    client_base: ClientBase<TelegramSender>,
 }
 
 impl TelegramClient {
-    /// Creates a new Telegram client.
+    /// Creates a new `TelegramClient`.
     ///
     /// This method initializes a new `TelegramClient` using the provided `ClientBuilder`.
     /// It configures the client with the necessary parameters and returns an instance of `TelegramClient`.
     ///
     /// # Parameters
     ///
-    /// * `builder` - The client builder containing necessary configurations.
+    /// * `builder` - The `ClientBuilder` containing the necessary configurations.
     ///
     /// # Returns
     ///
@@ -45,88 +43,43 @@ impl TelegramClient {
     /// let builder = ClientBuilder::new("client_id".to_string(), "api_key".to_string(), voiceflow_client, 10);
     /// let client = TelegramClient::new(builder);
     /// ```
-    pub fn new(builder: ClientBuilder) -> Self{
+    pub fn new(builder: ClientBuilder) -> Self {
         let api_key = builder.api_key().clone();
         let max_connections_per_moment = builder.max_connections_per_moment();
         let connection_duration = builder.connection_duration();
         let sender = TelegramSender::new(max_connections_per_moment, api_key, connection_duration);
 
-        Self{
-            client_base: ClientBase::new(builder, sender)
+        Self {
+            client_base: ClientBase::new(builder, sender),
         }
     }
 
-    /// Switches the carousel card at Client's message.
+    /// Switches the carousel card in the client's message.
+    ///
+    /// This method is used to switch between carousel cards in a Telegram session.
+    /// It updates the session with the new carousel state and sends the updated carousel card.
     ///
     /// # Parameters
     ///
     /// * `locked_session` - The locked session for the interaction.
-    /// * `carousel` - The Voiceflow carousel block.
-    /// * `message_id` - The ID of the message.
-    /// * `index` - The index of the carousel card.
-    /// * `interaction_time` - The interaction time.
+    /// * `carousel` - The `VoiceflowCarousel` block containing the cards.
+    /// * `message_id` - The ID of the message containing the carousel.
+    /// * `direction` - The direction to switch the carousel (`true` for next, `false` for previous).
+    /// * `interaction_time` - The interaction time as a Unix timestamp.
     ///
     /// # Returns
     ///
-    /// A `VoiceflousionResult` containing a vector of `H::SenderResponder` or a `VoiceflousionError` if the request fails.
-    async fn switch_carousel_card(&self, locked_session: &LockedSession<'_>,  carousel: &VoiceflowCarousel,  message_id: &String, index: usize, interaction_time: i64) -> VoiceflousionResult<TelegramResponder> {
+    /// A `VoiceflousionResult` containing the `TelegramResponder` if successful, or a `VoiceflousionError` if the request fails.
+    async fn switch_carousel_card(&self, locked_session: &LockedSession<'_>, carousel: &VoiceflowCarousel, message_id: &String, direction: bool, interaction_time: i64) -> VoiceflousionResult<TelegramResponder> {
+        // Update the last interaction time in the session
         locked_session.set_last_interaction(Some(interaction_time));
-        self.client_base.sender().update_carousel(carousel, index, locked_session.get_chat_id(), message_id).await
+        // Update the carousel with the new card and send the response
+        self.client_base.sender().update_carousel(carousel, direction, locked_session.get_chat_id(), message_id).await
     }
 }
 
 #[async_trait]
-impl Client for TelegramClient{
-
-    /// An array of allowed origins for CORS specific to the Telegram client.
-    const ORIGINS: &'static [&'static str] = &[
-        "http://149.154.160.0",
-        "http://149.154.160.1",
-        "http://149.154.160.2",
-        "http://149.154.160.3",
-        "http://149.154.160.4",
-        "http://149.154.160.5",
-        "http://149.154.160.6",
-        "http://149.154.160.7",
-        "http://149.154.160.8",
-        "http://149.154.160.9",
-        "http://149.154.160.10",
-        "http://149.154.160.11",
-        "http://149.154.160.12",
-        "http://149.154.160.13",
-        "http://149.154.160.14",
-        "http://149.154.160.15",
-        "http://149.154.160.16",
-        "http://149.154.160.17",
-        "http://149.154.160.18",
-        "http://149.154.160.19",
-        "http://149.154.160.20",
-
-        "http://91.108.4.0",
-        "http://91.108.4.1",
-        "http://91.108.4.2",
-        "http://91.108.4.3",
-        "http://91.108.4.4",
-        "http://91.108.4.5",
-        "http://91.108.4.6",
-        "http://91.108.4.7",
-        "http://91.108.4.8",
-        "http://91.108.4.9",
-        "http://91.108.4.10",
-        "http://91.108.4.11",
-        "http://91.108.4.12",
-        "http://91.108.4.13",
-        "http://91.108.4.14",
-        "http://91.108.4.15",
-        "http://91.108.4.16",
-        "http://91.108.4.17",
-        "http://91.108.4.18",
-        "http://91.108.4.19",
-        "http://91.108.4.20",
-        "http://91.108.4.21",
-        "http://91.108.4.22"
-    ];
-
+impl Client for TelegramClient {
     type ClientUpdate<'async_trait> = TelegramUpdate;
     type ClientSender<'async_trait> = TelegramSender;
 
@@ -139,30 +92,35 @@ impl Client for TelegramClient{
         &self.client_base
     }
 
-    /// Handles button interaction by checking if the previous message is a carousel and switching cards if necessary.
-    /// Otherwise, processes the button press normally.
+    /// Handles carousel switch interactions in a Telegram session.
+    ///
+    /// This method checks if the previous message contains a carousel block and, if so,
+    /// switches the carousel card according to the specified direction. If the previous
+    /// message is not a carousel, it returns an error indicating that there is no carousel to switch.
     ///
     /// # Parameters
     ///
-    /// * `locked_session` - The locked session for the interaction.
-    /// * `interaction_time` - The interaction time.
-    /// * `message` - The text message associated with the button.
-    /// * `button_path` - The data associated with the button.
-    /// * `update_state` - The optional state for updating the dialog.
-    /// * `update` - The update from the Telegram client.
-    /// * `payload` - The payload associated with the button.
+    /// * `locked_session` - The locked session for the interaction, ensuring thread-safe access.
+    /// * `interaction_time` - The time of the interaction in seconds since the Unix epoch.
+    /// * `switch_direction` - The direction to switch the carousel (`true` for next, `false` for previous).
     ///
     /// # Returns
     ///
-    /// A `VoiceflousionResult` containing a vector of `H::SenderResponder` or a `VoiceflousionError` if the request fails.
-    async fn handle_button_interaction(&self, locked_session: &LockedSession<'_>, interaction_time: i64, button_path: &String, update_state: Option<State>, update: &Self::ClientUpdate<'_>, payload: &Value) -> VoiceflousionResult<Vec<<Self::ClientSender<'_> as Sender>::SenderResponder>> {
-        if let Some(prev_message) = locked_session.previous_message().await.deref() {
-            if let VoiceflowBlock::Carousel(carousel) = prev_message.block() {
-                if let Some(index) = update.carousel_card_index() {
-                    return Ok(vec![self.switch_carousel_card(locked_session, carousel, prev_message.id(), index, interaction_time).await?]);
-                }
-            }
+    /// A `VoiceflousionResult` containing a vector of `SenderResponder` if the switch was successful,
+    /// or a `VoiceflousionError` if the operation fails (e.g., no carousel to switch).
+    async fn handle_carousel_switch(&self, locked_session: &LockedSession<'_>, interaction_time: i64, switch_direction: bool) -> VoiceflousionResult<Vec<<Self::ClientSender<'_> as Sender>::SenderResponder>> {
+        let binding = locked_session.previous_message().await;
+        let previous_message = binding.deref().as_ref().ok_or_else(|| {
+            VoiceflousionError::ClientRequestError("TelegramClient".to_string(), "Carousel cannot be switched at the start of the conversation".to_string(), )
+        })?;
+
+        if let VoiceflowBlock::Carousel(carousel) = previous_message.block() {
+            Ok(vec![self.switch_carousel_card(locked_session, carousel, previous_message.id(), switch_direction, interaction_time).await?])
+        } else {
+            Err(VoiceflousionError::ValidationError(
+                "TelegramClient".to_string(),
+                "There is no carousel to switch".to_string(),
+            ))
         }
-        self.choose_button_in_voiceflow_dialog(locked_session, interaction_time, button_path, update_state, payload).await
     }
 }

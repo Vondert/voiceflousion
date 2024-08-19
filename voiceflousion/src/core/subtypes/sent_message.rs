@@ -1,14 +1,16 @@
+use crate::core::voiceflow::dialog_blocks::VoiceflowButton;
 use crate::core::voiceflow::VoiceflowBlock;
+use crate::errors::{VoiceflousionError, VoiceflousionResult};
 
 /// Represents a sent message in the integration.
 ///
-/// `SentMessage` holds details of a message sent, including the block, message ID, and date.
+/// `SentMessage` holds details of a message sent, including the associated block, message ID, and date.
 pub struct SentMessage {
-    /// The block associated with the sent message.
+    /// The block associated with the sent message, which may include text, buttons, cards, or carousels.
     block: VoiceflowBlock,
-    /// The ID of the sent message.
+    /// The ID of the sent message, used to identify the message uniquely.
     message_id: String,
-    /// The date the message was sent.
+    /// The date the message was sent, represented as a Unix timestamp.
     date: i64,
 }
 
@@ -19,7 +21,7 @@ impl SentMessage {
     ///
     /// * `block` - The `VoiceflowBlock` associated with the message.
     /// * `message_id` - The ID of the message.
-    /// * `date` - The date the message was sent.
+    /// * `date` - The date the message was sent, represented as a Unix timestamp.
     ///
     /// # Returns
     ///
@@ -91,7 +93,7 @@ impl SentMessage {
     ///
     /// # Returns
     ///
-    /// An `i64` representing the date the message was sent.
+    /// An `i64` representing the date the message was sent as a Unix timestamp.
     ///
     /// # Example
     ///
@@ -107,5 +109,58 @@ impl SentMessage {
     /// ```
     pub fn date(&self) -> i64 {
         self.date
+    }
+
+    /// Retrieves the payload of a button by its index from the associated block.
+    ///
+    /// This method attempts to extract the payload of a button from the `VoiceflowBlock` associated with the sent message.
+    /// It supports blocks that contain buttons, such as `Buttons`, `Card`, and `Carousel`.
+    ///
+    /// # Parameters
+    ///
+    /// * `button_index` - The index of the button within the block to retrieve the payload from.
+    ///
+    /// # Returns
+    ///
+    /// A `VoiceflousionResult` containing the button's payload as a `Value`, or an error if the block does not contain buttons
+    /// or the button index is out of bounds.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use serde_json::json;
+    /// use voiceflousion::core::subtypes::SentMessage;
+    /// use voiceflousion::core::voiceflow::dialog_blocks::{VoiceflowButton, VoiceflowButtons};
+    /// use voiceflousion::core::voiceflow::VoiceflowBlock;
+    ///
+    /// let button = VoiceflowButton::new("Click me".to_string(), json!("payload"), None);
+    /// let buttons = VoiceflowButtons::new(vec![button]);
+    /// let block = VoiceflowBlock::Buttons(buttons);
+    /// let sent_message = SentMessage::new(block, "message_id".to_string(), 1627554661);
+    ///
+    /// let payload = sent_message.get_button(0).unwrap();
+    /// ```
+    pub fn get_button(&self, button_index: usize) -> VoiceflousionResult<&VoiceflowButton> {
+        match &self.block {
+            VoiceflowBlock::Buttons(buttons) => {
+                let button = buttons.get_button(button_index)?;
+                Ok(button)
+            },
+            VoiceflowBlock::Card(card) => {
+                let buttons = card.buttons().as_ref().unwrap();
+                let button = buttons.get_button(button_index)?;
+                Ok(button)
+            },
+            VoiceflowBlock::Carousel(carousel) => {
+                let (card, _index) = carousel.get_selected_card()?;
+                let buttons = card.buttons().as_ref().unwrap();
+                let button = buttons.get_button(button_index)?;
+                Ok(button)
+            },
+            _ => Err(VoiceflousionError::ValidationError(
+                "SentMessage content".to_string(),
+                "There are no buttons in the previous message!".to_string(),
+            )),
+        }
     }
 }

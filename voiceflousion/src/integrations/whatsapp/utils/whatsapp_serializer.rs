@@ -11,7 +11,8 @@ pub(crate) struct WhatsAppSerializer {}
 
 impl WhatsAppSerializer {
 
-    const ALLOWED_BUTTON_TITLE: usize = 24;
+    /// Maximum allowed length for button titles.
+    pub const ALLOWED_BUTTON_TITLE: usize = 24;
 
     /// Builds a JSON body for a text message to be sent via WhatsApp.
     ///

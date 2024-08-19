@@ -165,32 +165,28 @@ impl Sender for TelegramSender{
     ///
     /// # Parameters
     ///
+    /// * `_client_id` - The client ID (not used in this implementation).
     /// * `text` - The text message to send.
     /// * `chat_id` - The chat ID of the recipient.
-    /// * `sender_http_client` - The HTTP client for sending requests.
-    /// * `api_key` - The API key for authenticating with the Telegram API.
     ///
     /// # Returns
     ///
-    /// A `VoiceflousionResult` containing a `TelegramResponder` or a `VoiceflousionError` if the request fails.
+    /// A `VoiceflousionResult` containing a `TelegramResponder` if the request succeeds,
+    /// or a `VoiceflousionError` if the request fails.
     ///
     /// # Example
     ///
     /// ```
     /// use voiceflousion::integrations::telegram::TelegramSender;
-    /// use voiceflousion::core::voiceflow::dialog_blocks::{VoiceflowCard, VoiceflowCarousel};
     /// use voiceflousion::core::voiceflow::dialog_blocks::VoiceflowText;
     /// use voiceflousion::core::traits::Sender;
     /// use tokio;
     ///
     /// #[tokio::main]
-    /// async fn main() -> () {
-    ///
-    ///     let cards = vec![VoiceflowCard::new(Some("https://example.com/image.jpg".to_string()), Some("Title".to_string()), Some("Description".to_string()), None)];
-    ///     let carousel = VoiceflowCarousel::new(cards, true);
+    /// async fn main() {
     ///     let sender = TelegramSender::new(10, "api_key".to_string(), None);
-    ///     let chat_id = String::new();
-    ///     let client_id = String::new();
+    ///     let chat_id = String::from("chat_id");
+    ///     let client_id = String::from("client_id");
     ///     let text = VoiceflowText::new("Hello, World!".to_string());
     ///     let response = sender.send_text(&client_id, text, &chat_id).await;
     ///     println!("{:?}", response);
@@ -215,28 +211,28 @@ impl Sender for TelegramSender{
     ///
     /// # Parameters
     ///
+    /// * `_client_id` - The client ID (not used in this implementation).
     /// * `image` - The image message to send.
     /// * `chat_id` - The chat ID of the recipient.
-    /// * `sender_http_client` - The HTTP client for sending requests.
-    /// * `api_key` - The API key for authenticating with the Telegram API.
     ///
     /// # Returns
     ///
-    /// A `VoiceflousionResult` containing a `TelegramResponder` or a `VoiceflousionError` if the request fails.
+    /// A `VoiceflousionResult` containing a `TelegramResponder` if the request succeeds,
+    /// or a `VoiceflousionError` if the request fails.
     ///
     /// # Example
     ///
     /// ```
     /// use voiceflousion::integrations::telegram::TelegramSender;
-    /// use voiceflousion::core::traits::Sender;
     /// use voiceflousion::core::voiceflow::dialog_blocks::VoiceflowImage;
+    /// use voiceflousion::core::traits::Sender;
     /// use tokio;
     ///
     /// #[tokio::main]
-    /// async fn main() -> () {
+    /// async fn main() {
     ///     let sender = TelegramSender::new(10, "api_key".to_string(), None);
-    ///     let chat_id = String::new();
-    ///     let client_id = String::new();
+    ///     let chat_id = String::from("chat_id");
+    ///     let client_id = String::from("client_id");
     ///     let image = VoiceflowImage::new("https://example.com/image.jpg".to_string(), Some(100), Some(200));
     ///     let response = sender.send_image(&client_id, image, &chat_id).await;
     ///     println!("{:?}", response);
@@ -261,31 +257,30 @@ impl Sender for TelegramSender{
     ///
     /// # Parameters
     ///
+    /// * `_client_id` - The client ID (not used in this implementation).
     /// * `buttons` - The buttons message to send.
     /// * `chat_id` - The chat ID of the recipient.
-    /// * `sender_http_client` - The HTTP client for sending requests.
-    /// * `api_key` - The API key for authenticating with the Telegram API.
     ///
     /// # Returns
     ///
-    /// A `VoiceflousionResult` containing a `TelegramResponder` or a `VoiceflousionError` if the request fails.
+    /// A `VoiceflousionResult` containing a `TelegramResponder` if the request succeeds,
+    /// or a `VoiceflousionError` if the request fails.
     ///
     /// # Example
     ///
     /// ```
     /// use voiceflousion::integrations::telegram::TelegramSender;
-    /// use voiceflousion::core::traits::Sender;
-    /// use voiceflousion::core::voiceflow::dialog_blocks::enums::VoiceflowButtonActionType;
     /// use voiceflousion::core::voiceflow::dialog_blocks::{VoiceflowButton, VoiceflowButtons};
+    /// use voiceflousion::core::traits::Sender;
     /// use serde_json::Value;
     /// use tokio;
     ///
     /// #[tokio::main]
-    /// async fn main() -> () {
+    /// async fn main() {
     ///     let sender = TelegramSender::new(10, "api_key".to_string(), None);
-    ///     let chat_id = String::new();
-    ///     let client_id = String::new();
-    ///     let buttons = vec![VoiceflowButton::new("Click me".to_string(), VoiceflowButtonActionType::Path, Value::Null)];
+    ///     let chat_id = String::from("chat_id");
+    ///     let client_id = String::from("client_id");
+    ///     let buttons = vec![VoiceflowButton::new("Click me".to_string(), Value::Null, None)];
     ///     let voiceflow_buttons = VoiceflowButtons::new(buttons);
     ///     let response = sender.send_buttons(&client_id, voiceflow_buttons, &chat_id).await;
     ///     println!("{:?}", response);
@@ -311,14 +306,14 @@ impl Sender for TelegramSender{
     ///
     /// # Parameters
     ///
+    /// * `_client_id` - The client ID (not used in this implementation).
     /// * `card` - The card message to send.
     /// * `chat_id` - The chat ID of the recipient.
-    /// * `sender_http_client` - The HTTP client for sending requests.
-    /// * `api_key` - The API key for authenticating with the Telegram API.
     ///
     /// # Returns
     ///
-    /// A `VoiceflousionResult` containing a `TelegramResponder` or a `VoiceflousionError` if the request fails.
+    /// A `VoiceflousionResult` containing a `TelegramResponder` if the request succeeds,
+    /// or a `VoiceflousionError` if the request fails.
     ///
     /// # Example
     ///
@@ -329,12 +324,11 @@ impl Sender for TelegramSender{
     /// use tokio;
     ///
     /// #[tokio::main]
-    /// async fn main() -> () {
+    /// async fn main() {
     ///     let card = VoiceflowCard::new(Some("https://example.com/image.jpg".to_string()), Some("Title".to_string()), Some("Description".to_string()), None);
     ///     let sender = TelegramSender::new(10, "api_key".to_string(), None);
-    ///     let chat_id = String::new();
-    ///     let client_id = String::new();
-    ///     let message_id = String::new();
+    ///     let chat_id = String::from("chat_id");
+    ///     let client_id = String::from("client_id");
     ///     let response = sender.send_card(&client_id, card, &chat_id).await;
     ///     println!("{:?}", response);
     /// }
@@ -358,14 +352,14 @@ impl Sender for TelegramSender{
     ///
     /// # Parameters
     ///
+    /// * `_client_id` - The client ID (not used in this implementation).
     /// * `carousel` - The carousel message to send.
     /// * `chat_id` - The chat ID of the recipient.
-    /// * `sender_http_client` - The HTTP client for sending requests.
-    /// * `api_key` - The API key for authenticating with the Telegram API.
     ///
     /// # Returns
     ///
-    /// A `VoiceflousionResult` containing a `TelegramResponder` or a `VoiceflousionError` if the request fails.
+    /// A `VoiceflousionResult` containing a `TelegramResponder` if the request succeeds,
+    /// or a `VoiceflousionError` if the request fails.
     ///
     /// # Example
     ///
@@ -376,13 +370,12 @@ impl Sender for TelegramSender{
     /// use tokio;
     ///
     /// #[tokio::main]
-    /// async fn main() -> () {
+    /// async fn main() {
     ///     let cards = vec![VoiceflowCard::new(Some("https://example.com/image.jpg".to_string()), Some("Title".to_string()), Some("Description".to_string()), None)];
     ///     let carousel = VoiceflowCarousel::new(cards, true);
     ///     let sender = TelegramSender::new(10, "api_key".to_string(), None);
-    ///     let chat_id = String::new();
-    ///     let client_id = String::new();
-    ///     let message_id = String::new();
+    ///     let chat_id = String::from("chat_id");
+    ///     let client_id = String::from("client_id");
     ///     let response = sender.send_carousel(&client_id, carousel, &chat_id).await;
     ///     println!("{:?}", response);
     /// }

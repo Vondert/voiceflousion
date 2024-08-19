@@ -1,36 +1,56 @@
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct ButtonCallbackData{
+pub struct ButtonCallbackData {
     #[serde(skip_serializing_if = "Option::is_none")]
     index: Option<usize>,
     #[serde(skip_serializing_if = "Option::is_none")]
     timestamp_mark: Option<i64>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    direction: Option<bool>
+    direction: Option<bool>,
 }
 
-impl ButtonCallbackData{
-    fn new(builder: ButtonCallbackDataBuilder) -> Self{
+impl ButtonCallbackData {
+    /// Creates a new `ButtonCallbackData` instance.
+    ///
+    /// # Parameters
+    ///
+    /// * `index` - An optional index value.
+    /// * `timestamp_mark` - An optional timestamp mark.
+    /// * `direction` - An optional direction (true for forward, false for backward).
+    ///
+    /// # Returns
+    ///
+    /// A new `ButtonCallbackData` instance.
+    fn new(index: Option<usize>, timestamp_mark: Option<i64>, direction: Option<bool>) -> Self {
         Self {
-            index: builder.index,
-            timestamp_mark: builder.timestamp_mark,
-            direction: builder.direction,
+            index,
+            timestamp_mark,
+            direction,
         }
     }
+
+    /// Converts the `ButtonCallbackData` instance to a JSON string.
+    ///
+    /// # Returns
+    ///
+    /// The JSON string if serialization succeeds or an empty string if serialization fails.
     pub fn to_json_string(self) -> String{
         serde_json::to_string(&self).unwrap_or_else(|_| "".to_string())
     }
 
-    pub fn index(&self) -> Option<usize>{
+    /// Returns a reference to the index, if any.
+    pub fn index(&self) -> Option<usize> {
         self.index
     }
 
-    pub fn timestamp_mark(&self) -> Option<i64>{
+    /// Returns a reference to the timestamp mark, if any.
+    pub fn timestamp_mark(&self) -> Option<i64> {
         self.timestamp_mark
     }
 
-    pub fn direction(&self) -> Option<bool>{
+    /// Returns a reference to the direction, if any.
+    pub fn direction(&self) -> Option<bool> {
         self.direction
     }
 }
@@ -43,26 +63,63 @@ pub struct ButtonCallbackDataBuilder {
 }
 
 impl ButtonCallbackDataBuilder {
+    /// Creates a new `ButtonCallbackDataBuilder`.
+    ///
+    /// # Returns
+    ///
+    /// A new `ButtonCallbackDataBuilder` instance.
     pub fn new() -> Self {
         Self::default()
     }
 
-    pub fn index(mut self, index: usize) -> Self{
+    /// Sets the index value.
+    ///
+    /// # Parameters
+    ///
+    /// * `index` - The index value to set.
+    ///
+    /// # Returns
+    ///
+    /// The updated builder instance.
+    pub fn index(mut self, index: usize) -> Self {
         self.index = Some(index);
         self
     }
 
-    pub fn timestamp_mark(mut self, timestamp_mark: i64) -> Self{
+    /// Sets the timestamp mark.
+    ///
+    /// # Parameters
+    ///
+    /// * `timestamp_mark` - The timestamp mark to set.
+    ///
+    /// # Returns
+    ///
+    /// The updated builder instance.
+    pub fn timestamp_mark(mut self, timestamp_mark: i64) -> Self {
         self.timestamp_mark = Some(timestamp_mark);
         self
     }
 
-    pub fn direction(mut self, direction: bool) -> Self{
+    /// Sets the direction.
+    ///
+    /// # Parameters
+    ///
+    /// * `direction` - The direction value to set.
+    ///
+    /// # Returns
+    ///
+    /// The updated builder instance.
+    pub fn direction(mut self, direction: bool) -> Self {
         self.direction = Some(direction);
         self
     }
 
-    pub fn build(self) -> ButtonCallbackData{
-        ButtonCallbackData::new(self)
+    /// Builds the `ButtonCallbackData` instance.
+    ///
+    /// # Returns
+    ///
+    /// A new `ButtonCallbackData` instance.
+    pub fn build(self) -> ButtonCallbackData {
+        ButtonCallbackData::new(self.index, self.timestamp_mark, self.direction)
     }
 }

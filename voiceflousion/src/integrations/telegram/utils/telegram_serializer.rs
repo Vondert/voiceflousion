@@ -3,10 +3,13 @@ use crate::core::voiceflow::dialog_blocks::enums::VoiceflowButtonsOption;
 use crate::core::voiceflow::dialog_blocks::{VoiceflowButtons, VoiceflowCard};
 use crate::integrations::utils::ButtonCallbackDataBuilder;
 
+/// `TelegramSerializer` provides methods for serializing various types of messages
+/// into JSON format compatible with the Telegram API. These include text, image,
+/// button, and card messages, as well as specialized carousel messages.
 pub(crate) struct TelegramSerializer;
 
 impl TelegramSerializer {
-    /// Builds the JSON body for sending a text message via Telegram API.
+    /// Builds the JSON body for sending a text message via the Telegram API.
     ///
     /// # Parameters
     ///
@@ -23,7 +26,7 @@ impl TelegramSerializer {
         })
     }
 
-    /// Builds the JSON body for sending an image message via Telegram API.
+    /// Builds the JSON body for sending an image message via the Telegram API.
     ///
     /// # Parameters
     ///
@@ -40,7 +43,7 @@ impl TelegramSerializer {
         })
     }
 
-    /// Builds the JSON body for sending a message with buttons via Telegram API.
+    /// Builds the JSON body for sending a message with buttons via the Telegram API.
     ///
     /// # Parameters
     ///
@@ -67,7 +70,7 @@ impl TelegramSerializer {
         })
     }
 
-    /// Builds the JSON body for sending a card message via Telegram API.
+    /// Builds the JSON body for sending a card message via the Telegram API.
     ///
     /// # Parameters
     ///
@@ -90,7 +93,7 @@ impl TelegramSerializer {
         Self::build_card_base_body(chat_id, text, card.image_url(), inline_keyboard)
     }
 
-    /// Builds the JSON body for sending a carousel card message via Telegram API.
+    /// Builds the JSON body for sending a carousel card message via the Telegram API.
     ///
     /// # Parameters
     ///
@@ -113,7 +116,7 @@ impl TelegramSerializer {
         Self::build_card_base_body(chat_id, text, card.image_url(), inline_keyboard)
     }
 
-    /// Builds the JSON body for updating a carousel card message via Telegram API.
+    /// Builds the JSON body for updating a carousel card message via the Telegram API.
     ///
     /// # Parameters
     ///
@@ -160,7 +163,7 @@ impl TelegramSerializer {
         }
     }
 
-    /// Builds the base JSON body for sending a card or carousel message via Telegram API.
+    /// Builds the base JSON body for sending a card or carousel message via the Telegram API.
     ///
     /// # Parameters
     ///
@@ -207,7 +210,7 @@ impl TelegramSerializer {
     /// A vector of vectors containing the keyboard layout in JSON format.
     fn build_buttons_vec(buttons: &VoiceflowButtons) -> Vec<Vec<Value>> {
         buttons.iter().enumerate().map(|(index, b)| {
-            let callback_data =ButtonCallbackDataBuilder::new().index(index).build().to_json_string();
+            let callback_data = ButtonCallbackDataBuilder::new().index(index).build().to_json_string();
 
             json!({ "text": b.name(), "callback_data": callback_data })
         }).map(|key| vec![key]).collect()
@@ -240,12 +243,12 @@ impl TelegramSerializer {
         let mut switch_buttons: Vec<Value> = Vec::new();
         // Add a previous button if this is not the first card
         if index > 0 {
-            let carousel_prev= ButtonCallbackDataBuilder::new().direction(false).build().to_json_string();
-            switch_buttons.push(json!({ "text": "<--", "callback_data": carousel_prev}));
+            let carousel_prev = ButtonCallbackDataBuilder::new().direction(false).build().to_json_string();
+            switch_buttons.push(json!({ "text": "<--", "callback_data": carousel_prev }));
         }
         // Add a next button if this is not the last card
         if index < carousel_len - 1 {
-            let carousel_next= ButtonCallbackDataBuilder::new().direction(true).build().to_json_string();
+            let carousel_next = ButtonCallbackDataBuilder::new().direction(true).build().to_json_string();
             switch_buttons.push(json!({ "text": "-->", "callback_data": carousel_next }));
         }
         inline_keyboard.push(switch_buttons);

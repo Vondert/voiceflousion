@@ -18,21 +18,9 @@ pub trait ServerClient: Client {
     /// A list of allowed origins for CORS.
     ///
     /// This constant defines an array of static string slices representing the origins
-    /// that are allowed to make cross-origin requests to client's server. These origins are
+    /// that are allowed to make cross-origin requests to the client's server. These origins are
     /// used to configure the CORS settings of the server, ensuring that only requests
     /// from specified origins are permitted.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// const ORIGINS: &'static [&'static str] = &[
-    ///     "http://149.154.160.1",
-    ///     "http://149.154.160.2",
-    ///     "http://91.108.4.1",
-    ///     "http://91.108.4.2",
-    ///     "http://voiceflow.com"
-    /// ];
-    /// ```
     const ORIGINS: &'static [&'static str];
 
     /// Authenticates incoming webhook requests.
@@ -66,13 +54,13 @@ pub trait ServerClient: Client {
 /// This implementation overrides the `authenticate_webhook` method to provide specific
 /// authentication logic for WhatsApp webhook requests.
 #[cfg(feature = "whatsapp")]
-impl ServerClient for WhatsAppClient{
-
+impl ServerClient for WhatsAppClient {
+    /// Allowed origins for CORS specific to the WhatsApp client.
     const ORIGINS: &'static [&'static str] = &[];
 
-    fn authenticate_webhook(params: &mut QueryParams, value: Option<&Value>, bot_auth_token: Option<BotAuthToken>) -> Option<Response>{
+    fn authenticate_webhook(params: &mut QueryParams, value: Option<&Value>, bot_auth_token: Option<BotAuthToken>) -> Option<Response> {
         // Check if the incoming webhook update is of type "service" and reject it
-        if let Some(json) = value{
+        if let Some(json) = value {
             let origin_type = json["entry"][0]["changes"][0]["value"]["statuses"][0]["conversation"]["origin"]["type"]
                 .as_str();
 
@@ -85,13 +73,12 @@ impl ServerClient for WhatsAppClient{
 
         // Handle the webhook verification challenge for WhatsApp
         if let Some(challenge) = params.remove("hub.challenge") {
-            if let Some(bot_token) = bot_auth_token{
-                if let Some(verify_token) = params.remove("hub.verify_token"){
-                    if bot_token.token() != &verify_token{
+            if let Some(bot_token) = bot_auth_token {
+                if let Some(verify_token) = params.remove("hub.verify_token") {
+                    if bot_token.token() != &verify_token {
                         return Some((StatusCode::OK, Json("Webhook authorization failed!".to_string())).into_response());
                     }
-                }
-                else{
+                } else {
                     return Some((StatusCode::OK, Json("Webhook authorization failed!".to_string())).into_response());
                 }
             }
@@ -106,7 +93,7 @@ impl ServerClient for WhatsAppClient{
 /// Since Telegram does not require additional authentication logic beyond the default,
 /// this implementation uses the default `authenticate_webhook` method provided by the `ServerClient` trait.
 #[cfg(feature = "telegram")]
-impl ServerClient for TelegramClient{
+impl ServerClient for TelegramClient {
     /// An array of allowed origins for CORS specific to the Telegram client.
     const ORIGINS: &'static [&'static str] = &[
         "http://149.154.160.0",

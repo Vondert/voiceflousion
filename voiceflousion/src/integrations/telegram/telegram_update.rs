@@ -42,7 +42,8 @@ impl TelegramUpdate {
     /// use voiceflousion::core::traits::Update;
     /// use voiceflousion::integrations::telegram::TelegramUpdate;
     ///
-    /// let interaction_type = InteractionType::new("message".to_string(), None);
+    /// let button_index = 0usize;
+    /// let interaction_type = InteractionType::new("message".to_string(), Some(button_index), None);
     /// let update = TelegramUpdate::new("chat_id".to_string(), "message_id".to_string(), 1627554661, interaction_type, "update_id".to_string(), Some(true));
     /// ```
     pub fn new(chat_id: String, message_id: String, interaction_time: i64, interaction_type: InteractionType, update_id: String, carousel_direction: Option<bool>) -> Self {
@@ -66,7 +67,8 @@ impl TelegramUpdate {
     /// use voiceflousion::core::traits::Update;
     /// use voiceflousion::integrations::telegram::TelegramUpdate;
     ///
-    /// let interaction_type = InteractionType::new("message".to_string(), None);
+    /// let button_index = 0usize;
+    /// let interaction_type = InteractionType::new("message".to_string(), Some(button_index), None);
     /// let update = TelegramUpdate::new("chat_id".to_string(), "message_id".to_string(), 1627554661, interaction_type, "update_id".to_string(), Some(true));
     /// let index = update.carousel_card_index();
     /// ```
@@ -87,7 +89,8 @@ impl TelegramUpdate {
     /// use voiceflousion::core::traits::Update;
     /// use voiceflousion::integrations::telegram::TelegramUpdate;
     ///
-    /// let interaction_type = InteractionType::new("message".to_string(), None);
+    /// let button_index = 0usize;
+    /// let interaction_type = InteractionType::new("message".to_string(), Some(button_index), None);
     /// let update = TelegramUpdate::new("chat_id".to_string(), "message_id".to_string(), 1627554661, interaction_type, "update_id".to_string(), Some(true));
     /// let message_id = update.message_id();
     /// ```
@@ -115,18 +118,6 @@ impl Update for TelegramUpdate {
     /// # Returns
     ///
     /// A `VoiceflousionResult` containing the `TelegramUpdate` or a `VoiceflousionError` if the conversion fails.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// use serde_json::json;
-    /// use voiceflousion::core::traits::Update;
-    /// use voiceflousion::integrations::telegram::TelegramUpdate;
-    ///
-    /// let body = json!({});
-    ///
-    /// let update = TelegramUpdate::from_request_body(body);
-    /// ```
     fn from_request_body(body: Value) -> VoiceflousionResult<Self> {
         // Check if the update contains a message or a callback query
         let is_message = body.get("message").is_some();

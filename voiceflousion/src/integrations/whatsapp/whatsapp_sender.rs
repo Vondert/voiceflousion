@@ -13,7 +13,6 @@ use crate::errors::{VoiceflousionError, VoiceflousionResult};
 use crate::integrations::whatsapp::whatsapp_responder::WhatsAppResponder;
 use crate::integrations::whatsapp::utils::WhatsAppSerializer;
 
-
 /// Represents a sender for WhatsApp integration.
 ///
 /// `WhatsAppSender` handles sending various types of messages (text, image, buttons, etc.)
@@ -269,7 +268,6 @@ impl Sender for WhatsAppSender {
     /// ```
     /// use voiceflousion::integrations::whatsapp::WhatsAppSender;
     /// use voiceflousion::core::traits::Sender;
-    /// use voiceflousion::core::voiceflow::dialog_blocks::enums::VoiceflowButtonActionType;
     /// use voiceflousion::core::voiceflow::dialog_blocks::{VoiceflowButton, VoiceflowButtons};
     /// use serde_json::Value;
     /// use tokio;
@@ -279,7 +277,7 @@ impl Sender for WhatsAppSender {
     ///     let sender = WhatsAppSender::new(10, "api_key".to_string(), None);
     ///     let chat_id = String::new();
     ///     let client_id = String::new();
-    ///     let buttons = vec![VoiceflowButton::new("Click me".to_string(), VoiceflowButtonActionType::Path, Value::Null)];
+    ///     let buttons = vec![VoiceflowButton::new("Click me".to_string(), Value::Null, None)];
     ///     let voiceflow_buttons = VoiceflowButtons::new(buttons);
     ///     let response = sender.send_buttons(&client_id, voiceflow_buttons, &chat_id).await;
     ///     println!("{:?}", response);

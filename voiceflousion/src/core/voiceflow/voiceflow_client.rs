@@ -319,21 +319,21 @@ impl VoiceflowClient {
     ///
     /// ```
     /// use std::sync::Arc;
+    /// use serde_json::{json, Value};
     /// use voiceflousion::core::session_wrappers::{LockedSession, Session};
     /// use voiceflousion::core::voiceflow::{State, VoiceflowClient, VoiceflowSession};
     /// use tokio;
     ///
     /// #[tokio::main]
     /// async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    ///     use serde_json::Value;
-    /// let session = Arc::new(Session::new("chat_id".to_string(), None, true));
+    ///     let session = Arc::new(Session::new("chat_id".to_string(), None, true));
     ///     let locked_session = LockedSession::try_from_session(&session)?;
     ///     let session = locked_session.voiceflow_session();
     ///
     ///     let vf_client = Arc::new(VoiceflowClient::new("vf_api_key".to_string(), "bot_id".to_string(), "version_id".to_string(), 10, None));
     ///     let state = State::default();
     ///
-    ///     let response = vf_client.choose_button(&session, Some(state), Value::Null).await;
+    ///     let response = vf_client.choose_button(&session, Some(state), json!({"path": "path"})).await;
     ///
     ///     Ok(())
     /// }

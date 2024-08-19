@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.2.0] - 2024-08-19
+### Added
+
+### Changed
+
+### Fixed
+
+### Removed
+
+
 ## [0.2.0] - 2024-08-04
 ### Added
 - Added `ClientManager` struct for managing large amounts of clients.

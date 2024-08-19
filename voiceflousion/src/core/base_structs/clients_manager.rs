@@ -88,11 +88,6 @@ impl<C: Client> ClientsManager<C>{
     ///     let clients_manager: ClientsManager<TelegramClient> = ClientsManager::new();
     ///     let client_id = String::from("client_123");
     ///     let client = clients_manager.get_client(&client_id).await;
-    ///     if let Some(client) = client {
-    ///         println!("Client found: {:?}", client);
-    ///     } else {
-    ///         println!("Client not found.");
-    ///     }
     /// }
     /// ```
     pub async fn get_client(&self, client_id: &String) -> Option<Arc<C>> {
@@ -145,11 +140,15 @@ impl<C: Client> ClientsManager<C>{
     /// use tokio::sync::RwLock;
     /// use voiceflousion::core::base_structs::ClientsManager;
     /// use voiceflousion::integrations::telegram::TelegramClient;
+    /// use voiceflousion::core::ClientBuilder;
+    /// use voiceflousion::core::voiceflow::VoiceflowClient;
     ///
     /// #[tokio::main]
     /// async fn main() {
     ///     let clients_manager: ClientsManager<TelegramClient> = ClientsManager::new();
-    ///     let client = TelegramClient::new(); // Example, assumes `new` method exists
+    ///     let voiceflow_client = Arc::new(VoiceflowClient::new("vf_api_key".to_string(), "bot_id".to_string(), "version_id".to_string(), 10, Some(120)));
+    ///     let builder = ClientBuilder::new("client_id".to_string(), "api_key".to_string(), voiceflow_client, 10);
+    ///     let client = TelegramClient::new(builder);
     ///     clients_manager.add_client(client).await;
     /// }
     /// ```

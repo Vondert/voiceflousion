@@ -1,6 +1,6 @@
 [package]
 name = "voiceflousion"
-version = "0.2.0"
+version = "0.3.0"
 authors = ["Vondert (Ivan Milennyi) <25042018avic@gmail.com>"]
 edition = "2021"
 description = "A crate that provides toolkit for Voiceflow AI bots integrations and pre-built functionality for quick integration with popular messengers"
@@ -9,7 +9,7 @@ repository = "https://github.com/Vondert/voiceflousion"
 documentation = "https://docs.rs/voiceflousion"
 homepage = "https://github.com/Vondert/voiceflousion"
 readme = "../README_CARGO.md"
-keywords = ["chatbot", "voiceflow", "integration", "telegram", "ai"]
+keywords = ["chatbot", "voiceflow", "integration", "framework", "ai"]
 categories = ["api-bindings", "web-programming", "asynchronous", "network-programming"]
 
 [dependencies]

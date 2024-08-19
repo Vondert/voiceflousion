@@ -5,10 +5,8 @@
 pub enum InteractionType {
     /// Represents a text interaction.
     Text(String),
-
     /// Represents a button interaction with the associated index.
     Button(usize),
-
     /// Represents a carousel switch interaction with a direction (`true` for next, `false` for previous).
     CarouselSwitch(bool),
 }
@@ -35,8 +33,8 @@ impl InteractionType {
     /// let carousel_interaction = InteractionType::new("".to_string(), None, Some(true)); // Carousel switch interaction
     /// let text_interaction = InteractionType::new("Hello, world!".to_string(), None, None); // Text interaction
     /// ```
-    pub fn new(message: String, button_options: Option<usize>, carousel_switch_direction: Option<bool>) -> Self {
-        match (button_options, carousel_switch_direction) {
+    pub fn new(message: String, button_index: Option<usize>, carousel_switch_direction: Option<bool>) -> Self {
+        match (button_index, carousel_switch_direction) {
             (_, Some(direction)) => InteractionType::CarouselSwitch(direction),
             (Some(index), None) => InteractionType::Button(index),
             (None, None) => InteractionType::Text(message),

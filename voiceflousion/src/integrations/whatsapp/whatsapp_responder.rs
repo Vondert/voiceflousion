@@ -56,7 +56,7 @@ impl Responder for WhatsAppResponder{
             .ok_or_else(|| VoiceflousionError::ClientResponseReadingError("WhatsAppResponder message_id".to_string(), json.to_string()))?;
 
         Ok(Self{
-            responder_base: ResponderBase::new(message_id, content, wa_id, timestamp)
+            responder_base: ResponderBase::new(message_id, wa_id, content, timestamp)
         })
     }
 }

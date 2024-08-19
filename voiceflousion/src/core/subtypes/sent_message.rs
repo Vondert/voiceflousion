@@ -6,12 +6,10 @@ use crate::errors::{VoiceflousionError, VoiceflousionResult};
 ///
 /// `SentMessage` holds details of a message sent, including the associated block, message ID, and date.
 pub struct SentMessage {
-    /// The block associated with the sent message.
+    /// The block associated with the sent message, which may include text, buttons, cards, or carousels.
     block: VoiceflowBlock,
-
-    /// The ID of the sent message.
+    /// The ID of the sent message, used to identify the message uniquely.
     message_id: String,
-
     /// The date the message was sent, represented as a Unix timestamp.
     date: i64,
 }
@@ -133,10 +131,9 @@ impl SentMessage {
     /// use serde_json::json;
     /// use voiceflousion::core::subtypes::SentMessage;
     /// use voiceflousion::core::voiceflow::dialog_blocks::{VoiceflowButton, VoiceflowButtons};
-    /// use voiceflousion::core::voiceflow::dialog_blocks::enums::VoiceflowButtonActionType;
     /// use voiceflousion::core::voiceflow::VoiceflowBlock;
     ///
-    /// let button = VoiceflowButton::new("Click me".to_string(), VoiceflowButtonActionType::Path, json!("payload"));
+    /// let button = VoiceflowButton::new("Click me".to_string(), json!("payload"), None);
     /// let buttons = VoiceflowButtons::new(vec![button]);
     /// let block = VoiceflowBlock::Buttons(buttons);
     /// let sent_message = SentMessage::new(block, "message_id".to_string(), 1627554661);
@@ -160,7 +157,10 @@ impl SentMessage {
                 let button = buttons.get_button(button_index)?;
                 Ok(button)
             },
-            _ => Err(VoiceflousionError::ValidationError("SentMessage content".to_string(), "There are no buttons in the previous message!".to_string()))
+            _ => Err(VoiceflousionError::ValidationError(
+                "SentMessage content".to_string(),
+                "There are no buttons in the previous message!".to_string(),
+            )),
         }
     }
 }

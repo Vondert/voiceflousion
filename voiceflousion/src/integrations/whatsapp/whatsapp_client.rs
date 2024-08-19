@@ -7,8 +7,7 @@ use crate::core::traits::{get_last_sent_message, Client, Sender};
 use crate::core::voiceflow::dialog_blocks::VoiceflowCarousel;
 use crate::core::voiceflow::VoiceflowBlock;
 use crate::errors::{VoiceflousionError, VoiceflousionResult};
-use crate::integrations::whatsapp::whatsapp_sender::WhatsAppSender;
-use crate::integrations::whatsapp::{WhatsAppResponder, WhatsAppUpdate};
+use crate::integrations::whatsapp::{WhatsAppResponder, WhatsAppUpdate, WhatsAppSender};
 
 pub struct WhatsAppClient {
     client_base: ClientBase<WhatsAppSender>

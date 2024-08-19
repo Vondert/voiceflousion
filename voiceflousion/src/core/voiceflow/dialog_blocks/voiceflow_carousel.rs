@@ -60,7 +60,7 @@ impl VoiceflowCarousel {
             cards,
             has_images,
             selected_mark: Arc::new(AtomicI64::new(timestamp)),
-            selected_index: Arc::new(AtomicUsize::new(0usize))
+            selected_index: Arc::new(AtomicUsize::new(0usize)),
         }
     }
 
@@ -140,10 +140,14 @@ impl VoiceflowCarousel {
     /// let carousel = VoiceflowCarousel::new(cards, true);
     /// let (selected_card, index) = carousel.get_selected_card().unwrap();
     /// ```
-    pub fn get_selected_card(&self) -> VoiceflousionResult<(&VoiceflowCard, usize)>{
+    pub fn get_selected_card(&self) -> VoiceflousionResult<(&VoiceflowCard, usize)> {
         let index = self.get_selected_index();
-        let card = self.cards.get(index)
-            .ok_or_else(|| VoiceflousionError::ValidationError("VoiceflousionCarousel".to_string(), format!("Index {} out of bounds", index)))?;
+        let card = self.cards.get(index).ok_or_else(|| {
+            VoiceflousionError::ValidationError(
+                "VoiceflousionCarousel".to_string(),
+                format!("Index {} out of bounds", index),
+            )
+        })?;
 
         Ok((card, index))
     }
@@ -215,19 +219,28 @@ impl VoiceflowCarousel {
             if current_index < self.cards.len() - 1 {
                 current_index + 1
             } else {
-                return Err(VoiceflousionError::ValidationError("VoiceflousionCarousel".to_string(), format!("Index {} can't be bigger", current_index)))
+                return Err(VoiceflousionError::ValidationError(
+                    "VoiceflousionCarousel".to_string(),
+                    format!("Index {} can't be bigger", current_index),
+                ));
             }
         } else {
             if current_index > 0 {
                 current_index - 1
             } else {
-                return Err(VoiceflousionError::ValidationError("VoiceflousionCarousel".to_string(), format!("Index {} can't be lesser", current_index)))
+                return Err(VoiceflousionError::ValidationError(
+                    "VoiceflousionCarousel".to_string(),
+                    format!("Index {} can't be lesser", current_index),
+                ));
             }
         };
 
-
-        let card = self.cards.get(new_index)
-            .ok_or_else(|| VoiceflousionError::ValidationError("VoiceflousionCarousel".to_string(), format!("Index {} out of bounds", new_index)))?;
+        let card = self.cards.get(new_index).ok_or_else(|| {
+            VoiceflousionError::ValidationError(
+                "VoiceflousionCarousel".to_string(),
+                format!("Index {} out of bounds", new_index),
+            )
+        })?;
 
         Ok((card, new_index))
     }
@@ -255,7 +268,7 @@ impl VoiceflowCarousel {
     /// let carousel = VoiceflowCarousel::new(cards, true);
     /// carousel.set_selected_card(1, Utc::now().timestamp());
     /// ```
-    pub fn set_selected_card(&self, selected_index: usize, timestamp: i64) -> () {
+    pub fn set_selected_card(&self, selected_index: usize, timestamp: i64) {
         if selected_index >= self.cards.len() {
             panic!("Index {} is out of bounds", selected_index);
         }
@@ -264,9 +277,12 @@ impl VoiceflowCarousel {
     }
 }
 
-impl FromValue for VoiceflowCarousel{
-
+impl FromValue for VoiceflowCarousel {
     /// Attempts to convert a JSON `Value` into a `VoiceflowCarousel` instance.
+    ///
+    /// This method extracts the list of cards from the JSON value and determines
+    /// whether the carousel contains only images or only text. Mixed carousels
+    /// are not allowed and will return an error.
     ///
     /// # Parameters
     ///
@@ -274,31 +290,54 @@ impl FromValue for VoiceflowCarousel{
     ///
     /// # Returns
     ///
-    /// A `Result` containing an `Option` with the `VoiceflowCarousel` instance if the conversion
+    /// A `VoiceflousionResult` containing an `Option` with the `VoiceflowCarousel` instance if the conversion
     /// succeeds, or a `VoiceflousionError` if the conversion fails. If the conversion
     /// succeeds but there is no meaningful value, `None` can be returned.
     fn from_value(value: &Value) -> VoiceflousionResult<Option<Self>> {
-        let payload = value["trace"].get("payload")
-            .ok_or_else(|| VoiceflousionError::VoiceflowBlockConvertationError(("VoiceflowCarousel carousel payload".to_string(), value.clone())))?;
+        // Extract the "payload" field from the "trace" object in the JSON value.
+        let payload = value["trace"].get("payload").ok_or_else(|| {
+            VoiceflousionError::VoiceflowBlockConvertationError(
+                "VoiceflowCarousel carousel payload".to_string(),
+                value.clone(),
+            )
+        })?;
 
-        let cards_value = payload.get("cards").and_then(|cards| cards.as_array())
-            .ok_or_else(|| VoiceflousionError::VoiceflowBlockConvertationError(("VoiceflowCarousel cards value".to_string(), value.clone())))?;
+        // Extract the "cards" array from the payload.
+        let cards_value = payload
+            .get("cards")
+            .and_then(|cards| cards.as_array())
+            .ok_or_else(|| {
+                VoiceflousionError::VoiceflowBlockConvertationError(
+                    "VoiceflowCarousel cards value".to_string(),
+                    value.clone(),
+                )
+            })?;
 
-        let cards_option: Result<Vec<Option<VoiceflowCard>>, VoiceflousionError> = cards_value.into_iter().map(|card| VoiceflowCard::from_value(card)).collect();
+        // Convert each card in the array into a VoiceflowCard.
+        let cards_option: Result<Vec<Option<VoiceflowCard>>, VoiceflousionError> = cards_value
+            .into_iter()
+            .map(|card| VoiceflowCard::from_value(card))
+            .collect();
         let cards: Vec<VoiceflowCard> = cards_option?.into_iter().filter_map(|card| card).collect();
 
-        if cards.is_empty(){
-            return Ok(None)
+        // Return None if the carousel has no cards.
+        if cards.is_empty() {
+            return Ok(None);
         }
 
+        // Determine if all cards have images or if all are text-only.
         let has_images = cards.iter().all(|card| card.image_url().is_some());
         let no_images = cards.iter().all(|card| card.image_url().is_none());
 
-        // Check for mixed types: some cards with images, some without
+        // Check for mixed types: some cards with images, some without.
         if !has_images && !no_images {
-            return Err(VoiceflousionError::VoiceflowBlockConvertationError(("VoiceflowCarousel cards value".to_string(), value.clone())))
+            return Err(VoiceflousionError::VoiceflowBlockConvertationError(
+                "VoiceflowCarousel cards value".to_string(),
+                value.clone(),
+            ));
         }
-        Ok(Some(Self::new(cards, has_images)))
 
+        // Return the constructed VoiceflowCarousel.
+        Ok(Some(Self::new(cards, has_images)))
     }
 }

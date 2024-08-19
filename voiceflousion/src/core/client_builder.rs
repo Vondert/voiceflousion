@@ -2,33 +2,35 @@ use std::sync::Arc;
 use crate::core::session_wrappers::Session;
 use crate::core::voiceflow::{State, VoiceflowClient};
 
+
 /// Builds a client with the necessary configurations.
 ///
 /// `ClientBuilder` provides a builder pattern for constructing a client with various configurations,
-/// including session management and cleanup settings.
+/// including session management, cleanup settings, and API interactions. This struct allows for
+/// flexible client setup tailored to specific needs.
 pub struct ClientBuilder {
-    /// The client ID.
+    /// The client ID used to uniquely identify the client.
     client_id: String,
-    /// The API key for authentication.
+    /// The API key for authentication with the Voiceflow API.
     api_key: String,
-    /// The Voiceflow client for API interactions.
+    /// The Voiceflow client used for API interactions.
     voiceflow_client: Arc<VoiceflowClient>,
-    /// Optional sessions to initialize with.
+    /// Optional sessions to initialize the client with. This can be used to preload existing sessions.
     sessions: Option<Vec<Session>>,
-    /// The maximum number of connections per moment.
+    /// The maximum number of connections allowed at any given moment.
     max_connections_per_moment: usize,
-    /// Optional duration of the HTTP connection in seconds
+    /// Optional duration of the HTTP connection in seconds. This controls how long connections are kept alive.
     connection_duration: Option<u64>,
-    /// The optional duration for session validity.
+    /// The optional duration for session validity in seconds. This defines how long a session remains valid before expiring.
     session_duration: Option<i64>,
-    /// The optional interval for session cleanup.
+    /// The optional interval for session cleanup in seconds. This defines how frequently the system checks for expired sessions and cleans them up.
     sessions_cleanup_interval: Option<u64>,
-    /// The launch state of the Voiceflow client.
+    /// The launch state of the Voiceflow client, which may include configurations like default states or variables.
     launch_state: State,
-
+    /// A status flag indicating whether the client is active or not.
     status: bool,
-
-    bot_auth_token: Option<String>
+    /// The optional bot authentication token, used for additional security or identification purposes.
+    bot_auth_token: Option<String>,
 }
 
 impl ClientBuilder {

@@ -19,14 +19,15 @@ pub trait Sender: Deref<Target=SenderBase> + Send + Sync + Sized {
 
     /// Sends a `VoiceflowMessage` to a client.
     ///
-    /// **This method has base implementation for sending messages. Modify it only if you
-    /// know what you are doing or have devised a better approach.**
-    ///
     /// This method iterates over the blocks in the `VoiceflowMessage` and sends
     /// each block using the appropriate method (`send_text`, `send_image`, etc.).
     ///
+    /// **This method has a base implementation for sending messages. Modify it only if you
+    /// know what you are doing or have devised a better approach.**
+    ///
     /// # Parameters
     ///
+    /// * `client_id` - The ID of the client.
     /// * `chat_id` - The chat ID of the client to send the message to.
     /// * `message` - The `VoiceflowMessage` to send.
     ///
@@ -78,10 +79,9 @@ pub trait Sender: Deref<Target=SenderBase> + Send + Sync + Sized {
     ///
     /// # Parameters
     ///
+    /// * `client_id` - The ID of the client.
     /// * `text` - The `VoiceflowText` block to send.
     /// * `chat_id` - The chat ID of the client to send the message to.
-    /// * `sender_http_client` - The HTTP client used for sending the request.
-    /// * `api_key` - The API key used for authentication.
     ///
     /// # Returns
     ///
@@ -92,10 +92,9 @@ pub trait Sender: Deref<Target=SenderBase> + Send + Sync + Sized {
     ///
     /// # Parameters
     ///
+    /// * `client_id` - The ID of the client.
     /// * `image` - The `VoiceflowImage` block to send.
     /// * `chat_id` - The chat ID of the client to send the message to.
-    /// * `sender_http_client` - The HTTP client used for sending the request.
-    /// * `api_key` - The API key used for authentication.
     ///
     /// # Returns
     ///
@@ -106,10 +105,9 @@ pub trait Sender: Deref<Target=SenderBase> + Send + Sync + Sized {
     ///
     /// # Parameters
     ///
+    /// * `client_id` - The ID of the client.
     /// * `buttons` - The `VoiceflowButtons` block to send.
     /// * `chat_id` - The chat ID of the client to send the message to.
-    /// * `sender_http_client` - The HTTP client used for sending the request.
-    /// * `api_key` - The API key used for authentication.
     ///
     /// # Returns
     ///
@@ -120,10 +118,9 @@ pub trait Sender: Deref<Target=SenderBase> + Send + Sync + Sized {
     ///
     /// # Parameters
     ///
+    /// * `client_id` - The ID of the client.
     /// * `card` - The `VoiceflowCard` block to send.
     /// * `chat_id` - The chat ID of the client to send the message to.
-    /// * `sender_http_client` - The HTTP client used for sending the request.
-    /// * `api_key` - The API key used for authentication.
     ///
     /// # Returns
     ///
@@ -134,10 +131,9 @@ pub trait Sender: Deref<Target=SenderBase> + Send + Sync + Sized {
     ///
     /// # Parameters
     ///
+    /// * `client_id` - The ID of the client.
     /// * `carousel` - The `VoiceflowCarousel` block to send.
     /// * `chat_id` - The chat ID of the client to send the message to.
-    /// * `sender_http_client` - The HTTP client used for sending the request.
-    /// * `api_key` - The API key used for authentication.
     ///
     /// # Returns
     ///

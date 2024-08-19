@@ -98,7 +98,7 @@ impl Responder for TelegramResponder {
 
         Ok(Self {
             bot_id: result.from.id.to_string(),
-            responder_base: ResponderBase::new(result.message_id.to_string(), content, result.chat.id.to_string(), result.date)
+            responder_base: ResponderBase::new(result.message_id.to_string(), result.chat.id.to_string(), content, result.date)
         })
     }
 }

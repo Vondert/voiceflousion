@@ -12,22 +12,23 @@ use crate::core::voiceflow::{State, VoiceflowClient};
 /// `ClientBase` is the foundational struct for managing client interactions with Voiceflow.
 ///
 /// This struct encapsulates essential components such as the client ID, Voiceflow client for API interactions,
-/// session manager for handling sessions, message sender, and the initial launch state.
+/// session manager for handling sessions, message sender, the initial launch state, and additional internal states
+/// like the status flag and bot authentication token.
 pub struct ClientBase<H: Sender> {
-    /// The client ID for the client.
+    /// The unique identifier for the client.
     client_id: String,
-    /// The Voiceflow client for API interactions.
+    /// The Voiceflow client used for interacting with the Voiceflow API.
     voiceflow_client: Arc<VoiceflowClient>,
-    /// The session manager for handling sessions.
+    /// The session manager responsible for managing and maintaining sessions.
     sessions: SessionsManager,
-    /// The sender for sending messages.
+    /// The sender used for sending messages through the appropriate channel.
     sender: H,
-    /// The initial launch state of the client.
+    /// The initial launch state that determines the client's starting condition.
     launch_state: State,
-    //
+    /// A status flag indicating the current operational state of the client.
     status: Arc<AtomicBool>,
-
-    bot_auth_token: Arc<RwLock<Option<BotAuthToken>>>
+    /// The bot authentication token, which may be updated or accessed as needed.
+    bot_auth_token: Arc<RwLock<Option<BotAuthToken>>>,
 }
 
 impl<H: Sender> ClientBase<H> {

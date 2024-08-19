@@ -133,10 +133,8 @@ pub trait Client: Sync + Send {
     ///
     /// * `locked_session` - The locked session for the interaction.
     /// * `interaction_time` - The interaction time.
-    /// * `message` - The text message associated with the button.
-    /// * `button_data` - The data associated with the button.
+    /// * `button_index` - The index of the button in the previous message.
     /// * `state` - The optional state for updating the dialog.
-    /// * `payload` - The payload associated with the button.
     ///
     /// # Returns
     ///

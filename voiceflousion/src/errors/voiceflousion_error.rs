@@ -10,8 +10,8 @@ use serde_json::Value;
 pub enum VoiceflousionError {
     /// Error occurred while converting a Voiceflow block.
     ///
-    /// Contains a tuple with a string description and the JSON value that failed to convert.
-    VoiceflowBlockConvertationError((String, Value)),
+    /// Contains a string description and the JSON value that failed to convert.
+    VoiceflowBlockConvertationError(String, Value),
 
     /// Error occurred while making a request to Voiceflow.
     ///
@@ -67,8 +67,8 @@ pub type VoiceflousionResult<T> = Result<T, VoiceflousionError>;
 impl Display for VoiceflousionError {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), std::fmt::Error>{
         match self {
-            VoiceflousionError::VoiceflowBlockConvertationError(block) => {
-                write!(f, "Failed to convert voiceflow block: {}\n{:?}", block.0, block.1)
+            VoiceflousionError::VoiceflowBlockConvertationError(error, block) => {
+                write!(f, "Failed to convert voiceflow block: {}\n{:?}", error, block)
             },
             VoiceflousionError::VoiceflowResponseReadingError(error) => {
                 write!(f, "Voiceflow response reading: {}", error)

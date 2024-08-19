@@ -53,7 +53,9 @@ pub enum VoiceflousionError {
     /// Contains the chat ID and update ID of the deprecated update.
     DeprecatedError(String, String),
 
-
+    /// Error occurred due to invalid update.
+    ///
+    /// Contains the update and error message.
     ValidationError(String, String)
 }
 

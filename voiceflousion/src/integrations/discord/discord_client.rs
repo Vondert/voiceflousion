@@ -8,7 +8,8 @@ use crate::integrations::discord::discord_sender::DiscordSender;
 use crate::integrations::discord::discord_update::DiscordUpdate;
 
 pub struct DiscordClient{
-    client_base: ClientBase<DiscordSender>
+    client_base: ClientBase<DiscordSender>,
+    public_key: String
 }
 
 impl DiscordClient{
@@ -35,9 +36,10 @@ impl DiscordClient{
     ///
     /// let voiceflow_client = Arc::new(VoiceflowClient::new("vf_api_key".to_string(), "bot_id".to_string(), "version_id".to_string(), 10, Some(120)));
     /// let builder = ClientBuilder::new("client_id".to_string(), "api_key".to_string(), voiceflow_client, 10);
-    /// let client = DiscordClient::new(builder);
+    /// let public_key = "public_key".to_string();
+    /// let client = DiscordClient::new(builder, public_key);
     /// ```
-    pub fn new(builder: ClientBuilder) -> Self {
+    pub fn new(builder: ClientBuilder, public_key: String) -> Self {
         let api_key = builder.api_key().clone();
         let max_connections_per_moment = builder.max_connections_per_moment();
         let connection_duration = builder.connection_duration();
@@ -45,7 +47,12 @@ impl DiscordClient{
 
         Self {
             client_base: ClientBase::new(builder, sender),
+            public_key
         }
+    }
+
+    pub fn get_public_key(&self) -> &String{
+        &self.public_key
     }
 }
 

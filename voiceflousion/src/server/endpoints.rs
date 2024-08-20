@@ -3,13 +3,11 @@ use std::sync::Arc;
 use axum::extract::{Path, Query};
 use axum::{Extension, Json};
 use axum::http::StatusCode;
-use axum_extra::TypedHeader;
 use axum_core::response::IntoResponse;
-use axum_extra::headers::Origin;
 use serde_json::Value;
 use crate::core::base_structs::ClientsManager;
 use crate::core::traits::Update;
-use crate::server::subtypes::{AuthResult, QueryParams};
+use crate::server::subtypes::{AuthResult, QueryParams, VoiceflousionHeadersWrapper};
 use crate::server::traits::{BotHandler, ServerClient};
 
 /// Main endpoint function for handling incoming webhook requests.
@@ -34,14 +32,13 @@ pub(super) async fn main_endpoint<C: ServerClient>(
     id: Path<String>,
     mut params: Query<QueryParams>,
     Json(body): Json<Value>,
+    headers: VoiceflousionHeadersWrapper,
     Extension(clients): Extension<Arc<ClientsManager<C>>>,
     Extension(optional_allowed_origins): Extension<Arc<Option<HashMap<&'static str, ()>>>>,
-    Extension(handler): Extension<Arc<dyn BotHandler<C>>>,
-    optional_origin_header: Option<TypedHeader<Origin>>
+    Extension(handler): Extension<Arc<dyn BotHandler<C>>>
 ) -> impl IntoResponse {
-
     // Authenticate the request, including checking the origin and token.
-    let client = match authenticate_request::<C>(id, &mut params, Some(&body), clients.clone(), optional_allowed_origins.clone(), optional_origin_header).await{
+    let client = match authenticate_request::<C>(id, &mut params, Some(&body), headers, clients.clone(), optional_allowed_origins.clone()).await{
         AuthResult::Client(client) => client,
         AuthResult::Response(response) => return response
     };
@@ -87,11 +84,11 @@ pub(super) async fn main_endpoint<C: ServerClient>(
 pub(super) async fn get_auth_endpoint<C: ServerClient>(
     id: Path<String>,
     mut params: Query<QueryParams>,
+    headers: VoiceflousionHeadersWrapper,
     Extension(clients): Extension<Arc<ClientsManager<C>>>,
-    Extension(optional_allowed_origins): Extension< Arc<Option<HashMap<&'static str, ()>>>>,
-    optional_origin_header: Option<TypedHeader<Origin>>
+    Extension(optional_allowed_origins): Extension< Arc<Option<HashMap<&'static str, ()>>>>
 ) -> impl IntoResponse{
-    match authenticate_request::<C>(id, &mut params, None, clients.clone(), optional_allowed_origins.clone(), optional_origin_header).await{
+    match authenticate_request::<C>(id, &mut params, None, headers, clients.clone(), optional_allowed_origins.clone()).await{
         AuthResult::Client(_client) => {
             (StatusCode::OK, Json("Endpoint authentication with GET response not passed".to_string())).into_response()
         },
@@ -142,25 +139,24 @@ async fn authenticate_request<C: ServerClient>(
     Path(id): Path<String>,
     Query(params): &mut Query<QueryParams>,
     body: Option<&Value>,
+    headers: VoiceflousionHeadersWrapper,
     clients: Arc<ClientsManager<C>>,
-    optional_allowed_origins: Arc<Option<HashMap<&'static str, ()>>>,
-    optional_origin_header: Option<TypedHeader<Origin>>
+    optional_allowed_origins: Arc<Option<HashMap<&'static str, ()>>>
 ) -> AuthResult<C> {
-
     // Check the Origin header if allowed origins are defined.
-    if let Some(allowed_origins) = &*optional_allowed_origins {
-        if let Some(origin_header) = optional_origin_header{
-            let origin = origin_header.hostname();
-            if !allowed_origins.contains_key(origin) {
-                println!("Unauthorized origin: {}", origin);
-                return AuthResult::Response((StatusCode::OK, Json("Unauthorized origin".to_string())).into_response());
-            }
-        }
-        else{
-            println!("Missing origin header in request! Client: {}\nAdd headers to request or turn of allowed origins in server!", id);
-            return AuthResult::Response((StatusCode::OK, Json("Missing origin header in request! Add headers to request or turn of allowed origins in server!".to_string())).into_response());
-        }
-    }
+    // if let Some(allowed_origins) = &*optional_allowed_origins {
+    //     if let Some(origin_header) = optional_origin_header{
+    //         let origin = origin_header.hostname();
+    //         if !allowed_origins.contains_key(origin) {
+    //             println!("Unauthorized origin: {}", origin);
+    //             return AuthResult::Response((StatusCode::OK, Json("Unauthorized origin".to_string())).into_response());
+    //         }
+    //     }
+    //     else{
+    //         println!("Missing origin header in request! Client: {}\nAdd headers to request or turn of allowed origins in server!", id);
+    //         return AuthResult::Response((StatusCode::OK, Json("Missing origin header in request! Add headers to request or turn of allowed origins in server!".to_string())).into_response());
+    //     }
+    // }
 
     // Validate client ID
     let client = if let Some(client) = clients.get_client(&id).await {
@@ -185,14 +181,14 @@ async fn authenticate_request<C: ServerClient>(
             return AuthResult::Response((StatusCode::OK, Json("Unauthorized access".to_string())).into_response());
         }
 
-        // Perform additional webhook authentication if required
-        if let Some(response) = C::authenticate_webhook(params, body, Some(bot_auth_token)){
+        // Perform server client request authentication if required
+        if let Some(response) = client.authenticate_server_client_request(headers, params, body, Some(bot_auth_token)){
             return AuthResult::Response(response);
         };
     }
     else{
         // Perform authentication without a token
-        if let Some(response) = C::authenticate_webhook(params, body, None){
+        if let Some(response) = client.authenticate_server_client_request(headers, params, body, None){
             return AuthResult::Response(response);
         };
     };

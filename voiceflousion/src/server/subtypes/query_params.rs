@@ -43,7 +43,7 @@ impl QueryParams {
     /// # Returns
     ///
     /// An `Option<BotAuthToken>` containing the token if found, or `None` if the key does not exist.
-    pub fn extract_bot_auth_token(&mut self) -> Option<BotAuthToken> {
+    pub(crate) fn extract_bot_auth_token(&mut self) -> Option<BotAuthToken> {
         if let Some(token) = self.remove("voiceflousion_bot_token") {
             Some(BotAuthToken::new(token))
         } else {

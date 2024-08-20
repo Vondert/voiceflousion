@@ -1,14 +1,13 @@
 use axum::http::StatusCode;
 use axum::Json;
 use axum_core::response::{IntoResponse, Response};
-use chrono::format::parse;
 use serde_json::{json, Value};
 use crate::core::subtypes::BotAuthToken;
 use crate::core::traits::Client;
 use crate::integrations::discord::DiscordClient;
 use crate::integrations::telegram::TelegramClient;
 use crate::integrations::whatsapp::WhatsAppClient;
-use crate::server::subtypes::QueryParams;
+use crate::server::subtypes::{QueryParams, VoiceflousionHeadersWrapper};
 
 /// Trait that extends the `Client` trait to add server-specific functionality.
 ///
@@ -27,7 +26,7 @@ pub trait ServerClient: Client {
     const BASE_URL: &'static str;
 
 
-    /// Authenticates incoming webhook requests.
+    /// Authenticates incoming requests to server client.
     ///
     /// This method is used to validate webhook requests by examining the query parameters,
     /// the optional JSON body, and an optional bot authentication token. By default, it
@@ -44,7 +43,9 @@ pub trait ServerClient: Client {
     /// An optional `Response` indicating the result of the authentication. If `None` is returned,
     /// the request is considered authenticated.
     #[inline]
-    fn authenticate_webhook(
+    fn authenticate_server_client_request(
+        &self,
+        _headers: VoiceflousionHeadersWrapper,
         _params: &mut QueryParams,
         _value: Option<&Value>,
         _bot_auth_token: Option<BotAuthToken>
@@ -55,14 +56,14 @@ pub trait ServerClient: Client {
 
 /// Implementation of `ServerClient` for `WhatsAppClient`.
 ///
-/// This implementation overrides the `authenticate_webhook` method to provide specific
-/// authentication logic for WhatsApp webhook requests.
+/// This implementation overrides the `authenticate_server_client_request` method to provide specific
+/// authentication logic for WhatsApp server client requests.
 #[cfg(feature = "whatsapp")]
 impl ServerClient for WhatsAppClient {
     /// Allowed origins for CORS specific to the WhatsApp client.
     const ORIGINS: &'static [&'static str] = &[];
     const BASE_URL: &'static str = "whatsapp";
-    fn authenticate_webhook(params: &mut QueryParams, value: Option<&Value>, bot_auth_token: Option<BotAuthToken>) -> Option<Response> {
+    fn authenticate_server_client_request(&self, _headers: VoiceflousionHeadersWrapper, params: &mut QueryParams, value: Option<&Value>, bot_auth_token: Option<BotAuthToken>) -> Option<Response> {
         // Check if the incoming webhook update is of type "service" and reject it
         if let Some(json) = value {
             let origin_type = json["entry"][0]["changes"][0]["value"]["statuses"][0]["conversation"]["origin"]["type"]
@@ -95,7 +96,7 @@ impl ServerClient for WhatsAppClient {
 /// Implementation of `ServerClient` for `TelegramClient`.
 ///
 /// Since Telegram does not require additional authentication logic beyond the default,
-/// this implementation uses the default `authenticate_webhook` method provided by the `ServerClient` trait.
+/// this implementation uses the default `authenticate_server_client_request` method provided by the `ServerClient` trait.
 #[cfg(feature = "telegram")]
 impl ServerClient for TelegramClient {
     /// An array of allowed origins for CORS specific to the Telegram client.
@@ -152,14 +153,16 @@ impl ServerClient for TelegramClient {
 
 impl ServerClient for DiscordClient{
     const ORIGINS: &'static [&'static str] = &[];
-    const BASE_URL: &'static str = "discord";
-    fn authenticate_webhook(params: &mut QueryParams, value: Option<&Value>, bot_auth_token: Option<BotAuthToken>) -> Option<Response> {
+    const BASE_URL: &'static str = "discordd";
+    fn authenticate_server_client_request(&self, _headers: VoiceflousionHeadersWrapper, _params: &mut QueryParams, value: Option<&Value>, _bot_auth_token: Option<BotAuthToken>) -> Option<Response> {
         let body = if let Some(body) = value{
+            println!("{:?}", &body);
             body
         }
         else{
             return Some((StatusCode::UNAUTHORIZED, Json("Invalid request body".to_string())).into_response())
         };
+        let public_key = self.get_public_key().clone();
         let request_type = body.get("type").and_then(|type_value| type_value.as_u64()).unwrap_or_else(|| 1u64);
         match request_type{
             1 => {

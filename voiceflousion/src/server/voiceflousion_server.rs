@@ -2,11 +2,11 @@ use std::collections::HashMap;
 use std::net::SocketAddr;
 use std::sync::Arc;
 use axum::{Extension, Json, Router};
-use axum::http::HeaderMap;
 use axum::routing::post;
 use serde_json::Value;
 use crate::core::base_structs::ClientsManager;
 use crate::server::endpoints::{get_auth_endpoint, main_endpoint};
+use crate::server::subtypes::VoiceflousionHeadersWrapper;
 use crate::server::traits::{BotHandler, ServerClient};
 
 /// VoiceflousionServer is responsible for handling HTTP requests to bots and routing them to the appropriate handlers.
@@ -253,28 +253,28 @@ impl<C: ServerClient + 'static> VoiceflousionServer<C> {
                        let clients = clients.clone();
                        let optional_allowed_origins = optional_allowed_origins.clone();
                        let handler = handler.clone();
-                       move |headers: HeaderMap, origin_header, path, params, json: Json<Value>| {
+                       move |headers: VoiceflousionHeadersWrapper, path, params, json: Json<Value>| {
                            main_endpoint(
                                path,
                                params,
                                json,
+                               headers,
                                Extension(clients),
                                Extension(optional_allowed_origins),
-                               Extension(handler),
-                               origin_header
+                               Extension(handler)
                            )
                        }
                    })
                    .get({
                        let clients = clients.clone();
                        let optional_allowed_origins = optional_allowed_origins.clone();
-                       move |origin_header, path, params| {
+                       move |headers: VoiceflousionHeadersWrapper, path, params| {
                             get_auth_endpoint(
                                 path,
                                 params,
+                                headers,
                                 Extension(clients),
-                                Extension(optional_allowed_origins),
-                                origin_header
+                                Extension(optional_allowed_origins)
                             )
                        }
                    }),

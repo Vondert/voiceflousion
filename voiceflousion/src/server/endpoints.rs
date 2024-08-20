@@ -144,19 +144,18 @@ async fn authenticate_request<C: ServerClient>(
     optional_allowed_origins: Arc<Option<HashMap<&'static str, ()>>>
 ) -> AuthResult<C> {
     // Check the Origin header if allowed origins are defined.
-    // if let Some(allowed_origins) = &*optional_allowed_origins {
-    //     if let Some(origin_header) = optional_origin_header{
-    //         let origin = origin_header.hostname();
-    //         if !allowed_origins.contains_key(origin) {
-    //             println!("Unauthorized origin: {}", origin);
-    //             return AuthResult::Response((StatusCode::OK, Json("Unauthorized origin".to_string())).into_response());
-    //         }
-    //     }
-    //     else{
-    //         println!("Missing origin header in request! Client: {}\nAdd headers to request or turn of allowed origins in server!", id);
-    //         return AuthResult::Response((StatusCode::OK, Json("Missing origin header in request! Add headers to request or turn of allowed origins in server!".to_string())).into_response());
-    //     }
-    // }
+    if let Some(allowed_origins) = &*optional_allowed_origins {
+        if let Some(origin) = headers.get_header_str("Origin"){
+            if !allowed_origins.contains_key(origin) {
+                println!("Unauthorized origin: {}", origin);
+                return AuthResult::Response((StatusCode::OK, Json("Unauthorized origin".to_string())).into_response());
+            }
+        }
+        else{
+            println!("Missing origin header in request! Client: {}\nAdd headers to request or turn of allowed origins in server!", id);
+            return AuthResult::Response((StatusCode::OK, Json("Missing origin header in request! Add headers to request or turn of allowed origins in server!".to_string())).into_response());
+        }
+    }
 
     // Validate client ID
     let client = if let Some(client) = clients.get_client(&id).await {

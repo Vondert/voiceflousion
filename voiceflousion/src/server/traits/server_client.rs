@@ -4,10 +4,18 @@ use axum_core::response::{IntoResponse, Response};
 use serde_json::{json, Value};
 use crate::core::subtypes::BotAuthToken;
 use crate::core::traits::Client;
-use crate::integrations::discord::DiscordClient;
-use crate::integrations::telegram::TelegramClient;
-use crate::integrations::whatsapp::WhatsAppClient;
 use crate::server::subtypes::{QueryParams, VoiceflousionHeadersWrapper};
+
+
+#[cfg(feature = "telegram")]
+use crate::integrations::telegram::TelegramClient;
+#[cfg(feature = "whatsapp")]
+use crate::integrations::whatsapp::WhatsAppClient;
+#[cfg(feature = "discord")]
+use crate::{
+    integrations::discord::DiscordClient,
+    server::traits::utils::discord_verify_public_key
+};
 
 /// Trait that extends the `Client` trait to add server-specific functionality.
 ///
@@ -151,28 +159,35 @@ impl ServerClient for TelegramClient {
     const BASE_URL: &'static str = "telegram";
 }
 
+#[cfg(feature = "discord")]
 impl ServerClient for DiscordClient{
     const ORIGINS: &'static [&'static str] = &[];
-    const BASE_URL: &'static str = "discordd";
-    fn authenticate_server_client_request(&self, _headers: VoiceflousionHeadersWrapper, _params: &mut QueryParams, value: Option<&Value>, _bot_auth_token: Option<BotAuthToken>) -> Option<Response> {
-        let body = if let Some(body) = value{
-            println!("{:?}", &body);
-            body
-        }
-        else{
-            return Some((StatusCode::UNAUTHORIZED, Json("Invalid request body".to_string())).into_response())
+    const BASE_URL: &'static str = "discord";
+    fn authenticate_server_client_request(&self, headers: VoiceflousionHeadersWrapper, _params: &mut QueryParams, value: Option<&Value>, _bot_auth_token: Option<BotAuthToken>) -> Option<Response> {
+        let body = match value{
+            Some(body) => body,
+            None => return Some((StatusCode::UNAUTHORIZED, Json("Invalid request body".to_string())).into_response())
         };
-        let public_key = self.get_public_key().clone();
-        let request_type = body.get("type").and_then(|type_value| type_value.as_u64()).unwrap_or_else(|| 1u64);
+        let signature = headers.get_header_str_or_empty("x-signature-ed25519");
+        let timestamp = headers.get_header_str_or_empty("x-signature-timestamp");
+        if timestamp.is_empty() ||signature.is_empty(){
+            return Some((StatusCode::UNAUTHORIZED, Json("Timestamp and signature headers aren't provided".to_string())).into_response())
+        }
+
+        let public_key = self.get_public_key();
+        if let Err(error) = discord_verify_public_key(public_key, signature, timestamp, body){
+            println!("Discord authentication error: {}", error);
+            return Some((StatusCode::UNAUTHORIZED, Json("Key verification failed".to_string())).into_response())
+        }
+
+        let request_type = body.get("type").and_then(|type_value| type_value.as_u64()).unwrap_or_default();
+
         match request_type{
             1 => {
                 let body = Json(json!({
-                    "type": request_type,
-                    "data": {
-                        "content": "Hello world!"
-                    }
+                    "type": request_type
                 }));
-                println!("{:?}", &body.0);
+
                 Some((StatusCode::OK, body).into_response())
             },
             4 => None,

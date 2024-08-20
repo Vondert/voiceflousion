@@ -227,7 +227,7 @@ impl<C: ServerClient + 'static> VoiceflousionServer<C> {
         let ip = address.into();
         let listener = tokio::net::TcpListener::bind(ip).await.unwrap();
 
-        println!("Server is set on {}{}", ip, &route);
+        println!("Server is set on {}", ip);
         println!("Bots without authentication token are available on {}{}", ip, route);
         println!("Bots with authentication token are available on {}{}/?token=<token>", ip, route);
 

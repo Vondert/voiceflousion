@@ -9,4 +9,4 @@ pub(crate) mod utils;
 #[cfg(feature = "advanced")]
 pub mod utils;
 
-//mod discord;
+pub mod discord;

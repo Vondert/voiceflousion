@@ -9,7 +9,7 @@ pub struct DiscordUpdate{
     update_base: UpdateBase
 }
 
-impl Deref<Target=UpdateBase> for DiscordUpdate {
+impl Deref for DiscordUpdate {
     type Target = UpdateBase;
 
     fn deref(&self) -> &Self::Target {

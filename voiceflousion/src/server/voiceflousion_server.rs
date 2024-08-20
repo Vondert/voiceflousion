@@ -2,6 +2,7 @@ use std::collections::HashMap;
 use std::net::SocketAddr;
 use std::sync::Arc;
 use axum::{Extension, Json, Router};
+use axum::http::HeaderMap;
 use axum::routing::post;
 use serde_json::Value;
 use crate::core::base_structs::ClientsManager;
@@ -10,12 +11,12 @@ use crate::server::traits::{BotHandler, ServerClient};
 
 /// VoiceflousionServer is responsible for handling HTTP requests to bots and routing them to the appropriate handlers.
 ///
-/// This struct contains bots clients manager, base part of the server's HTTP endpoint URL, and the handler function for processing incoming webhook requests.
+/// This struct contains bots clients manager, optional part of the server's HTTP endpoint URL, and the handler function for processing incoming webhook requests.
 pub struct VoiceflousionServer<C: ServerClient + 'static> {
     /// Manager for handling multiple bots clients.
     clients: Option<Arc<ClientsManager<C >>>,
-    /// Base part of the server's HTTP endpoint URL.
-    base_url: String,
+    /// Optional; extending part of the server's HTTP endpoint URL.
+    extend_url: Option<String>,
     /// Handler function for processing incoming webhook requests.
     handler: Arc<dyn BotHandler<C>>,
     /// Allowed origins for CORS settings stored in a HashMap for fast lookup.
@@ -27,7 +28,6 @@ impl<C: ServerClient + 'static> VoiceflousionServer<C> {
     ///
     /// # Parameters
     ///
-    /// * `base_url` - Base part of the server's HTTP endpoint URL.
     /// * `webhook_handler` - The handler  function for processing incoming webhook requests.
     ///
     /// # Returns
@@ -41,17 +41,17 @@ impl<C: ServerClient + 'static> VoiceflousionServer<C> {
     /// use voiceflousion::server::handlers::base_dialog_handler;
     /// use voiceflousion::server::VoiceflousionServer;
     ///
-    /// let voiceflousion_telegram_server = VoiceflousionServer::<TelegramClient>::new("telegram".to_string(), {
+    /// let voiceflousion_telegram_server = VoiceflousionServer::<TelegramClient>::new({
     ///             |update, client| Box::pin(base_dialog_handler(update, client))
     ///  });
     /// ```
-    pub fn new(base_url: String, webhook_handler: impl BotHandler<C> + 'static) -> Self {
+    pub fn new(webhook_handler: impl BotHandler<C> + 'static) -> Self {
         let handler =  Arc::new(move |update: C::ClientUpdate<'static>, client: Arc<C>| {
             webhook_handler(update, client)
         });
         Self {
             clients: None,
-            base_url,
+            extend_url: None,
             handler,
             allowed_origins: Arc::new(None)
         }
@@ -84,7 +84,7 @@ impl<C: ServerClient + 'static> VoiceflousionServer<C> {
     ///
     /// let telegram_client_manager = Arc::new(ClientsManager::from_clients(vec![telegram_client]));
     ///
-    /// let voiceflousion_telegram_server = VoiceflousionServer::<TelegramClient>::new("telegram".to_string(), {
+    /// let voiceflousion_telegram_server = VoiceflousionServer::<TelegramClient>::new({
     ///             |update, client| Box::pin(base_dialog_handler(update, client))
     ///  })
     ///  .set_clients_manager(telegram_client_manager);
@@ -110,7 +110,7 @@ impl<C: ServerClient + 'static> VoiceflousionServer<C> {
     /// use voiceflousion::integrations::telegram::TelegramClient;
     /// use voiceflousion::server::handlers::base_dialog_handler;
     ///
-    /// let voiceflousion_telegram_server = VoiceflousionServer::<TelegramClient>::new("telegram".to_string(), {
+    /// let voiceflousion_telegram_server = VoiceflousionServer::<TelegramClient>::new({
     ///             |update, client| Box::pin(base_dialog_handler(update, client))
     /// })
     /// .enable_default_origins();
@@ -154,7 +154,7 @@ impl<C: ServerClient + 'static> VoiceflousionServer<C> {
     ///     "http://another-example.com",
     /// ];
     ///
-    /// let voiceflousion_telegram_server = VoiceflousionServer::<TelegramClient>::new("telegram".to_string(), {
+    /// let voiceflousion_telegram_server = VoiceflousionServer::<TelegramClient>::new({
     ///             |update, client| Box::pin(base_dialog_handler(update, client))
     /// })
     /// .override_allow_origins(additional_origins);
@@ -166,6 +166,20 @@ impl<C: ServerClient + 'static> VoiceflousionServer<C> {
         }
         self.allowed_origins = Arc::new(Some(origins_map));
         self
+    }
+
+    pub fn set_extend_url(mut self, extend_url: &str) -> Self{
+        self.extend_url = Some(extend_url.to_string());
+        self
+    }
+
+    pub fn get_route(&self) -> String{
+        if let Some(url) = &self.extend_url{
+            format!("/{}/:id/{}", C::BASE_URL, url)
+        }
+        else{
+            format!("/{}/:id", C::BASE_URL)
+        }
     }
 
     /// Starts the server and begins listening for incoming requests.
@@ -196,7 +210,7 @@ impl<C: ServerClient + 'static> VoiceflousionServer<C> {
     ///     let telegram_client_manager = Arc::new(ClientsManager::from_clients(vec![telegram_client]));
     ///
     ///     tokio::spawn(async move {
-    ///         VoiceflousionServer::<TelegramClient>::new("telegram".to_string(), {
+    ///         VoiceflousionServer::<TelegramClient>::new({
     ///             |update, client| Box::pin(base_dialog_handler(update, client))
     ///         })
     ///         .set_clients_manager(telegram_client_manager)
@@ -206,42 +220,40 @@ impl<C: ServerClient + 'static> VoiceflousionServer<C> {
     /// }
     /// ```
     pub async fn run(self, address: impl Into<SocketAddr>) {
-        let base_url = self.base_url.clone();
-        let router = self.create_router(&base_url).await.into_make_service();
+        let route = self.get_route();
+        let router = self.create_router(route.clone()).await.into_make_service();
 
         // Start the HTTP server
         let ip = address.into();
         let listener = tokio::net::TcpListener::bind(ip).await.unwrap();
 
-        println!("Server is set on {}/{}", ip, base_url);
-        println!("Bots without authentication token are available on {}/{}/<bot_id>", ip, base_url);
-        println!("Bots with authentication token are available on {}/{}/<bot_id>/?token=<token>", ip, base_url);
+        println!("Server is set on {}{}", ip, &route);
+        println!("Bots without authentication token are available on {}{}", ip, route);
+        println!("Bots with authentication token are available on {}{}/?token=<token>", ip, route);
 
         axum::serve(listener, router).await.unwrap();
     }
 
 
-    /// Creates a new router with the specified base URL.
+    /// Creates a new router.
     ///
     /// # Parameters
     ///
-    /// * `base_url` - The base part of the server's HTTP endpoint URL.
+    /// * `extend_url` - The optional extending part of the server's HTTP endpoint URL.
     ///
     /// # Returns
     ///
     /// A `Router` instance configured with the appropriate routes and CORS settings.
-    async fn create_router(self, base_url: &String) -> Router{
+    async fn create_router(self, url: String) -> Router{
         let clients = self.clients.clone().expect("Webhook is not set");
         let handler = self.handler.clone();
         let optional_allowed_origins = self.allowed_origins.clone();
-
         Router::new()
-            .route(&format!("/{}/:id", base_url),
-                   post({
+            .route(&url, post({
                        let clients = clients.clone();
                        let optional_allowed_origins = optional_allowed_origins.clone();
                        let handler = handler.clone();
-                       move |origin_header, path, params, json: Json<Value>| {
+                       move |headers: HeaderMap, origin_header, path, params, json: Json<Value>| {
                            main_endpoint(
                                path,
                                params,

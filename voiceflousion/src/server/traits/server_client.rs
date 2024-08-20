@@ -1,9 +1,11 @@
 use axum::http::StatusCode;
 use axum::Json;
 use axum_core::response::{IntoResponse, Response};
-use serde_json::Value;
+use chrono::format::parse;
+use serde_json::{json, Value};
 use crate::core::subtypes::BotAuthToken;
 use crate::core::traits::Client;
+use crate::integrations::discord::DiscordClient;
 use crate::integrations::telegram::TelegramClient;
 use crate::integrations::whatsapp::WhatsAppClient;
 use crate::server::subtypes::QueryParams;
@@ -22,6 +24,8 @@ pub trait ServerClient: Client {
     /// used to configure the CORS settings of the server, ensuring that only requests
     /// from specified origins are permitted.
     const ORIGINS: &'static [&'static str];
+    const BASE_URL: &'static str;
+
 
     /// Authenticates incoming webhook requests.
     ///
@@ -57,7 +61,7 @@ pub trait ServerClient: Client {
 impl ServerClient for WhatsAppClient {
     /// Allowed origins for CORS specific to the WhatsApp client.
     const ORIGINS: &'static [&'static str] = &[];
-
+    const BASE_URL: &'static str = "whatsapp";
     fn authenticate_webhook(params: &mut QueryParams, value: Option<&Value>, bot_auth_token: Option<BotAuthToken>) -> Option<Response> {
         // Check if the incoming webhook update is of type "service" and reject it
         if let Some(json) = value {
@@ -142,4 +146,34 @@ impl ServerClient for TelegramClient {
         "http://91.108.4.21",
         "http://91.108.4.22"
     ];
+
+    const BASE_URL: &'static str = "telegram";
+}
+
+impl ServerClient for DiscordClient{
+    const ORIGINS: &'static [&'static str] = &[];
+    const BASE_URL: &'static str = "discord";
+    fn authenticate_webhook(params: &mut QueryParams, value: Option<&Value>, bot_auth_token: Option<BotAuthToken>) -> Option<Response> {
+        let body = if let Some(body) = value{
+            body
+        }
+        else{
+            return Some((StatusCode::UNAUTHORIZED, Json("Invalid request body".to_string())).into_response())
+        };
+        let request_type = body.get("type").and_then(|type_value| type_value.as_u64()).unwrap_or_else(|| 1u64);
+        match request_type{
+            1 => {
+                let body = Json(json!({
+                    "type": request_type,
+                    "data": {
+                        "content": "Hello world!"
+                    }
+                }));
+                println!("{:?}", &body.0);
+                Some((StatusCode::OK, body).into_response())
+            },
+            4 => None,
+            _ => Some((StatusCode::UNAUTHORIZED, Json("Invalid request type".to_string())).into_response())
+        }
+    }
 }

@@ -21,19 +21,19 @@ tokio = { version = "1.36.0", features = ["rt", "rt-multi-thread", "macros"] }
 sha2 = "0.10.8"
 chrono="0.4.38"
 async-trait = "0.1.80"
-axum = "0.7.5"
-axum-core = "0.4.3"
+axum = { version = "0.7.5", optional = true }
+axum-core = { version = "0.4.3", optional = true }
 rand = "0.8.5"
-hex = "0.4.3"
-ring = "0.17.8"
+hex = { version = "0.4.3", optional = true }
+ring = { version = "0.17.8", optional = true }
 
 [features]
 default = []
 telegram = []
 whatsapp = []
-discord = []
-all-integrations = ["telegram", "whatsapp", "discord"]
-server = []
+discord_unimplemented = ["hex", "ring"]
+all-integrations = ["telegram", "whatsapp"]
+server = ["axum", "axum-core"]
 advanced = []
 
 [package.metadata.docs.rs]

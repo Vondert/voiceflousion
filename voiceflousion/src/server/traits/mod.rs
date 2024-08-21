@@ -1,6 +1,10 @@
 mod bot_handler;
 mod server_client;
-#[cfg(not(feature = "advanced"))]
+#[cfg(all(not(feature = "advanced"), any(
+    feature = "telegram",
+    feature = "whatsapp",
+    feature = "discord_unimplemented"
+)))]
 mod utils;
 
 #[cfg(feature = "advanced")]

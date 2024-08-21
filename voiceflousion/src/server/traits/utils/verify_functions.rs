@@ -1,9 +1,10 @@
-use ring::signature::{UnparsedPublicKey, ED25519};
 use serde_json::Value;
 use crate::errors::{VoiceflousionError, VoiceflousionResult};
+#[cfg(feature = "discord_unimplemented")]
+use ring::signature::{UnparsedPublicKey, ED25519};
 
-#[cfg(feature = "discord")]
-pub fn discord_verify_public_key(public_key: &String, signature: &str, timestamp: &str, body: &Value) -> VoiceflousionResult<()>{
+#[cfg(feature = "discord_unimplemented")]
+pub fn discord_public_key_verify(public_key: &String, signature: &str, timestamp: &str, body: &Value) -> VoiceflousionResult<()>{
     let signature_bytes = hex::decode(signature).map_err(|_| {
         VoiceflousionError::ClientRequestInvalidBodyError(
             "Discord signature".to_string(),

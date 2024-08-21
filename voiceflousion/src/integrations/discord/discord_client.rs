@@ -66,6 +66,6 @@ impl Client for DiscordClient{
     }
 
     async fn handle_carousel_switch(&self, locked_session: &LockedSession<'_>, interaction_time: i64, switch_direction: bool) -> VoiceflousionResult<Vec<<Self::ClientSender<'_> as Sender>::SenderResponder>> {
-        todo!()
+        unimplemented!()
     }
 }

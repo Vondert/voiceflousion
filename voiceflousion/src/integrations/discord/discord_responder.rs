@@ -24,6 +24,6 @@ impl Deref for DiscordResponder {
 #[async_trait]
 impl Responder for DiscordResponder{
     async fn from_response(response: Response, content: VoiceflowBlock) -> VoiceflousionResult<Self> {
-        todo!()
+        unimplemented!()
     }
 }

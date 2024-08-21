@@ -52,22 +52,22 @@ impl Sender for DiscordSender{
     type SenderResponder = DiscordResponder;
 
     async fn send_text(&self, client_id: &String, text: VoiceflowText, chat_id: &String) -> VoiceflousionResult<Self::SenderResponder> {
-        todo!()
+        unimplemented!()
     }
 
     async fn send_image(&self, client_id: &String, image: VoiceflowImage, chat_id: &String) -> VoiceflousionResult<Self::SenderResponder> {
-        todo!()
+        unimplemented!()
     }
 
     async fn send_buttons(&self, client_id: &String, buttons: VoiceflowButtons, chat_id: &String) -> VoiceflousionResult<Self::SenderResponder> {
-        todo!()
+        unimplemented!()
     }
 
     async fn send_card(&self, client_id: &String, card: VoiceflowCard, chat_id: &String) -> VoiceflousionResult<Self::SenderResponder> {
-        todo!()
+        unimplemented!()
     }
 
     async fn send_carousel(&self, client_id: &String, carousel: VoiceflowCarousel, chat_id: &String) -> VoiceflousionResult<Self::SenderResponder> {
-        todo!()
+        unimplemented!()
     }
 }

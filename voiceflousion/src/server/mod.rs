@@ -1,7 +1,7 @@
 mod voiceflousion_server;
 pub mod handlers;
 mod endpoints;
-mod traits;
+pub mod traits;
 
 #[cfg(not(feature = "advanced"))]
 mod subtypes;

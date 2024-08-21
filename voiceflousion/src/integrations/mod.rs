@@ -2,7 +2,7 @@
 pub mod telegram;
 #[cfg(feature = "whatsapp")]
 pub mod whatsapp;
-#[cfg(feature = "discord")]
+#[cfg(feature = "discord_unimplemented")]
 pub mod discord;
 
 #[cfg(not(feature = "advanced"))]

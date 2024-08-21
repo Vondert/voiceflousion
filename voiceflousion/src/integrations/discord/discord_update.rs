@@ -19,6 +19,6 @@ impl Deref for DiscordUpdate {
 
 impl Update for DiscordUpdate{
     fn from_request_body(body: Value) -> VoiceflousionResult<Self> {
-        todo!()
+        unimplemented!()
     }
 }

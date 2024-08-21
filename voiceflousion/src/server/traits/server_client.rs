@@ -11,10 +11,10 @@ use crate::server::subtypes::{QueryParams, VoiceflousionHeadersWrapper};
 use crate::integrations::telegram::TelegramClient;
 #[cfg(feature = "whatsapp")]
 use crate::integrations::whatsapp::WhatsAppClient;
-#[cfg(feature = "discord")]
+#[cfg(feature = "discord_unimplemented")]
 use crate::{
     integrations::discord::DiscordClient,
-    server::traits::utils::discord_verify_public_key
+    server::traits::utils::discord_public_key_verify
 };
 
 /// Trait that extends the `Client` trait to add server-specific functionality.
@@ -159,7 +159,7 @@ impl ServerClient for TelegramClient {
     const BASE_URL: &'static str = "telegram";
 }
 
-#[cfg(feature = "discord")]
+#[cfg(feature = "discord_unimplemented")]
 impl ServerClient for DiscordClient{
     const ORIGINS: &'static [&'static str] = &[];
     const BASE_URL: &'static str = "discord";
@@ -175,7 +175,7 @@ impl ServerClient for DiscordClient{
         }
 
         let public_key = self.get_public_key();
-        if let Err(error) = discord_verify_public_key(public_key, signature, timestamp, body){
+        if let Err(error) = discord_public_key_verify(public_key, signature, timestamp, body){
             println!("Discord authentication error: {}", error);
             return Some((StatusCode::UNAUTHORIZED, Json("Key verification failed".to_string())).into_response())
         }

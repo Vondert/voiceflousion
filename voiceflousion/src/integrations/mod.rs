@@ -2,6 +2,10 @@
 pub mod telegram;
 #[cfg(feature = "whatsapp")]
 pub mod whatsapp;
+
+#[cfg(feature = "instagram")]
+pub mod instagram;
+
 #[cfg(feature = "discord_unimplemented")]
 pub mod discord;
 

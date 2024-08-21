@@ -31,8 +31,9 @@ ring = { version = "0.17.8", optional = true }
 default = []
 telegram = []
 whatsapp = []
+instagram = []
 discord_unimplemented = ["hex", "ring"]
-all-integrations = ["telegram", "whatsapp"]
+all-integrations = ["telegram", "whatsapp", "instagram"]
 server = ["axum", "axum-core"]
 advanced = []
 

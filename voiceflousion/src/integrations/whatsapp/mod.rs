@@ -2,7 +2,16 @@ mod whatsapp_responder;
 mod whatsapp_sender;
 mod whatsapp_update;
 mod whatsapp_client;
+
+pub use self::whatsapp_update::WhatsAppUpdate;
+pub use self::whatsapp_client::WhatsAppClient;
+pub use self::whatsapp_responder::WhatsAppResponder;
+
+#[cfg(not(feature = "advanced"))]
 mod utils;
+
+#[cfg(feature = "advanced")]
+pub mod utils;
 
 #[cfg(feature = "advanced")]
 pub use self::{
@@ -10,10 +19,7 @@ pub use self::{
 };
 
 #[cfg(not(feature = "advanced"))]
-pub(super) use self::{
+use self::{
     whatsapp_sender::WhatsAppSender
 };
 
-pub use whatsapp_responder::WhatsAppResponder;
-pub use whatsapp_client::WhatsAppClient;
-pub use whatsapp_update::WhatsAppUpdate;

@@ -10,6 +10,8 @@ use crate::server::subtypes::{QueryParams, VoiceflousionHeadersWrapper};
 use crate::integrations::telegram::TelegramClient;
 #[cfg(feature = "whatsapp")]
 use crate::integrations::whatsapp::WhatsAppClient;
+#[cfg(feature = "instagram")]
+use crate::integrations::instagram::InstagramClient;
 #[cfg(feature = "discord_unimplemented")]
 use crate::{
     integrations::discord::DiscordClient,
@@ -170,6 +172,12 @@ impl ServerClient for TelegramClient {
 
     /// Base URL path for the Telegram client.
     const BASE_URL: &'static str = "telegram";
+}
+
+#[cfg(feature = "instagram")]
+impl ServerClient for InstagramClient{
+    const ORIGINS: &'static [&'static str] = &[];
+    const BASE_URL: &'static str = "instagram";
 }
 
 /// Implementation of `ServerClient` for `DiscordClient`.

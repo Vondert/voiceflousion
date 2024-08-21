@@ -6,7 +6,7 @@ use crate::integrations::utils::ButtonCallbackDataBuilder;
 /// `TelegramSerializer` provides methods for serializing various types of messages
 /// into JSON format compatible with the Telegram API. These include text, image,
 /// button, and card messages, as well as specialized carousel messages.
-pub(crate) struct TelegramSerializer;
+pub struct TelegramSerializer;
 
 impl TelegramSerializer {
     /// Builds the JSON body for sending a text message via the Telegram API.

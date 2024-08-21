@@ -34,19 +34,7 @@ impl TelegramUpdate {
     /// # Returns
     ///
     /// A new instance of `TelegramUpdate`.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// use voiceflousion::core::subtypes::InteractionType;
-    /// use voiceflousion::core::traits::Update;
-    /// use voiceflousion::integrations::telegram::TelegramUpdate;
-    ///
-    /// let button_index = 0usize;
-    /// let interaction_type = InteractionType::new("message".to_string(), Some(button_index), None);
-    /// let update = TelegramUpdate::new("chat_id".to_string(), "message_id".to_string(), 1627554661, interaction_type, "update_id".to_string(), Some(true));
-    /// ```
-    pub fn new(chat_id: String, message_id: String, interaction_time: i64, interaction_type: InteractionType, update_id: String, carousel_direction: Option<bool>) -> Self {
+    fn new(chat_id: String, message_id: String, interaction_time: i64, interaction_type: InteractionType, update_id: String, carousel_direction: Option<bool>) -> Self {
         Self {
             update_base: UpdateBase::new(chat_id, interaction_time, interaction_type, update_id),
             message_id,
@@ -59,19 +47,6 @@ impl TelegramUpdate {
     /// # Returns
     ///
     /// An optional `usize` representing the carousel card index.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// use voiceflousion::core::subtypes::InteractionType;
-    /// use voiceflousion::core::traits::Update;
-    /// use voiceflousion::integrations::telegram::TelegramUpdate;
-    ///
-    /// let button_index = 0usize;
-    /// let interaction_type = InteractionType::new("message".to_string(), Some(button_index), None);
-    /// let update = TelegramUpdate::new("chat_id".to_string(), "message_id".to_string(), 1627554661, interaction_type, "update_id".to_string(), Some(true));
-    /// let index = update.carousel_card_index();
-    /// ```
     pub fn carousel_card_index(&self) -> Option<bool> {
         self.carousel_direction
     }
@@ -81,19 +56,6 @@ impl TelegramUpdate {
     /// # Returns
     ///
     /// A reference to the message ID string.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// use voiceflousion::core::subtypes::InteractionType;
-    /// use voiceflousion::core::traits::Update;
-    /// use voiceflousion::integrations::telegram::TelegramUpdate;
-    ///
-    /// let button_index = 0usize;
-    /// let interaction_type = InteractionType::new("message".to_string(), Some(button_index), None);
-    /// let update = TelegramUpdate::new("chat_id".to_string(), "message_id".to_string(), 1627554661, interaction_type, "update_id".to_string(), Some(true));
-    /// let message_id = update.message_id();
-    /// ```
     pub fn message_id(&self) -> &String {
         &self.message_id
     }

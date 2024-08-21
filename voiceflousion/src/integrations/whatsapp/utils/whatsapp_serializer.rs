@@ -7,7 +7,7 @@ use crate::integrations::utils::ButtonCallbackDataBuilder;
 ///
 /// `WhatsAppSerializer` provides methods to create JSON payloads for different types of WhatsApp messages,
 /// including text, image, and interactive (buttons and carousel) messages.
-pub(crate) struct WhatsAppSerializer {}
+pub struct WhatsAppSerializer {}
 
 impl WhatsAppSerializer {
 

@@ -39,7 +39,7 @@ impl WhatsAppUpdate{
     /// # Returns
     ///
     /// A new instance of `WhatsAppUpdate`.
-    pub fn new(chat_id: String, interaction_time: i64, interaction_type: InteractionType, update_id: String) -> Self {
+    fn new(chat_id: String, interaction_time: i64, interaction_type: InteractionType, update_id: String) -> Self {
         Self {
             update_base: UpdateBase::new(chat_id, interaction_time, interaction_type, update_id)
         }

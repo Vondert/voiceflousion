@@ -1,2 +1,2 @@
-mod verify_functions;
-pub use self::verify_functions::*;
+mod verification_functions;
+pub use self::verification_functions::*;

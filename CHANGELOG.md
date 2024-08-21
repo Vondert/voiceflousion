@@ -1,6 +1,25 @@
 # Changelog
 
-## [0.3.0] - 2024-08-19
+## [0.3.1] - 2024-08-21 - Enhanced Feature Set
+### Added
+- `BASE_URL` in `ServerClient` trait instead of `base_url` field in `VoiceflousionServer`.
+- `extend_url` field in `VoiceflousionServer` for customizing endpoints url.
+- `VoiceflousionHeadersWrapper` and its methods for handling incoming requests headers.
+- `headers` parameter to `ServerClient`'s trait `authenticate_server_client_request()` method.
+- `optional` flags to optional crates.
+- Bindings with crates for some features.
+- `utils` module in `server/taris` with `verification_functions.rs` for functions that used in `authenticate_server_client_request()` method implementations.
+
+### Changed
+- Functions in `endpoints` module to handle `VoiceflousionHeadersWrapper`.
+
+### Removed
+- `axum-extra` crate.
+
+### Fixed
+- Compilation for all combinations of features.
+
+## [0.3.0] - 2024-08-19 - WhatsApp Integration
 ### Added
 - `whatsapp` module to `integrations` to provide WhatsApp integration.
 - `traits` module in `server`.
@@ -37,11 +56,11 @@
 - `Image` variant from `VoiceflowButtonsOption` enum.
 - `Deref` and `DerefMut` from `VoiceflowMessage`.
 
-## [0.2.0] - 2024-08-04
+## [0.2.0] - 2024-08-04 - Server
 ### Added
 - `ClientManager` struct for managing large amounts of clients.
 - `server` module.
-- `VoiceflowServer` (web server for bot webhooks) for setting up bots.
+- `VoiceflousionServer` (web server for bot webhooks) for setting up bots.
 - Status and methods for working with it to `ClientBase` struct.
 - `Debug` trait bound for `Responder` and `Update` traits.
 - `handlers` module to `server` module.
@@ -67,7 +86,7 @@
 - `SessionManager` creation.
 - Critical issue in `is_valid_session()` method from `SessionMap`.
 
-## [0.1.2] - 2024-07-26
+## [0.1.2] - 2024-07-26 - Refactoring 'core' traits
 ### Added
 - `VoiceflousionResult` type for `Result` aliasing.
 - `base_structs` module to `core`.
@@ -78,11 +97,11 @@
 - Refactored and improved `Sender` trait. Created `SenderBase` struct.
 - Refactored and improved `Responder` trait. Created `ResponderBase` struct.
 
-## [0.1.1] - 2024-07-24
+## [0.1.1] - 2024-07-24 - Launch state for bots
 ### Added
 - `launch_state` for clients.
 
-## [0.1.0] - 2024-07-23
+## [0.1.0] - 2024-07-23 - Telegram Integration
 ### Added
 - `core` module.
 - `voiceflow` module to `core` for handling Voiceflow integration.

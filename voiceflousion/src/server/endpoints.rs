@@ -3,13 +3,11 @@ use std::sync::Arc;
 use axum::extract::{Path, Query};
 use axum::{Extension, Json};
 use axum::http::StatusCode;
-use axum_extra::TypedHeader;
 use axum_core::response::IntoResponse;
-use axum_extra::headers::Origin;
 use serde_json::Value;
 use crate::core::base_structs::ClientsManager;
 use crate::core::traits::Update;
-use crate::server::subtypes::{AuthResult, QueryParams};
+use crate::server::subtypes::{AuthResult, QueryParams, VoiceflousionHeadersWrapper};
 use crate::server::traits::{BotHandler, ServerClient};
 
 /// Main endpoint function for handling incoming webhook requests.
@@ -19,13 +17,13 @@ use crate::server::traits::{BotHandler, ServerClient};
 ///
 /// # Parameters
 ///
-/// * `id` - The ID of the bot client.
-/// * `params` - Query parameters containing.
+/// * `id` - The ID of the bot client extracted from the request path.
+/// * `params` - Query parameters containing additional request data and the bot authentication token.
 /// * `body` - The JSON body of the incoming request.
+/// * `headers` - Wrapper for the HTTP headers in the request.
 /// * `clients` - The clients manager containing the bot clients.
-/// * `optional_allowed_origins` - Optional allowed origins for allowed origins settings.
+/// * `optional_allowed_origins` - Optional allowed origins for CORS settings.
 /// * `handler` - The handler function for processing the update.
-/// * `optional_origin_header` - Optional origin header from the request.
 ///
 /// # Returns
 ///
@@ -34,14 +32,13 @@ pub(super) async fn main_endpoint<C: ServerClient>(
     id: Path<String>,
     mut params: Query<QueryParams>,
     Json(body): Json<Value>,
+    headers: VoiceflousionHeadersWrapper,
     Extension(clients): Extension<Arc<ClientsManager<C>>>,
     Extension(optional_allowed_origins): Extension<Arc<Option<HashMap<&'static str, ()>>>>,
-    Extension(handler): Extension<Arc<dyn BotHandler<C>>>,
-    optional_origin_header: Option<TypedHeader<Origin>>
+    Extension(handler): Extension<Arc<dyn BotHandler<C>>>
 ) -> impl IntoResponse {
-
     // Authenticate the request, including checking the origin and token.
-    let client = match authenticate_request::<C>(id, &mut params, Some(&body), clients.clone(), optional_allowed_origins.clone(), optional_origin_header).await{
+    let client = match authenticate_request::<C>(id, &mut params, Some(&body), headers, clients.clone(), optional_allowed_origins.clone()).await{
         AuthResult::Client(client) => client,
         AuthResult::Response(response) => return response
     };
@@ -75,11 +72,11 @@ pub(super) async fn main_endpoint<C: ServerClient>(
 ///
 /// # Parameters
 ///
-/// * `id` - The ID of the bot client.
-/// * `params` - Query parameters containing.
+/// * `id` - The ID of the bot client extracted from the request path.
+/// * `params` - Query parameters containing additional request data and the bot authentication token.
+/// * `headers` - Wrapper for the HTTP headers in the request.
 /// * `clients` - The clients manager containing the bot clients.
 /// * `optional_allowed_origins` - Optional allowed origins for CORS settings.
-/// * `optional_origin_header` - Optional origin header from the request.
 ///
 /// # Returns
 ///
@@ -87,11 +84,11 @@ pub(super) async fn main_endpoint<C: ServerClient>(
 pub(super) async fn get_auth_endpoint<C: ServerClient>(
     id: Path<String>,
     mut params: Query<QueryParams>,
+    headers: VoiceflousionHeadersWrapper,
     Extension(clients): Extension<Arc<ClientsManager<C>>>,
-    Extension(optional_allowed_origins): Extension< Arc<Option<HashMap<&'static str, ()>>>>,
-    optional_origin_header: Option<TypedHeader<Origin>>
+    Extension(optional_allowed_origins): Extension< Arc<Option<HashMap<&'static str, ()>>>>
 ) -> impl IntoResponse{
-    match authenticate_request::<C>(id, &mut params, None, clients.clone(), optional_allowed_origins.clone(), optional_origin_header).await{
+    match authenticate_request::<C>(id, &mut params, None, headers, clients.clone(), optional_allowed_origins.clone()).await{
         AuthResult::Client(_client) => {
             (StatusCode::OK, Json("Endpoint authentication with GET response not passed".to_string())).into_response()
         },
@@ -131,9 +128,9 @@ fn deserialize_update<U: Update>(body: Value) -> Result<U, StatusCode> {
 /// * `id` - The ID of the bot client extracted from the request path.
 /// * `params` - The query parameters extracted from the request, including the bot authentication token.
 /// * `body` - The optional JSON body of the request.
+/// * `headers` - Wrapper for the HTTP headers in the request.
 /// * `clients` - The clients manager containing the bot clients.
 /// * `optional_allowed_origins` - Optional allowed origins for CORS settings.
-/// * `optional_origin_header` - Optional origin header from the request.
 ///
 /// # Returns
 ///
@@ -142,15 +139,13 @@ async fn authenticate_request<C: ServerClient>(
     Path(id): Path<String>,
     Query(params): &mut Query<QueryParams>,
     body: Option<&Value>,
+    headers: VoiceflousionHeadersWrapper,
     clients: Arc<ClientsManager<C>>,
-    optional_allowed_origins: Arc<Option<HashMap<&'static str, ()>>>,
-    optional_origin_header: Option<TypedHeader<Origin>>
+    optional_allowed_origins: Arc<Option<HashMap<&'static str, ()>>>
 ) -> AuthResult<C> {
-
     // Check the Origin header if allowed origins are defined.
     if let Some(allowed_origins) = &*optional_allowed_origins {
-        if let Some(origin_header) = optional_origin_header{
-            let origin = origin_header.hostname();
+        if let Some(origin) = headers.get_header_str("Origin"){
             if !allowed_origins.contains_key(origin) {
                 println!("Unauthorized origin: {}", origin);
                 return AuthResult::Response((StatusCode::OK, Json("Unauthorized origin".to_string())).into_response());
@@ -185,14 +180,14 @@ async fn authenticate_request<C: ServerClient>(
             return AuthResult::Response((StatusCode::OK, Json("Unauthorized access".to_string())).into_response());
         }
 
-        // Perform additional webhook authentication if required
-        if let Some(response) = C::authenticate_webhook(params, body, Some(bot_auth_token)){
+        // Perform server client request authentication if required
+        if let Some(response) = client.authenticate_server_client_request(headers, params, body, Some(bot_auth_token)){
             return AuthResult::Response(response);
         };
     }
     else{
         // Perform authentication without a token
-        if let Some(response) = C::authenticate_webhook(params, body, None){
+        if let Some(response) = client.authenticate_server_client_request(headers, params, body, None){
             return AuthResult::Response(response);
         };
     };

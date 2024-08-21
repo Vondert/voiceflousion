@@ -94,7 +94,7 @@ serde = { version = "1.0.193", features = ["derive"] }
 dotenv = "0.15.0"
 serde_json = "1.0.114"
 tokio = { version = "1.36.0", features = ["rt", "rt-multi-thread", "macros"] }
-voiceflousion = { version = "0.3.0", features = ["all-integrations", "server"] }
+voiceflousion = { version = "0.3.1", features = ["all-integrations", "server"] }
 ```
 
 ### Set Up the Main File
@@ -162,12 +162,12 @@ let whatsapp_client_manager = Arc::new(ClientsManager::from_clients(vec![whatsap
 use voiceflousion::server::handlers::base_dialog_handler;
 use voiceflousion::server::VoiceflousionServer;
 
-let telegram_voiceflousion_server = VoiceflousionServer::<TelegramClient>::new("telegram".to_string(), {
+let telegram_voiceflousion_server = VoiceflousionServer::<TelegramClient>::new({
         |update, client| Box::pin(base_dialog_handler(update, client))
     })
     .set_clients_manager(telegram_client_manager);
 
-let whatsapp_voiceflousion_server = VoiceflousionServer::<WhatsAppClient>::new("whatsapp".to_string(), {
+let whatsapp_voiceflousion_server = VoiceflousionServer::<WhatsAppClient>::new({
         |update, client| Box::pin(base_dialog_handler(update, client))
     })
     .set_clients_manager(whatsapp_client_manager);
@@ -190,12 +190,12 @@ tokio::join!(telegram_voiceflousion_server_closure, whatsapp_voiceflousion_serve
 **Receive webhook address:** Copy given urls from console and set webhook with Telegram API and in WhatsApp application on Meta developers platform.
 
 ```plaintext
-Server is set on 127.0.0.1:8080/telegram
-Server is set on 127.0.0.1:8081/whatsapp
-Bots without authentication token are available on 127.0.0.1:8080/telegram/<bot_id>
-Bots with authentication token are available on 127.0.0.1:8080/telegram/<bot_id>/?token=<token>
-Bots without authentication token are available on 127.0.0.1:8081/whatsapp/<bot_id>
-Bots with authentication token are available on 127.0.0.1:8081/whatsapp/<bot_id>/?token=<token>
+Server is set on 127.0.0.1:8080
+Bots without authentication token are available on 127.0.0.1:8080/telegram/:id
+Bots with authentication token are available on 127.0.0.1:8080/telegram/:id/?token=<token>
+Server is set on 127.0.0.1:8081
+Bots without authentication token are available on 127.0.0.1:8081/whatsapp/:id
+Bots with authentication token are available on 127.0.0.1:8081/whatsapp/:id/?token=<token>
 ```
 
 ## Dependencies

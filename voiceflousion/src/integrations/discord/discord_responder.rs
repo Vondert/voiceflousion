@@ -1,5 +1,6 @@
 use std::fmt::Debug;
 use std::ops::Deref;
+use async_trait::async_trait;
 use reqwest::Response;
 use crate::core::base_structs::ResponderBase;
 use crate::core::traits::Responder;
@@ -12,15 +13,17 @@ pub struct DiscordResponder{
     responder_base: ResponderBase
 }
 
-impl Deref<Target=ResponderBase> for DiscordResponder {
+impl Deref for DiscordResponder {
     type Target = ResponderBase;
 
     fn deref(&self) -> &Self::Target {
         &self.responder_base
     }
 }
+
+#[async_trait]
 impl Responder for DiscordResponder{
     async fn from_response(response: Response, content: VoiceflowBlock) -> VoiceflousionResult<Self> {
-        todo!()
+        unimplemented!()
     }
 }

@@ -2,16 +2,18 @@ use std::collections::HashMap;
 use std::net::SocketAddr;
 use std::sync::Arc;
 use axum::{Extension, Json, Router};
+use axum::extract::{Path, Query};
 use axum::routing::post;
 use serde_json::Value;
 use crate::core::base_structs::ClientsManager;
 use crate::server::endpoints::{get_auth_endpoint, main_endpoint};
-use crate::server::subtypes::VoiceflousionHeadersWrapper;
+use crate::server::subtypes::{QueryParams, VoiceflousionHeadersWrapper};
 use crate::server::traits::{BotHandler, ServerClient};
 
 /// VoiceflousionServer is responsible for handling HTTP requests to bots and routing them to the appropriate handlers.
 ///
 /// This struct contains bots clients manager, optional part of the server's HTTP endpoint URL, and the handler function for processing incoming webhook requests.
+/// It also handles CORS settings to allow or restrict access to specific origins.
 pub struct VoiceflousionServer<C: ServerClient + 'static> {
     /// Manager for handling multiple bots clients.
     clients: Option<Arc<ClientsManager<C >>>,
@@ -168,11 +170,54 @@ impl<C: ServerClient + 'static> VoiceflousionServer<C> {
         self
     }
 
-    pub fn set_extend_url(mut self, extend_url: &str) -> Self{
+    /// Sets an additional extension for the server's URL.
+    ///
+    /// # Parameters
+    ///
+    /// * `extend_url` - The additional string to extend the base URL.
+    ///
+    /// # Returns
+    ///
+    /// The updated `VoiceflousionServer` instance.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use voiceflousion::server::VoiceflousionServer;
+    /// use voiceflousion::integrations::telegram::TelegramClient;
+    /// use voiceflousion::server::handlers::base_dialog_handler;
+    ///
+    /// let voiceflousion_telegram_server = VoiceflousionServer::<TelegramClient>::new({
+    ///             |update, client| Box::pin(base_dialog_handler(update, client))
+    /// })
+    /// .set_extend_url("extra");
+    /// ```
+    pub fn set_extend_url(mut self, extend_url: &str) -> Self {
         self.extend_url = Some(extend_url.to_string());
         self
     }
 
+    /// Constructs the route path based on the base URL and optional extension.
+    ///
+    /// # Returns
+    ///
+    /// A `String` representing the route path.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use voiceflousion::server::VoiceflousionServer;
+    /// use voiceflousion::integrations::telegram::TelegramClient;
+    /// use voiceflousion::server::handlers::base_dialog_handler;
+    ///
+    /// let voiceflousion_telegram_server = VoiceflousionServer::<TelegramClient>::new({
+    ///             |update, client| Box::pin(base_dialog_handler(update, client))
+    /// })
+    /// .set_extend_url("extra");
+    ///
+    /// let route = voiceflousion_telegram_server.get_route();
+    /// assert_eq!(route, "/telegram/:id/extra");
+    /// ```
     pub fn get_route(&self) -> String{
         if let Some(url) = &self.extend_url{
             format!("/{}/:id/{}", C::BASE_URL, url)
@@ -235,11 +280,11 @@ impl<C: ServerClient + 'static> VoiceflousionServer<C> {
     }
 
 
-    /// Creates a new router.
+    /// Creates a new router for handling HTTP requests.
     ///
     /// # Parameters
     ///
-    /// * `extend_url` - The optional extending part of the server's HTTP endpoint URL.
+    /// * `url` - The constructed URL route for the server.
     ///
     /// # Returns
     ///
@@ -253,7 +298,7 @@ impl<C: ServerClient + 'static> VoiceflousionServer<C> {
                        let clients = clients.clone();
                        let optional_allowed_origins = optional_allowed_origins.clone();
                        let handler = handler.clone();
-                       move |headers: VoiceflousionHeadersWrapper, path, params, json: Json<Value>| {
+                       move |headers: VoiceflousionHeadersWrapper,  path: Path<String>, params: Query<QueryParams>, json: Json<Value>| {
                            main_endpoint(
                                path,
                                params,
@@ -268,7 +313,7 @@ impl<C: ServerClient + 'static> VoiceflousionServer<C> {
                    .get({
                        let clients = clients.clone();
                        let optional_allowed_origins = optional_allowed_origins.clone();
-                       move |headers: VoiceflousionHeadersWrapper, path, params| {
+                       move |headers: VoiceflousionHeadersWrapper, path: Path<String>, params: Query<QueryParams>| {
                             get_auth_endpoint(
                                 path,
                                 params,

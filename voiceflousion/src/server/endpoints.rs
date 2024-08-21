@@ -17,13 +17,13 @@ use crate::server::traits::{BotHandler, ServerClient};
 ///
 /// # Parameters
 ///
-/// * `id` - The ID of the bot client.
-/// * `params` - Query parameters containing.
+/// * `id` - The ID of the bot client extracted from the request path.
+/// * `params` - Query parameters containing additional request data and the bot authentication token.
 /// * `body` - The JSON body of the incoming request.
+/// * `headers` - Wrapper for the HTTP headers in the request.
 /// * `clients` - The clients manager containing the bot clients.
-/// * `optional_allowed_origins` - Optional allowed origins for allowed origins settings.
+/// * `optional_allowed_origins` - Optional allowed origins for CORS settings.
 /// * `handler` - The handler function for processing the update.
-/// * `optional_origin_header` - Optional origin header from the request.
 ///
 /// # Returns
 ///
@@ -72,11 +72,11 @@ pub(super) async fn main_endpoint<C: ServerClient>(
 ///
 /// # Parameters
 ///
-/// * `id` - The ID of the bot client.
-/// * `params` - Query parameters containing.
+/// * `id` - The ID of the bot client extracted from the request path.
+/// * `params` - Query parameters containing additional request data and the bot authentication token.
+/// * `headers` - Wrapper for the HTTP headers in the request.
 /// * `clients` - The clients manager containing the bot clients.
 /// * `optional_allowed_origins` - Optional allowed origins for CORS settings.
-/// * `optional_origin_header` - Optional origin header from the request.
 ///
 /// # Returns
 ///
@@ -128,9 +128,9 @@ fn deserialize_update<U: Update>(body: Value) -> Result<U, StatusCode> {
 /// * `id` - The ID of the bot client extracted from the request path.
 /// * `params` - The query parameters extracted from the request, including the bot authentication token.
 /// * `body` - The optional JSON body of the request.
+/// * `headers` - Wrapper for the HTTP headers in the request.
 /// * `clients` - The clients manager containing the bot clients.
 /// * `optional_allowed_origins` - Optional allowed origins for CORS settings.
-/// * `optional_origin_header` - Optional origin header from the request.
 ///
 /// # Returns
 ///

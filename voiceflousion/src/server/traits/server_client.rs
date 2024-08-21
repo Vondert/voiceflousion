@@ -6,7 +6,6 @@ use crate::core::subtypes::BotAuthToken;
 use crate::core::traits::Client;
 use crate::server::subtypes::{QueryParams, VoiceflousionHeadersWrapper};
 
-
 #[cfg(feature = "telegram")]
 use crate::integrations::telegram::TelegramClient;
 #[cfg(feature = "whatsapp")]
@@ -20,8 +19,8 @@ use crate::{
 /// Trait that extends the `Client` trait to add server-specific functionality.
 ///
 /// `ServerClient` is designed to be implemented by clients that interact with the server
-/// and require additional logic for webhook authentication. This trait provides a default
-/// method for authenticating webhooks, which can be overridden by specific client implementations.
+/// and require additional logic for server client requests authentication. This trait provides a default
+/// method for authenticating server client requests, which can be overridden by specific client implementations.
 pub trait ServerClient: Client {
 
     /// A list of allowed origins for CORS.
@@ -31,17 +30,21 @@ pub trait ServerClient: Client {
     /// used to configure the CORS settings of the server, ensuring that only requests
     /// from specified origins are permitted.
     const ORIGINS: &'static [&'static str];
+
+    /// The base URL path for the server client.
+    ///
+    /// This constant defines the base URL path that is used by the client to handle incoming requests.
     const BASE_URL: &'static str;
 
-
-    /// Authenticates incoming requests to server client.
+    /// Authenticates incoming requests to the server client.
     ///
-    /// This method is used to validate webhook requests by examining the query parameters,
-    /// the optional JSON body, and an optional bot authentication token. By default, it
-    /// returns `None`, meaning no authentication is performed.
+    /// This method is used to validate server client requests by examining the HTTP headers,
+    /// query parameters, the optional JSON body, and an optional bot authentication token.
+    /// By default, it returns `None`, meaning no authentication is performed.
     ///
     /// # Parameters
     ///
+    /// * `_headers` - The HTTP headers extracted from the request.
     /// * `_params` - The query parameters extracted from the request.
     /// * `_value` - The optional JSON body of the request.
     /// * `_bot_auth_token` - The optional bot authentication token.
@@ -70,9 +73,18 @@ pub trait ServerClient: Client {
 impl ServerClient for WhatsAppClient {
     /// Allowed origins for CORS specific to the WhatsApp client.
     const ORIGINS: &'static [&'static str] = &[];
+
+    /// Base URL path for the WhatsApp client.
     const BASE_URL: &'static str = "whatsapp";
-    fn authenticate_server_client_request(&self, _headers: VoiceflousionHeadersWrapper, params: &mut QueryParams, value: Option<&Value>, bot_auth_token: Option<BotAuthToken>) -> Option<Response> {
-        // Check if the incoming webhook update is of type "service" and reject it
+
+    fn authenticate_server_client_request(
+        &self,
+        _headers: VoiceflousionHeadersWrapper,
+        params: &mut QueryParams,
+        value: Option<&Value>,
+        bot_auth_token: Option<BotAuthToken>
+    ) -> Option<Response> {
+        // Check if the incoming request is of type "service" and reject it
         if let Some(json) = value {
             let origin_type = json["entry"][0]["changes"][0]["value"]["statuses"][0]["conversation"]["origin"]["type"]
                 .as_str();
@@ -84,7 +96,7 @@ impl ServerClient for WhatsAppClient {
             return None;
         }
 
-        // Handle the webhook verification challenge for WhatsApp
+        // Handle the request verification for WhatsApp
         if let Some(challenge) = params.remove("hub.challenge") {
             if let Some(bot_token) = bot_auth_token {
                 if let Some(verify_token) = params.remove("hub.verify_token") {
@@ -156,33 +168,55 @@ impl ServerClient for TelegramClient {
         "http://91.108.4.22"
     ];
 
+    /// Base URL path for the Telegram client.
     const BASE_URL: &'static str = "telegram";
 }
 
+/// Implementation of `ServerClient` for `DiscordClient`.
+///
+/// This implementation overrides the `authenticate_server_client_request` method to provide specific
+/// authentication logic for Discord server client requests, including signature verification.
 #[cfg(feature = "discord_unimplemented")]
-impl ServerClient for DiscordClient{
+impl ServerClient for DiscordClient {
+    /// Allowed origins for CORS specific to the Discord client.
     const ORIGINS: &'static [&'static str] = &[];
+
+    /// Base URL path for the Discord client.
     const BASE_URL: &'static str = "discord";
-    fn authenticate_server_client_request(&self, headers: VoiceflousionHeadersWrapper, _params: &mut QueryParams, value: Option<&Value>, _bot_auth_token: Option<BotAuthToken>) -> Option<Response> {
-        let body = match value{
+
+    fn authenticate_server_client_request(
+        &self,
+        headers: VoiceflousionHeadersWrapper,
+        _params: &mut QueryParams,
+        value: Option<&Value>,
+        _bot_auth_token: Option<BotAuthToken>
+    ) -> Option<Response> {
+        // Check if the request body exists and extract it
+        let body = match value {
             Some(body) => body,
             None => return Some((StatusCode::UNAUTHORIZED, Json("Invalid request body".to_string())).into_response())
         };
+
+        // Extract signature and timestamp headers
         let signature = headers.get_header_str_or_empty("x-signature-ed25519");
         let timestamp = headers.get_header_str_or_empty("x-signature-timestamp");
-        if timestamp.is_empty() ||signature.is_empty(){
-            return Some((StatusCode::UNAUTHORIZED, Json("Timestamp and signature headers aren't provided".to_string())).into_response())
+
+        // Return an error response if either header is missing
+        if timestamp.is_empty() || signature.is_empty() {
+            return Some((StatusCode::UNAUTHORIZED, Json("Timestamp and signature headers aren't provided".to_string())).into_response());
         }
 
+        // Verify the request signature using the Discord public key
         let public_key = self.get_public_key();
-        if let Err(error) = discord_public_key_verify(public_key, signature, timestamp, body){
+        if let Err(error) = discord_public_key_verify(public_key, signature, timestamp, body) {
             println!("Discord authentication error: {}", error);
-            return Some((StatusCode::UNAUTHORIZED, Json("Key verification failed".to_string())).into_response())
+            return Some((StatusCode::UNAUTHORIZED, Json("Key verification failed".to_string())).into_response());
         }
 
+        // Handle different types of Discord requests
         let request_type = body.get("type").and_then(|type_value| type_value.as_u64()).unwrap_or_default();
 
-        match request_type{
+        match request_type {
             1 => {
                 let body = Json(json!({
                     "type": request_type

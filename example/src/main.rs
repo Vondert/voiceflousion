@@ -31,7 +31,7 @@ async fn main() {
     let telegram_client = TelegramClient::new(client_builder);
     let telegram_client_manager = Arc::new(ClientsManager::from_clients(vec![telegram_client]));
 
-    let telegram_voiceflousion_server = VoiceflousionServer::<TelegramClient>::new("telegram".to_string(), {
+    let telegram_voiceflousion_server = VoiceflousionServer::<TelegramClient>::new({
         |update, client| Box::pin(base_dialog_handler(update, client))
     }).set_clients_manager(telegram_client_manager);
 
@@ -41,7 +41,7 @@ async fn main() {
     let whatsapp_client = WhatsAppClient::new(client_builder);
     let whatsapp_client_manager = Arc::new(ClientsManager::from_clients(vec![whatsapp_client]));
 
-    let whatsapp_voiceflousion_server = VoiceflousionServer::<WhatsAppClient>::new("whatsapp".to_string(), {
+    let whatsapp_voiceflousion_server = VoiceflousionServer::<WhatsAppClient>::new({
         |update, client| Box::pin(base_dialog_handler(update, client))
     }).set_clients_manager(whatsapp_client_manager);
 
